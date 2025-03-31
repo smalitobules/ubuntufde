@@ -199,30 +199,28 @@ EOF
                 rm /tmp/waiting_for_ssh
                 break
             fi
+            sleep 1
         done
         
-        # Entscheidung: Screen starten oder nicht?
-        read -p "Möchtest du die Installation in einer Screen-Sitzung fortsetzen? (j/n) [j]: " -r
-        USE_SCREEN=${REPLY:-j}
+        # Da Remote-Installation gewählt wurde, immer Screen-Sitzung starten
+        log_info "Starte Screen-Sitzung für Remote-Installation..."
         
-        if [[ $USE_SCREEN =~ ^[Jj]$ ]]; then
-            log_info "Starte Screen-Sitzung..."
-            screen -dmS ubuntufde "$0" screen_resumed
+        # Erstelle eine Datei, die anzeigt, dass wir im Screen-Modus sind
+        touch /tmp/ubuntufde_screen_mode
+        
+        # Starte das Skript in einer Screen-Sitzung und beende es hier
+        screen -dmS ubuntufde "$0" screen_resumed
+        
+        # Prüfe, ob Screen erfolgreich gestartet wurde
+        if screen -list | grep -q "ubuntufde"; then
+            log_info "Installation läuft in Screen-Sitzung im Hintergrund."
+            log_info "Du kannst jederzeit mit 'screen -r ubuntufde' wieder verbinden."
             
-            # Prüfe, ob Screen erfolgreich gestartet wurde
-            if screen -list | grep -q "ubuntufde"; then
-                log_info "Installation läuft in Screen-Sitzung im Hintergrund."
-                log_info "Du kannst jederzeit mit 'screen -r ubuntufde' wieder verbinden."
-                
-                # WICHTIG: KEIN exit 0 hier - wir wollen das Skript weiterlaufen lassen
-                
-                # Optional: Screen direkt anzeigen
-                screen -r ubuntufde
-            else
-                log_warn "Screen-Sitzung konnte nicht gestartet werden. Setze normal fort."
-            fi
+            # Beenden - das Hauptskript läuft jetzt in Screen
+            exit 0
         else
-            log_info "Setze Installation ohne Screen-Sitzung fort..."
+            log_warn "Screen-Sitzung konnte nicht gestartet werden. Beende."
+            exit 1
         fi
     else
         # Wir sind bereits in einer Screen-Sitzung
@@ -1355,36 +1353,27 @@ finalize_installation() {
 main() {
     # Prüfe, ob das Skript von der SSH- oder Screen-Fortsetzung kommt
     if [ "$1" = "ssh_resumed" ] || [ "$1" = "screen_resumed" ]; then
-        # Direkt zur Benutzerkonfiguration weitergehen
+        # Wenn wir von der Screen-Fortsetzung kommen
         log_info "Setze Installation in Screen-Sitzung fort..."
-        # Rest der Installation direkt ausführen
-        gather_user_input
-        prepare_disk
-        setup_encryption
-        setup_lvm
-        mount_filesystems
-        install_base_system
-        prepare_chroot
-        execute_chroot
-        finalize_installation
-        exit 0
+        # Marker-Datei anlegen, die zeigt, dass wir im Screen-Modus sind
+        touch /tmp/ubuntufde_screen_mode
+    else
+        # Normale Initialisierung
+        clear
+        echo -e "${CYAN}============================================================${NC}"
+        echo -e "${CYAN}   Ubuntu Server FDE - Automatisches Installationsskript   ${NC}"
+        echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                              ${NC}"
+        echo -e "${CYAN}============================================================${NC}"
+        echo
+        
+        # Logdatei initialisieren
+        echo "Ubuntu FDE Installation - $(date)" > "$LOG_FILE"
+        
+        # Systemcheck
+        check_root
+        check_system
+        check_dependencies
     fi
-
-    # Initialisierung
-    clear
-    echo -e "${CYAN}============================================================${NC}"
-    echo -e "${CYAN}   Ubuntu FDE - Automatisches Installationsskript           ${NC}"
-    echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                               ${NC}"
-    echo -e "${CYAN}============================================================${NC}"
-    echo
-    
-    # Logdatei initialisieren
-    echo "Ubuntu FDE Installation - $(date)" > "$LOG_FILE"
-    
-    # Systemcheck
-    check_root
-    check_system
-    check_dependencies
     
     # Installation
     echo
@@ -1406,4 +1395,4 @@ main() {
 }
 
 # Skript starten
-main
+main "$@"
