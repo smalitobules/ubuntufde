@@ -159,11 +159,9 @@ if [ -n "\$SSH_CONNECTION" ]; then
         # Wenn Screen-Sitzung existiert, verbinde
         if screen -list | grep -q "ubuntufde"; then
             echo "Bestehende Screen-Sitzung gefunden, verbinde..."
-            touch /tmp/ssh_connected
             screen -dr ubuntufde
         else
             echo "Keine laufende Screen-Sitzung gefunden, starte neu..."
-            touch /tmp/ssh_connected
             cd /root && screen -S ubuntufde ./install_script.sh ssh_resumed
         fi
     else
@@ -202,13 +200,8 @@ EOF
             sleep 1
         done
         
-        # Da Remote-Installation gewählt wurde, immer Screen-Sitzung starten
+        # Screen-Sitzung starten - aber OHNE exit 0, damit das Skript weiterläuft
         log_info "Starte Screen-Sitzung für Remote-Installation..."
-        
-        # Erstelle eine Datei, die anzeigt, dass wir im Screen-Modus sind
-        touch /tmp/ubuntufde_screen_mode
-        
-        # Starte das Skript in einer Screen-Sitzung und beende es hier
         screen -dmS ubuntufde "$0" screen_resumed
         
         # Prüfe, ob Screen erfolgreich gestartet wurde
@@ -216,11 +209,9 @@ EOF
             log_info "Installation läuft in Screen-Sitzung im Hintergrund."
             log_info "Du kannst jederzeit mit 'screen -r ubuntufde' wieder verbinden."
             
-            # Beenden - das Hauptskript läuft jetzt in Screen
-            exit 0
+            # WICHTIG: Kein exit 0 hier - Skript läuft weiter
         else
-            log_warn "Screen-Sitzung konnte nicht gestartet werden. Beende."
-            exit 1
+            log_warn "Screen-Sitzung konnte nicht gestartet werden."
         fi
     else
         # Wir sind bereits in einer Screen-Sitzung
