@@ -420,6 +420,11 @@ gather_user_input() {
             read -p "Möchtest du die Konfiguration nach möglichen Änderungen erneut speichern? (j/n) [j]: " -r
             SAVE_CONFIG=${REPLY:-j}
             
+            # Wenn Remote-Installation in der Konfiguration ist, direkt SSH einrichten
+            if [ "${INSTALL_MODE:-1}" = "2" ]; then
+                setup_ssh_access
+            fi
+            
             return
         else
             log_warn "Konfigurationsdatei nicht gefunden. Fahre mit manueller Konfiguration fort."
@@ -436,10 +441,16 @@ gather_user_input() {
     echo "2) Remote-Installation (SSH-Server wird eingerichtet)"
     read -p "Wähle den Installationsmodus [1]: " INSTALL_MODE_CHOICE
     INSTALL_MODE=${INSTALL_MODE_CHOICE:-1}
-
+    
     # Wenn Remote-Installation gewählt wurde, direkt SSH einrichten
     if [ "$INSTALL_MODE" = "2" ]; then
         setup_ssh_access
+    fi
+    
+    # WICHTIG: Hier Pause einbauen, um die SSH-Informationen sichtbar zu halten
+    if [ "$INSTALL_MODE" = "2" ]; then
+        read -p "Drücke ENTER um mit der Installation fortzufahren..." -s
+        echo
     fi
     
     # Desktop-Installation
