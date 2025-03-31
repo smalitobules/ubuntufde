@@ -201,16 +201,28 @@ EOF
             fi
         done
         
-        # Starte das Skript in einer Screen-Sitzung
-        screen -dmS ubuntufde "$0" screen_resumed
+        # Entscheidung: Screen starten oder nicht?
+        read -p "Möchtest du die Installation in einer Screen-Sitzung fortsetzen? (j/n) [j]: " -r
+        USE_SCREEN=${REPLY:-j}
         
-        # Prüfe, ob Screen erfolgreich gestartet wurde
-        if screen -list | grep -q "ubuntufde"; then
-            log_info "Installation läuft in Screen-Sitzung im Hintergrund."
-            log_info "Du kannst jederzeit mit 'screen -r ubuntufde' wieder verbinden."
-            exit 0
+        if [[ $USE_SCREEN =~ ^[Jj]$ ]]; then
+            log_info "Starte Screen-Sitzung..."
+            screen -dmS ubuntufde "$0" screen_resumed
+            
+            # Prüfe, ob Screen erfolgreich gestartet wurde
+            if screen -list | grep -q "ubuntufde"; then
+                log_info "Installation läuft in Screen-Sitzung im Hintergrund."
+                log_info "Du kannst jederzeit mit 'screen -r ubuntufde' wieder verbinden."
+                
+                # WICHTIG: KEIN exit 0 hier - wir wollen das Skript weiterlaufen lassen
+                
+                # Optional: Screen direkt anzeigen
+                screen -r ubuntufde
+            else
+                log_warn "Screen-Sitzung konnte nicht gestartet werden. Setze normal fort."
+            fi
         else
-            log_warn "Screen-Sitzung konnte nicht gestartet werden. Setze normal fort."
+            log_info "Setze Installation ohne Screen-Sitzung fort..."
         fi
     else
         # Wir sind bereits in einer Screen-Sitzung
