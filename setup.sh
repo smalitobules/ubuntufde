@@ -135,6 +135,9 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
+# GRUB Verzeichnis erstellen falls es nicht existiert
+mkdir -p /etc/default/grub.d/
+
 # GRUB für Verschlüsselung und Display konfigurieren
 cat > /etc/default/grub.d/local.cfg <<GRUBCFG
 GRUB_ENABLE_CRYPTODISK=y
@@ -142,6 +145,17 @@ GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_st
 GRUB_TIMEOUT=1
 GRUB_GFXMODE=1024x768
 GRUBCFG
+
+# GRUB Konfigurationsdatei-Rechte setzen
+chmod 644 /etc/default/grub.d/local.cfg
+
+# GRUB Hauptkonfiguration aktualisieren
+sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
+
+# Initramfs aktualisieren und GRUB installieren
+update-initramfs -u -k all
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck
+update-grub
 
 # Schlüsseldatei für automatische Entschlüsselung
 echo "KEYFILE_PATTERN=/etc/luks/*.keyfile" >> /etc/cryptsetup-initramfs/conf-hook
@@ -299,50 +313,9 @@ if [ -n "${ADDITIONAL_PACKAGES}" ]; then
     apt-get install -y ${ADDITIONAL_PACKAGES}
 fi
 
-# Bootloader (GRUB) installieren
-update-initramfs -u -k all
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck
-update-grub
-
-# Cleanup
+# Aufräumen
+echo "Bereinige temporäre Dateien..."
 apt-get clean
+apt-get autoremove -y
 rm -f /setup.sh
 MAINEOF
-
-# Setze Variablen für das Chroot-Skript
-sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${USER_PASSWORD}/$USER_PASSWORD/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${LUKS_PASSWORD}/$LUKS_PASSWORD/g" /mnt/ubuntu/setup.sh
-sed -i "s|\${DEVP}|$DEVP|g" /mnt/ubuntu/setup.sh
-sed -i "s|\${DM}|$DM|g" /mnt/ubuntu/setup.sh
-sed -i "s/\${KERNEL_TYPE}/$KERNEL_TYPE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${INSTALL_MODE}/$INSTALL_MODE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${ADDITIONAL_PACKAGES}/$ADDITIONAL_PACKAGES/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${UBUNTU_CODENAME}/$UBUNTU_CODENAME/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${UPDATE_OPTION}/$UPDATE_OPTION/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${INSTALL_DESKTOP}/$INSTALL_DESKTOP/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${NETWORK_CONFIG}/$NETWORK_CONFIG/g" /mnt/ubuntu/setup.sh
-sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
-
-# Ausführbar machen
-chmod +x /mnt/ubuntu/setup.sh
-
-show_progress 70
-}
-
-execute_chroot() {
-log_progress "Führe Installation in chroot-Umgebung durch..."
-
-# chroot ausführen
-log_info "Ausführen von setup.sh in chroot..."
-chroot /mnt/ubuntu /setup.sh
-
-log_info "Installation in chroot abgeschlossen."
-show_progress 90
-}
