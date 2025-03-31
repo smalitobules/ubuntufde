@@ -630,17 +630,17 @@ else
     echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
 fi
 
-# Kernel-Auswahl
+    # Kernel-Auswahl
     echo -e "\n${CYAN}Kernel-Auswahl:${NC}"
-    echo "1) Standard-Kernel"
-    echo "2) Low-Latency-Kernel"
-    echo "3) Liquorix-Kernel (Optimiert für Desktop-Nutzung)"
+    echo "1) Liquorix-Kernel (Optimiert für Desktop-Nutzung)"
+    echo "2) Standard-Kernel (Ubuntu Stock)"
+    echo "3) Low-Latency-Kernel (Optimiert für Echtzeitanwendungen)"
     read -p "Wähle den Kernel-Typ [1]: " KERNEL_CHOICE
     case ${KERNEL_CHOICE:-1} in
-        1) KERNEL_TYPE="standard" ;;
-        2) KERNEL_TYPE="lowlatency" ;;
-        3) KERNEL_TYPE="liquorix" ;;
-        *) KERNEL_TYPE="standard" ;;
+        1) KERNEL_TYPE="liquorix" ;;
+        2) KERNEL_TYPE="standard" ;;
+        3) KERNEL_TYPE="lowlatency" ;;
+        *) KERNEL_TYPE="liquorix" ;;
     esac
     
     # Secure Boot
