@@ -146,6 +146,8 @@ setup_ssh_access() {
     # Speichere bisherige Einstellungen für SSH-Start
     echo "INSTALL_MODE=2" > /tmp/install_config
     echo "SAVE_CONFIG=${SAVE_CONFIG}" >> /tmp/install_config
+    echo "CONFIG_OPTION=${CONFIG_OPTION}" >> /tmp/install_config
+    echo "SKIP_INITIAL_QUESTIONS=true" >> /tmp/install_config
     
     # SSH-Login mit automatischer Verbindung zur Installation
     cat > /root/.bash_profile <<EOF
@@ -371,53 +373,52 @@ calculate_available_space() {
 gather_user_input() {
     echo -e "${CYAN}===== INSTALLATIONSKONFIGURATION =====${NC}"
     
-    # Frage nach Konfigurationsdatei oder Speicherung
-    echo -e "\n${CYAN}Konfigurationsverwaltung:${NC}"
-    echo "1) Neue Konfiguration erstellen"
-    echo "2) Bestehende Konfigurationsdatei laden"
-    read -p "Wähle eine Option [1]: " CONFIG_OPTION
-    CONFIG_OPTION=${CONFIG_OPTION:-1}
-    
-    if [ "$CONFIG_OPTION" = "2" ]; then
-        read -p "Pfad zur Konfigurationsdatei: " config_path
-        if load_config "$config_path"; then
-            log_info "Konfiguration erfolgreich geladen."
-            
-            # Frage, ob am Ende trotzdem gespeichert werden soll
-            read -p "Möchtest du die Konfiguration nach möglichen Änderungen erneut speichern? (j/n) [j]: " -r
-            SAVE_CONFIG=${REPLY:-j}
-            
-            # Wenn Remote-Installation in der Konfiguration ist, direkt SSH einrichten
-            if [ "${INSTALL_MODE:-1}" = "2" ]; then
-                setup_ssh_access
+    # Wenn von SSH fortgesetzt, überspringe die ersten Fragen
+    if [ "${SKIP_INITIAL_QUESTIONS}" = "true" ]; then
+        log_info "Setze mit Desktop-Installation fort..."
+    else
+        # Frage nach Konfigurationsdatei oder Speicherung
+        echo -e "\n${CYAN}Konfigurationsverwaltung:${NC}"
+        echo "1) Neue Konfiguration erstellen"
+        echo "2) Bestehende Konfigurationsdatei laden"
+        read -p "Wähle eine Option [1]: " CONFIG_OPTION
+        CONFIG_OPTION=${CONFIG_OPTION:-1}
+        
+        if [ "$CONFIG_OPTION" = "2" ]; then
+            read -p "Pfad zur Konfigurationsdatei: " config_path
+            if load_config "$config_path"; then
+                log_info "Konfiguration erfolgreich geladen."
+                
+                # Frage, ob am Ende trotzdem gespeichert werden soll
+                read -p "Möchtest du die Konfiguration nach möglichen Änderungen erneut speichern? (j/n) [j]: " -r
+                SAVE_CONFIG=${REPLY:-j}
+                
+                # Wenn Remote-Installation in der Konfiguration ist, direkt SSH einrichten
+                if [ "${INSTALL_MODE:-1}" = "2" ]; then
+                    setup_ssh_access
+                fi
+                
+                return
+            else
+                log_warn "Konfigurationsdatei nicht gefunden. Fahre mit manueller Konfiguration fort."
             fi
-            
-            return
-        else
-            log_warn "Konfigurationsdatei nicht gefunden. Fahre mit manueller Konfiguration fort."
         fi
-    fi
-    
-    # Frage, ob die Konfiguration gespeichert werden soll
-    read -p "Möchtest du die Konfiguration für spätere Verwendung speichern? (j/n) [n]: " -r
-    SAVE_CONFIG=${REPLY:-n}
-    
-    # Installationsmodus
-    echo -e "\n${CYAN}Installationsmodus:${NC}"
-    echo "1) Lokale Installation (Kein SSH-Zugriff verfügbar)"
-    echo "2) Remote-Installation (SSH-Server wird eingerichtet)"
-    read -p "Wähle den Installationsmodus [1]: " INSTALL_MODE_CHOICE
-    INSTALL_MODE=${INSTALL_MODE_CHOICE:-1}
-    
-    # Wenn Remote-Installation gewählt wurde, direkt SSH einrichten
-    if [ "$INSTALL_MODE" = "2" ]; then
-        setup_ssh_access
-    fi
-    
-    # WICHTIG: Hier Pause einbauen, um die SSH-Informationen sichtbar zu halten
-    if [ "$INSTALL_MODE" = "2" ]; then
-        read -p "Drücke ENTER um mit der Installation fortzufahren..." -s
-        echo
+        
+        # Frage, ob die Konfiguration gespeichert werden soll
+        read -p "Möchtest du die Konfiguration für spätere Verwendung speichern? (j/n) [n]: " -r
+        SAVE_CONFIG=${REPLY:-n}
+        
+        # Installationsmodus
+        echo -e "\n${CYAN}Installationsmodus:${NC}"
+        echo "1) Lokale Installation (Kein SSH-Zugriff verfügbar)"
+        echo "2) Remote-Installation (SSH-Server wird eingerichtet)"
+        read -p "Wähle den Installationsmodus [1]: " INSTALL_MODE_CHOICE
+        INSTALL_MODE=${INSTALL_MODE_CHOICE:-1}
+        
+        # Wenn Remote-Installation gewählt wurde, direkt SSH einrichten
+        if [ "$INSTALL_MODE" = "2" ]; then
+            setup_ssh_access
+        fi
     fi
     
     # Desktop-Installation
