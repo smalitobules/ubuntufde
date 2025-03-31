@@ -126,97 +126,59 @@ check_system() {
 }
 
 setup_ssh_access() {
-    # Starte das Skript in einer Screen-Sitzung neu
-    if [ -z "$STY" ]; then
-        # Lösche bestehende .bash_profile (ignoriert Fehler wenn nicht vorhanden)
-        rm -f /root/.bash_profile
-        
-        # Zufälliges numerisches Passwort generieren (6 Ziffern)
-        SSH_PASSWORD=$(tr -dc '0-9' < /dev/urandom | head -c 6)
-        
-        # Root-Passwort setzen
-        echo "root:${SSH_PASSWORD}" | chpasswd
-        
-        # SSH-Server konfigurieren und starten
-        apt-get update
-        apt-get install -y screen openssh-server
-        
-        sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-        sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-        systemctl restart ssh
-        
-        # Skript in temporäre Datei kopieren für SSH-Zugriff
-        cp "$0" /root/install_script.sh
-        chmod +x /root/install_script.sh
-        
-        # Automatisches Verbinden mit der Screen-Sitzung beim SSH-Login
-        cat > /root/.bash_profile <<EOF
-# Temporäres Profil für automatisches Verbinden mit der Installation
+    # Lösche bestehende .bash_profile
+    rm -f /root/.bash_profile
+    
+    # Einfaches 6-stelliges Passwort
+    SSH_PASSWORD=$(tr -dc '0-9' < /dev/urandom | head -c 6)
+    
+    # Root-Passwort setzen
+    echo "root:${SSH_PASSWORD}" | chpasswd
+    
+    # SSH-Server einrichten
+    apt-get update
+    apt-get install -y screen openssh-server
+    
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+    sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+    systemctl restart ssh
+
+    # Speichere bisherige Einstellungen für SSH-Start
+    echo "INSTALL_MODE=2" > /tmp/install_config
+    echo "SAVE_CONFIG=${SAVE_CONFIG}" >> /tmp/install_config
+    
+    # SSH-Login mit automatischer Verbindung zur Installation
+    cat > /root/.bash_profile <<EOF
 if [ -n "\$SSH_CONNECTION" ]; then
-    echo "Verbinde mit der laufenden Installation..."
-    # Prüfen, ob Screen installiert ist
-    if command -v screen > /dev/null; then
-        # Wenn Screen-Sitzung existiert, verbinde
-        if screen -list | grep -q "ubuntufde"; then
-            echo "Bestehende Screen-Sitzung gefunden, verbinde..."
-            screen -dr ubuntufde
-        else
-            echo "Keine laufende Screen-Sitzung gefunden, starte neu..."
-            cd /root && screen -S ubuntufde ./install_script.sh ssh_resumed
-        fi
+    if [ -f /tmp/installation_running ]; then
+        echo "Installation läuft. Tippe 'cd /root && ./install_script.sh' um neu zu starten."
     else
-        echo "Screen nicht installiert. Installation kann nicht fortgesetzt werden."
+        echo "Verbinde mit der Installation..."
+        cd /root && ./install_script.sh ssh_connect
     fi
 fi
 EOF
-        
-        # SSH-Zugangsdaten anzeigen
-        echo -e "\n${CYAN}===== SSH-ZUGANG AKTIV =====${NC}"
-        echo -e "SSH-Server wurde aktiviert. Verbinde dich mit:"
-        echo -e "${YELLOW}IP-Adressen:${NC}"
-        ip -4 addr show scope global | grep inet | awk '{print "  " $2}' | cut -d/ -f1
-        echo -e "${YELLOW}Benutzername:${NC} root"
-        echo -e "${YELLOW}Passwort:${NC} ${SSH_PASSWORD}"
-        echo -e "${CYAN}============================${NC}"
-        echo
-        echo -e "Nach dem SSH-Login wirst du automatisch mit der laufenden Installation verbunden."
-        echo
-        
-        # Warte auf Bestätigung oder SSH-Verbindung
-        echo "Warte auf SSH-Verbindung... (Drücke ENTER, um ohne Warten fortzufahren)"
-        touch /tmp/waiting_for_ssh
-        while [ -f /tmp/waiting_for_ssh ]; do
-            if [ -f /tmp/ssh_connected ]; then
-                echo "SSH-Verbindung hergestellt. Setze Installation fort..."
-                rm /tmp/waiting_for_ssh
-                break
-            fi
-            
-            if read -t 1 -s; then
-                echo "ENTER gedrückt. Setze Installation fort..."
-                rm /tmp/waiting_for_ssh
-                break
-            fi
-            sleep 1
-        done
-        
-        # Screen-Sitzung starten - aber OHNE exit 0, damit das Skript weiterläuft
-        log_info "Starte Screen-Sitzung für Remote-Installation..."
-        screen -dmS ubuntufde "$0" screen_resumed
-        
-        # Prüfe, ob Screen erfolgreich gestartet wurde
-        if screen -list | grep -q "ubuntufde"; then
-            log_info "Installation läuft in Screen-Sitzung im Hintergrund."
-            log_info "Du kannst jederzeit mit 'screen -r ubuntufde' wieder verbinden."
-            
-            # WICHTIG: Kein exit 0 hier - Skript läuft weiter
-        else
-            log_warn "Screen-Sitzung konnte nicht gestartet werden."
-        fi
-    else
-        # Wir sind bereits in einer Screen-Sitzung
-        log_info "Installation läuft in Screen-Sitzung mit Name: ubuntufde"
-    fi
+    
+    # Skript kopieren
+    cp "$0" /root/install_script.sh
+    chmod +x /root/install_script.sh
+    
+    # SSH-Zugangsdaten anzeigen
+    echo -e "\n${CYAN}===== SSH-ZUGANG AKTIV =====${NC}"
+    echo -e "SSH-Server wurde aktiviert. Verbinde dich mit:"
+    echo -e "${YELLOW}IP-Adressen:${NC}"
+    ip -4 addr show scope global | grep inet | awk '{print "  " $2}' | cut -d/ -f1
+    echo -e "${YELLOW}Benutzername:${NC} root"
+    echo -e "${YELLOW}Passwort:${NC} ${SSH_PASSWORD}"
+    echo -e "${CYAN}============================${NC}"
+    echo
+    
+    # Warte auf Bestätigung oder Abbruch
+    echo "Warte auf SSH-Verbindung... (Drücke ENTER, um ohne Warten fortzufahren)"
+    read -t 30 -s || true
+    
+    # Marker für laufende Installation
+    touch /tmp/installation_running
 }
 
 # Netzwerk konfigurieren
@@ -1342,12 +1304,19 @@ finalize_installation() {
 # Hauptfunktion   #
 ###################
 main() {
-    # Prüfe, ob das Skript von der SSH- oder Screen-Fortsetzung kommt
-    if [ "$1" = "ssh_resumed" ] || [ "$1" = "screen_resumed" ]; then
-        # Wenn wir von der Screen-Fortsetzung kommen
-        log_info "Setze Installation in Screen-Sitzung fort..."
-        # Marker-Datei anlegen, die zeigt, dass wir im Screen-Modus sind
-        touch /tmp/ubuntufde_screen_mode
+    # Prüfe auf SSH-Verbindung
+    if [ "$1" = "ssh_connect" ]; then
+        clear
+        echo -e "${CYAN}============================================================${NC}"
+        echo -e "${CYAN}   Ubuntu Server FDE - Automatisches Installationsskript   ${NC}"
+        echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                              ${NC}"
+        echo -e "${CYAN}============================================================${NC}"
+        echo -e "${GREEN}[INFO]${NC} Neustart der Installation via SSH."
+        
+        # Lade gespeicherte Einstellungen
+        if [ -f /tmp/install_config ]; then
+            source /tmp/install_config
+        fi
     else
         # Normale Initialisierung
         clear
