@@ -126,32 +126,30 @@ check_system() {
 }
 
 setup_ssh_access() {
-    # Überprüfe, ob INSTALL_MODE_CHOICE für Remote gesetzt ist
-    # Bei der ersten Ausführung ist INSTALL_MODE_CHOICE noch nicht gesetzt
-    if [ "${INSTALL_MODE_CHOICE:-1}" = "2" ] || [ "${INSTALL_MODE:-1}" = "2" ]; then
-        # Installation von screen, falls noch nicht vorhanden
-        apt-get update
-        apt-get install -y screen openssh-server
+    # Direkte Ausführung für SSH-Server-Einrichtung bei Remote-Installation
+    log_info "Richte SSH-Server für Remote-Installation ein..."
+    
+    # Installation von benötigten Paketen
+    apt-get update
+    apt-get install -y screen openssh-server
+    
+    # Überprüfen, ob wir bereits in einer Screen-Sitzung sind
+    if [ -z "$STY" ]; then
+        # Zufälliges Passwort generieren
+        SSH_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
         
-        # Überprüfen, ob wir bereits in einer Screen-Sitzung sind
-        if [ -z "$STY" ]; then
-            log_info "Richte SSH-Server für Remote-Installation ein..."
-            
-            # Zufälliges Passwort generieren
-            SSH_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
-            
-            # Root-Passwort setzen
-            echo "root:${SSH_PASSWORD}" | chpasswd
-            
-            # SSH-Server konfigurieren
-            sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-            sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-            
-            # SSH-Server neustarten
-            systemctl restart ssh
-            
-            # Automatisches Verbinden mit der Screen-Sitzung beim SSH-Login
-            cat > /root/.bash_profile <<EOF
+        # Root-Passwort setzen
+        echo "root:${SSH_PASSWORD}" | chpasswd
+        
+        # SSH-Server konfigurieren
+        sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+        sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+        
+        # SSH-Server neustarten
+        systemctl restart ssh
+        
+        # Automatisches Verbinden mit der Screen-Sitzung beim SSH-Login
+        cat > /root/.bash_profile <<EOF
 # Temporäres Profil für automatisches Verbinden mit der Installation
 if [ -n "\$SSH_CONNECTION" ]; then
     echo "Verbinde mit der laufenden Installation..."
@@ -167,55 +165,52 @@ if [ -n "\$SSH_CONNECTION" ]; then
     fi
 fi
 EOF
+        
+        # SSH-Zugangsdaten in Datei schreiben (für Nachweis der Verbindung)
+        echo "${SSH_PASSWORD}" > /tmp/ssh_password
+        
+        # Zeige IP und SSH-Zugangsdaten an
+        echo -e "\n${CYAN}===== SSH-ZUGANG AKTIV =====${NC}"
+        echo -e "SSH-Server wurde aktiviert. Verbinde dich mit:"
+        echo -e "${YELLOW}IP-Adressen:${NC}"
+        ip -4 addr show scope global | grep inet | awk '{print "  " $2}' | cut -d/ -f1
+        echo -e "${YELLOW}Benutzername:${NC} root"
+        echo -e "${YELLOW}Passwort:${NC} ${SSH_PASSWORD}"
+        echo -e "${CYAN}============================${NC}"
+        echo
+        echo -e "Nach dem SSH-Login wirst du automatisch mit der laufenden Installation verbunden."
+        echo
+        
+        # Warte auf Bestätigung oder SSH-Verbindung
+        echo "Warte auf SSH-Verbindung... (Drücke ENTER, um ohne Warten fortzufahren)"
+        
+        # Einfache Schleife, die entweder auf ENTER oder SSH-Verbindung wartet
+        touch /tmp/waiting_for_ssh
+        while [ -f /tmp/waiting_for_ssh ]; do
+            # Prüfe, ob eine Signal-Datei erstellt wurde (durch SSH-Login)
+            if [ -f /tmp/ssh_connected ]; then
+                echo "SSH-Verbindung hergestellt. Setze Installation fort..."
+                rm /tmp/waiting_for_ssh
+                break
+            fi
             
-            # SSH-Zugangsdaten in Datei schreiben (für Nachweis der Verbindung)
-            echo "${SSH_PASSWORD}" > /tmp/ssh_password
-            
-            # Zeige IP und SSH-Zugangsdaten an
-            echo -e "\n${CYAN}===== SSH-ZUGANG =====${NC}"
-            echo -e "SSH-Server wurde aktiviert. Verbinde dich mit:"
-            echo -e "${YELLOW}IP-Adressen:${NC}"
-            ip -4 addr show scope global | grep inet | awk '{print "  " $2}' | cut -d/ -f1
-            echo -e "${YELLOW}Benutzername:${NC} root"
-            echo -e "${YELLOW}Passwort:${NC} ${SSH_PASSWORD}"
-            echo -e "${CYAN}======================${NC}"
-            echo
-            echo -e "Nach dem SSH-Login wirst du automatisch mit der laufenden Installation verbunden."
-            echo
-            
-            # Warte auf Bestätigung oder SSH-Verbindung
-            echo "Warte auf SSH-Verbindung... (Drücke ENTER, um ohne Warten fortzufahren)"
-            
-            # Einfache Schleife, die entweder auf ENTER oder SSH-Verbindung wartet
-            touch /tmp/waiting_for_ssh
-            while [ -f /tmp/waiting_for_ssh ]; do
-                # Prüfe, ob eine Signal-Datei erstellt wurde (durch SSH-Login)
-                if [ -f /tmp/ssh_connected ]; then
-                    echo "SSH-Verbindung hergestellt. Setze lokale Installation fort..."
-                    rm /tmp/waiting_for_ssh
-                    break
-                fi
-                
-                # Prüfe, ob der Nutzer ENTER gedrückt hat (wartet 1 Sekunde)
-                if read -t 1 -s; then
-                    echo "ENTER gedrückt. Setze Installation fort..."
-                    rm /tmp/waiting_for_ssh
-                    break
-                fi
-            done
-            
-            echo "Installation wird jetzt in einer Screen-Sitzung fortgesetzt..."
-            
-            # Starte das Skript in einer Screen-Sitzung neu
-            exec screen -S ubuntufde -c <(echo "startup_message off; caption always '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'") "$0" "$@"
-            # Nach diesem exec wird das Skript innerhalb von Screen neu gestartet
-            exit 0
-        else
-            # Wir sind bereits in einer Screen-Sitzung
-            log_info "Installation läuft in Screen-Sitzung mit Name: ubuntufde"
-        fi
+            # Prüfe, ob der Nutzer ENTER gedrückt hat (wartet 1 Sekunde)
+            if read -t 1 -s; then
+                echo "ENTER gedrückt. Setze Installation fort..."
+                rm /tmp/waiting_for_ssh
+                break
+            fi
+        done
+        
+        echo "Installation wird jetzt in einer Screen-Sitzung fortgesetzt..."
+        
+        # Starte das Skript in einer Screen-Sitzung neu
+        exec screen -S ubuntufde -c <(echo "startup_message off; caption always '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'") "$0" "$@"
+        # Nach diesem exec wird das Skript innerhalb von Screen neu gestartet
+        exit 0
     else
-        log_info "Lokale Installation: SSH-Server wird nicht aktiviert"
+        # Wir sind bereits in einer Screen-Sitzung
+        log_info "Installation läuft in Screen-Sitzung mit Name: ubuntufde"
     fi
 }
 
@@ -441,6 +436,11 @@ gather_user_input() {
     echo "2) Remote-Installation (SSH-Server wird eingerichtet)"
     read -p "Wähle den Installationsmodus [1]: " INSTALL_MODE_CHOICE
     INSTALL_MODE=${INSTALL_MODE_CHOICE:-1}
+
+    # Wenn Remote-Installation gewählt wurde, direkt SSH einrichten
+    if [ "$INSTALL_MODE" = "2" ]; then
+        setup_ssh_access
+    fi
     
     # Desktop-Installation
     echo -e "\n${CYAN}Desktop-Installation:${NC}"
@@ -1324,8 +1324,8 @@ main() {
     # Initialisierung
     clear
     echo -e "${CYAN}============================================================${NC}"
-    echo -e "${CYAN}   Ubuntu Server FDE - Automatisches Installationsskript   ${NC}"
-    echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                              ${NC}"
+    echo -e "${CYAN}   Ubuntu FDE - Automatisches Installationsskript           ${NC}"
+    echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                               ${NC}"
     echo -e "${CYAN}============================================================${NC}"
     echo
     
@@ -1336,9 +1336,6 @@ main() {
     check_root
     check_system
     check_dependencies
-    
-    # SSH-Setup für Remote-Zugriff
-    setup_ssh_access
     
     # Installation
     echo
