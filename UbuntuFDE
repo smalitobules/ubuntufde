@@ -126,6 +126,9 @@ check_system() {
 }
 
 setup_ssh_access() {
+    # Lösche bestehende .bash_profile falls vorhanden
+    rm -f /root/.bash_profile
+
     # Direkte Ausführung für SSH-Server-Einrichtung bei Remote-Installation
     log_info "Richte SSH-Server für Remote-Installation ein..."
     
@@ -136,7 +139,8 @@ setup_ssh_access() {
     # Überprüfen, ob wir bereits in einer Screen-Sitzung sind
     if [ -z "$STY" ]; then
         # Zufälliges Passwort generieren
-        SSH_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
+        #SSH_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
+        SSH_PASSWORD=$(tr -dc '0-9' < /dev/urandom | head -c 6)
         
         # Root-Passwort setzen
         echo "root:${SSH_PASSWORD}" | chpasswd
@@ -153,15 +157,18 @@ setup_ssh_access() {
 # Temporäres Profil für automatisches Verbinden mit der Installation
 if [ -n "\$SSH_CONNECTION" ]; then
     echo "Verbinde mit der laufenden Installation..."
-    # Prüfen, ob die Screen-Sitzung existiert
-    if screen -list | grep -q "ubuntufde"; then
+    # Starte eine neue Screen-Sitzung, falls keine existiert
+    if ! screen -list | grep -q "ubuntufde"; then
+        echo "Keine laufende Installationssitzung gefunden. Starte neue Sitzung..."
+        # Signal-Datei erstellen, um zu zeigen, dass SSH-Verbindung hergestellt wurde
+        touch /tmp/ssh_connected
+        cd /root && screen -S ubuntufde "$0" "resumed_from_ssh"
+    else
         # Signal-Datei erstellen, um zu zeigen, dass SSH-Verbindung hergestellt wurde
         touch /tmp/ssh_connected
         screen -dr ubuntufde
         # Nach dem Beenden von Screen (wenn der Benutzer sich trennt)
         echo "Von der Installation getrennt. Tippe 'screen -r ubuntufde' um wieder zu verbinden."
-    else
-        echo "Keine laufende Installationssitzung gefunden."
     fi
 fi
 EOF
@@ -205,7 +212,7 @@ EOF
         echo "Installation wird jetzt in einer Screen-Sitzung fortgesetzt..."
         
         # Starte das Skript in einer Screen-Sitzung neu
-        exec screen -S ubuntufde -c <(echo "startup_message off; caption always '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'") "$0" "$@"
+        exec screen -S ubuntufde -c <(echo "startup_message off; caption always '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'") "$0" resumed_from_screen
         # Nach diesem exec wird das Skript innerhalb von Screen neu gestartet
         exit 0
     else
@@ -1320,6 +1327,11 @@ finalize_installation() {
     show_progress 100
     echo
     
+    # Bash-Profile entfernen (Aufräumen)
+    rm -f /root/.bash_profile
+    log_info "Temporäre SSH-Konfiguration entfernt."
+
+    # Neustart-Abfrage
     read -p "Jetzt neustarten? (j/n) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Jj]$ ]]; then
@@ -1332,6 +1344,22 @@ finalize_installation() {
 # Hauptfunktion   #
 ###################
 main() {
+    # Prüfe, ob das Skript von der SSH- oder Screen-Fortsetzung kommt
+    if [ "$1" = "resumed_from_ssh" ] || [ "$1" = "resumed_from_screen" ]; then
+        # Direkt zur Benutzerkonfiguration weitergehen
+        log_info "Setze Installation in Screen-Sitzung fort..."
+        gather_user_input
+        prepare_disk
+        setup_encryption
+        setup_lvm
+        mount_filesystems
+        install_base_system
+        prepare_chroot
+        execute_chroot
+        finalize_installation
+        exit 0
+    fi
+
     # Initialisierung
     clear
     echo -e "${CYAN}============================================================${NC}"
