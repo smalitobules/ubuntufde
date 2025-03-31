@@ -175,12 +175,32 @@ EOF
     echo -e "${CYAN}============================${NC}"
     echo
     
-    # Warte auf Bestätigung oder Abbruch
-    echo "Warte auf SSH-Verbindung... (Drücke ENTER, um ohne Warten fortzufahren)"
-    read -t 30 -s || true
-    
     # Marker für laufende Installation
     touch /tmp/installation_running
+    
+    # Blockiere die lokale Installation
+    echo -e "\n${CYAN}Die Installation wird jetzt über SSH fortgesetzt.${NC}"
+    echo -e "Dieser lokale Prozess wird blockiert, bis die Installation abgeschlossen ist."
+    echo -e "(Drücke CTRL+C um abzubrechen)"
+    echo
+    
+    # Erstelle einen einzigartigen Namen für unseren Semaphor
+    SEM_NAME="/tmp/install_done_$(date +%s)"
+    touch /tmp/sem_name
+    echo "$SEM_NAME" > /tmp/sem_name
+    
+    # Warten bis die Installation beendet ist
+    while true; do
+        if [ -f "$SEM_NAME" ]; then
+            echo "Installation abgeschlossen."
+            rm -f "$SEM_NAME"
+            break
+        fi
+        sleep 5
+    done
+    
+    # Beenden nach Abschluss
+    exit 0
 }
 
 # Netzwerk konfigurieren
@@ -1299,6 +1319,11 @@ finalize_installation() {
         log_info "System wird neu gestartet..."
         reboot
     fi
+
+    # Signal für lokalen Prozess, dass wir fertig sind
+    for sem in /tmp/install_done_*; do
+        touch "$sem" 2>/dev/null || true
+    done
 }
 
 ###################
