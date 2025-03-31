@@ -50,62 +50,44 @@ if [ -n "$THORIUM_VERSION" ]; then
     echo -e "${GREEN}Verwende Thorium-Version: $THORIUM_VERSION${NC}"
     THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
     
-    echo -e "${YELLOW}Versuche Download von: $THORIUM_URL${NC}"
-    if ! wget --spider "$THORIUM_URL" 2>/dev/null; then
-        echo -e "${RED}URL nicht erreichbar, versuche generische Version...${NC}"
+    echo -e "${YELLOW}Lade Thorium herunter: $THORIUM_URL${NC}"
+    if ! wget -O /tmp/thorium.deb "$THORIUM_URL"; then
+        echo -e "${RED}Download fehlgeschlagen, versuche generische Version...${NC}"
         # Versuche generische Version ohne CPU-Erweiterung
         THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
         
-        if ! wget --spider "$THORIUM_URL" 2>/dev/null; then
-            echo -e "${RED}Generische URL auch nicht erreichbar, verwende Fallback-Links...${NC}"
+        if ! wget -O /tmp/thorium.deb "$THORIUM_URL"; then
+            echo -e "${RED}Generischer Download fehlgeschlagen, verwende Fallback-Links...${NC}"
             FALLBACK_VERSION="130.0.6723.174"
             FALLBACK_URL="https://github.com/Alex313031/thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
-            echo -e "${YELLOW}Prüfe Fallback URL: $FALLBACK_URL${NC}"
+            echo -e "${YELLOW}Versuche Fallback URL: $FALLBACK_URL${NC}"
             
-            if ! wget --spider "$FALLBACK_URL" 2>/dev/null; then
-                echo -e "${RED}Auch Fallback URL nicht erreichbar.${NC}"
-            else
-                echo -e "${GREEN}Fallback URL erreichbar!${NC}"
-                THORIUM_URL="$FALLBACK_URL"
+            if ! wget -O /tmp/thorium.deb "$FALLBACK_URL"; then
+                echo -e "${RED}Auch Fallback fehlgeschlagen, Installation von Thorium übersprungen.${NC}"
+                exit 1
             fi
-        } else {
-            echo -e "${GREEN}Generische URL erreichbar!${NC}"
-        }
-    } else {
-        echo -e "${GREEN}URL erreichbar!${NC}"
-    }
+        fi
+    fi
 else
     # Bei Fehler bei der Versionsermittlung direkt zu Fallback-Links
     echo -e "${RED}Versionsermittlung fehlgeschlagen, verwende Fallback-Links...${NC}"
     FALLBACK_VERSION="130.0.6723.174"
     FALLBACK_URL="https://github.com/Alex313031/thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
-    echo -e "${YELLOW}Prüfe Fallback URL: $FALLBACK_URL${NC}"
+    echo -e "${YELLOW}Versuche Fallback URL: $FALLBACK_URL${NC}"
     
-    if ! wget --spider "$FALLBACK_URL" 2>/dev/null; then
-        echo -e "${RED}Fallback URL nicht erreichbar.${NC}"
-    else
-        echo -e "${GREEN}Fallback URL erreichbar!${NC}"
-        THORIUM_URL="$FALLBACK_URL"
+    if ! wget -O /tmp/thorium.deb "$FALLBACK_URL"; then
+        echo -e "${RED}Fallback-Download fehlgeschlagen, Installation von Thorium übersprungen.${NC}"
+        exit 1
     fi
 fi
 
-echo -e "${YELLOW}Finale Download URL: $THORIUM_URL${NC}"
-
-# Im Test-Modus den tatsächlichen Download und die Installation überspringen
-read -p "Möchtest du Thorium tatsächlich herunterladen und installieren? (j/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Jj]$ ]]; then
-    echo -e "${YELLOW}Lade Thorium herunter...${NC}"
-    wget -O /tmp/thorium.deb "$THORIUM_URL"
-    
-    if [ -f /tmp/thorium.deb ]; then
-        echo -e "${GREEN}Download erfolgreich, installiere Thorium...${NC}"
-        apt-get install -y /tmp/thorium.deb
-        rm /tmp/thorium.deb
-        echo -e "${GREEN}Installation abgeschlossen.${NC}"
-    else
-        echo -e "${RED}Download fehlgeschlagen.${NC}"
-    fi
+# Installation ausführen
+if [ -f /tmp/thorium.deb ]; then
+    echo -e "${GREEN}Download erfolgreich, installiere Thorium...${NC}"
+    apt-get install -y /tmp/thorium.deb
+    rm /tmp/thorium.deb
+    echo -e "${GREEN}Installation abgeschlossen.${NC}"
 else
-    echo -e "${YELLOW}Test abgeschlossen ohne Download/Installation.${NC}"
+    echo -e "${RED}Download fehlgeschlagen, keine Thorium-Datei zum Installieren.${NC}"
+    exit 1
 fi
