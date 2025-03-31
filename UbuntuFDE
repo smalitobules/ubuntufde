@@ -149,21 +149,24 @@ setup_ssh_access() {
     echo "CONFIG_OPTION=${CONFIG_OPTION}" >> /tmp/install_config
     echo "SKIP_INITIAL_QUESTIONS=true" >> /tmp/install_config
     
+    # Skript kopieren - SICHERSTELLEN, DASS ES MIT VOLLEM PFAD KOPIERT WIRD
+    SCRIPT_PATH=$(readlink -f "$0")
+    cp "$SCRIPT_PATH" /root/install_script.sh
+    chmod +x /root/install_script.sh
+    
     # SSH-Login mit automatischer Verbindung zur Installation
     cat > /root/.bash_profile <<EOF
 if [ -n "\$SSH_CONNECTION" ]; then
-    if [ -f /tmp/installation_running ]; then
-        echo "Installation läuft. Tippe 'cd /root && ./install_script.sh' um neu zu starten."
-    else
+    if [ -f "/root/install_script.sh" ]; then
         echo "Verbinde mit der Installation..."
-        cd /root && ./install_script.sh ssh_connect
+        /root/install_script.sh ssh_connect
+    else
+        echo "FEHLER: Installationsskript nicht gefunden!"
+        echo "Pfad: /root/install_script.sh"
+        ls -la /root/
     fi
 fi
 EOF
-    
-    # Skript kopieren
-    cp "$0" /root/install_script.sh
-    chmod +x /root/install_script.sh
     
     # SSH-Zugangsdaten anzeigen
     echo -e "\n${CYAN}===== SSH-ZUGANG AKTIV =====${NC}"
