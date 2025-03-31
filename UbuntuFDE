@@ -126,57 +126,53 @@ check_system() {
 }
 
 setup_ssh_access() {
-    # Lösche bestehende .bash_profile falls vorhanden
-    rm -f /root/.bash_profile
-
-    # Direkte Ausführung für SSH-Server-Einrichtung bei Remote-Installation
-    log_info "Richte SSH-Server für Remote-Installation ein..."
-    
-    # Installation von benötigten Paketen
-    apt-get update
-    apt-get install -y screen openssh-server
-    
-    # Überprüfen, ob wir bereits in einer Screen-Sitzung sind
+    # Starte das Skript in einer Screen-Sitzung neu
     if [ -z "$STY" ]; then
-        # Zufälliges Passwort generieren
-        #SSH_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
+        # Lösche bestehende .bash_profile (ignoriert Fehler wenn nicht vorhanden)
+        rm -f /root/.bash_profile
+        
+        # Zufälliges numerisches Passwort generieren (6 Ziffern)
         SSH_PASSWORD=$(tr -dc '0-9' < /dev/urandom | head -c 6)
         
         # Root-Passwort setzen
         echo "root:${SSH_PASSWORD}" | chpasswd
         
-        # SSH-Server konfigurieren
+        # SSH-Server konfigurieren und starten
+        apt-get update
+        apt-get install -y screen openssh-server
+        
         sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
         sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-        
-        # SSH-Server neustarten
         systemctl restart ssh
+        
+        # Skript in temporäre Datei kopieren für SSH-Zugriff
+        cp "$0" /root/install_script.sh
+        chmod +x /root/install_script.sh
         
         # Automatisches Verbinden mit der Screen-Sitzung beim SSH-Login
         cat > /root/.bash_profile <<EOF
 # Temporäres Profil für automatisches Verbinden mit der Installation
 if [ -n "\$SSH_CONNECTION" ]; then
     echo "Verbinde mit der laufenden Installation..."
-    # Starte eine neue Screen-Sitzung, falls keine existiert
-    if ! screen -list | grep -q "ubuntufde"; then
-        echo "Keine laufende Installationssitzung gefunden. Starte neue Sitzung..."
-        # Signal-Datei erstellen, um zu zeigen, dass SSH-Verbindung hergestellt wurde
-        touch /tmp/ssh_connected
-        cd /root && screen -S ubuntufde "$0" "resumed_from_ssh"
+    # Prüfen, ob Screen installiert ist
+    if command -v screen > /dev/null; then
+        # Wenn Screen-Sitzung existiert, verbinde
+        if screen -list | grep -q "ubuntufde"; then
+            echo "Bestehende Screen-Sitzung gefunden, verbinde..."
+            touch /tmp/ssh_connected
+            screen -dr ubuntufde
+        else
+            echo "Keine laufende Screen-Sitzung gefunden, starte neu..."
+            touch /tmp/ssh_connected
+            cd /root && screen -S ubuntufde ./install_script.sh ssh_resumed
+        fi
     else
-        # Signal-Datei erstellen, um zu zeigen, dass SSH-Verbindung hergestellt wurde
-        touch /tmp/ssh_connected
-        screen -dr ubuntufde
-        # Nach dem Beenden von Screen (wenn der Benutzer sich trennt)
-        echo "Von der Installation getrennt. Tippe 'screen -r ubuntufde' um wieder zu verbinden."
+        echo "Screen nicht installiert. Installation kann nicht fortgesetzt werden."
     fi
 fi
 EOF
         
-        # SSH-Zugangsdaten in Datei schreiben (für Nachweis der Verbindung)
-        echo "${SSH_PASSWORD}" > /tmp/ssh_password
-        
-        # Zeige IP und SSH-Zugangsdaten an
+        # SSH-Zugangsdaten anzeigen
         echo -e "\n${CYAN}===== SSH-ZUGANG AKTIV =====${NC}"
         echo -e "SSH-Server wurde aktiviert. Verbinde dich mit:"
         echo -e "${YELLOW}IP-Adressen:${NC}"
@@ -190,18 +186,14 @@ EOF
         
         # Warte auf Bestätigung oder SSH-Verbindung
         echo "Warte auf SSH-Verbindung... (Drücke ENTER, um ohne Warten fortzufahren)"
-        
-        # Einfache Schleife, die entweder auf ENTER oder SSH-Verbindung wartet
         touch /tmp/waiting_for_ssh
         while [ -f /tmp/waiting_for_ssh ]; do
-            # Prüfe, ob eine Signal-Datei erstellt wurde (durch SSH-Login)
             if [ -f /tmp/ssh_connected ]; then
                 echo "SSH-Verbindung hergestellt. Setze Installation fort..."
                 rm /tmp/waiting_for_ssh
                 break
             fi
             
-            # Prüfe, ob der Nutzer ENTER gedrückt hat (wartet 1 Sekunde)
             if read -t 1 -s; then
                 echo "ENTER gedrückt. Setze Installation fort..."
                 rm /tmp/waiting_for_ssh
@@ -209,12 +201,17 @@ EOF
             fi
         done
         
-        echo "Installation wird jetzt in einer Screen-Sitzung fortgesetzt..."
+        # Starte das Skript in einer Screen-Sitzung
+        screen -dmS ubuntufde "$0" screen_resumed
         
-        # Starte das Skript in einer Screen-Sitzung neu
-        exec screen -S ubuntufde -c <(echo "startup_message off; caption always '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'") "$0" resumed_from_screen
-        # Nach diesem exec wird das Skript innerhalb von Screen neu gestartet
-        exit 0
+        # Prüfe, ob Screen erfolgreich gestartet wurde
+        if screen -list | grep -q "ubuntufde"; then
+            log_info "Installation läuft in Screen-Sitzung im Hintergrund."
+            log_info "Du kannst jederzeit mit 'screen -r ubuntufde' wieder verbinden."
+            exit 0
+        else
+            log_warn "Screen-Sitzung konnte nicht gestartet werden. Setze normal fort."
+        fi
     else
         # Wir sind bereits in einer Screen-Sitzung
         log_info "Installation läuft in Screen-Sitzung mit Name: ubuntufde"
@@ -1345,9 +1342,10 @@ finalize_installation() {
 ###################
 main() {
     # Prüfe, ob das Skript von der SSH- oder Screen-Fortsetzung kommt
-    if [ "$1" = "resumed_from_ssh" ] || [ "$1" = "resumed_from_screen" ]; then
+    if [ "$1" = "ssh_resumed" ] || [ "$1" = "screen_resumed" ]; then
         # Direkt zur Benutzerkonfiguration weitergehen
         log_info "Setze Installation in Screen-Sitzung fort..."
+        # Rest der Installation direkt ausführen
         gather_user_input
         prepare_disk
         setup_encryption
