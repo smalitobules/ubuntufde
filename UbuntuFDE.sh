@@ -472,6 +472,28 @@ gather_user_input() {
     RAM_MB=$((RAM_KB / 1024))
     RAM_GB=$((RAM_MB / 1024))
     DEFAULT_SWAP=$((RAM_GB * 2))
+
+    # Benutzeroberflächen-Sprache
+    echo -e "\n${CYAN}Sprache der Benutzeroberfläche:${NC}"
+    echo "1) Deutsch"
+    echo "2) English"
+    echo "3) Français"
+    echo "4) Italiano" 
+    echo "5) Русский"
+    echo "6) Español"
+    echo "7) Andere/Other"
+    read -p "Wähle die Sprache für die Benutzeroberfläche [1]: " UI_LANG_CHOICE
+
+    case ${UI_LANG_CHOICE:-1} in
+        1) UI_LANGUAGE="de_DE" ;;
+        2) UI_LANGUAGE="en_US" ;;
+        3) UI_LANGUAGE="fr_FR" ;;
+        4) UI_LANGUAGE="it_IT" ;;
+        5) UI_LANGUAGE="ru_RU" ;;
+        6) UI_LANGUAGE="es_ES" ;;
+        7) read -p "Gib den Sprachcode ein (z.B. nl_NL): " UI_LANGUAGE ;;
+        *) UI_LANGUAGE="de_DE" ;;
+    esac
     
     # Zeitzone
     echo -e "\n${CYAN}Zeitzone:${NC}"
@@ -1174,6 +1196,49 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     esac
 fi
 
+# Desktop-Sprachpakete installieren
+if [ "${INSTALL_DESKTOP}" = "1" ]; then
+    echo "Installiere Sprachpakete für ${UI_LANGUAGE}..."
+    
+    # Gemeinsame Sprachpakete für alle Desktop-Umgebungen
+    apt-get install -y language-pack-${UI_LANGUAGE%_*} language-selector-common
+    
+    # Desktop-spezifische Sprachpakete
+    case "${DESKTOP_ENV}" in
+        # GNOME Desktop
+        1)
+            apt-get install -y language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome
+            ;;
+        # KDE Plasma Desktop
+        2)
+            apt-get install -y language-pack-kde-${UI_LANGUAGE%_*} kde-l10n-${UI_LANGUAGE%_*} || true
+            ;;
+        # Xfce Desktop
+        3)
+            apt-get install -y language-pack-${UI_LANGUAGE%_*}-base xfce4-session-l10n || true
+            ;;
+    esac
+    
+    # Default-Sprache für das System setzen
+    cat > /etc/default/locale <<LOCALE
+LANG=${LOCALE}
+LC_MESSAGES=${UI_LANGUAGE}.UTF-8
+LOCALE
+
+    # AccountsService-Konfiguration für GDM/Anmeldebildschirm
+    if [ -d "/var/lib/AccountsService/users" ]; then
+        mkdir -p /var/lib/AccountsService/users/
+        for user in /home/*; do
+            username=$(basename "$user")
+            if [ -d "$user" ] && [ "$username" != "lost+found" ]; then
+                echo "[User]" > "/var/lib/AccountsService/users/$username"
+                echo "Language=${UI_LANGUAGE}.UTF-8" >> "/var/lib/AccountsService/users/$username"
+                echo "XSession=ubuntu" >> "/var/lib/AccountsService/users/$username"
+            fi
+        done
+    fi
+fi
+
 # Thorium Browser installieren
 THORIUM_INSTALLED=0  # Mit 0 initialisieren, um sicherzustellen, dass es eine Zahl ist
 if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1" ]; then
@@ -1296,6 +1361,7 @@ sed -i "s/\${UPDATE_OPTION}/$UPDATE_OPTION/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${INSTALL_DESKTOP}/$INSTALL_DESKTOP/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/setup.sh
+sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup.sh
