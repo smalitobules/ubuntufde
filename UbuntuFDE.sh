@@ -1049,8 +1049,8 @@ systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
 # GRUB Verzeichnisse vorbereiten
+mkdir -p /etc/default/
 mkdir -p /etc/default/grub.d/
-mkdir -p /mnt/ubuntu/etc/default/
 
 # GRUB-Konfiguration erstellen
 cat > /etc/default/grub <<GRUBCFG
@@ -1066,7 +1066,7 @@ GRUB_GFXMODE=1024x768
 GRUBCFG
 
 # GRUB Konfigurationsdatei-Rechte setzen
-chmod 644 /mnt/ubuntu/etc/default/grub
+chmod 644 /etc/default/grub
 
 # GRUB Hauptkonfiguration aktualisieren
 sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
