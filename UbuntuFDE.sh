@@ -1048,19 +1048,25 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
-# GRUB Verzeichnis erstellen falls es nicht existiert
+# GRUB Verzeichnisse vorbereiten
 mkdir -p /etc/default/grub.d/
+mkdir -p /mnt/ubuntu/etc/default/
 
-# GRUB für Verschlüsselung und Display konfigurieren
-cat > /etc/default/grub.d/local.cfg <<GRUBCFG
-GRUB_ENABLE_CRYPTODISK=y
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+# GRUB-Konfiguration erstellen
+cat > /etc/default/grub <<GRUBCFG
+# Autogenerierte GRUB-Konfiguration
+GRUB_DEFAULT=0
+GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=1
+GRUB_DISTRIBUTOR="$(. /etc/os-release && echo "$NAME")"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+GRUB_CMDLINE_LINUX=""
+GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXMODE=1024x768
 GRUBCFG
 
 # GRUB Konfigurationsdatei-Rechte setzen
-chmod 644 /etc/default/grub.d/local.cfg
+chmod 644 /mnt/ubuntu/etc/default/grub
 
 # GRUB Hauptkonfiguration aktualisieren
 sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
@@ -1118,6 +1124,7 @@ ufw enable
 apt-get install -y timeshift bleachbit fastfetch gparted vlc deluge ubuntu-gnome-wallpapers gnome-tweaks
 
 # Desktop-Umgebung installieren wenn gewünscht
+echo "DEBUG: INSTALL_DESKTOP=${INSTALL_DESKTOP}, DESKTOP_ENV=${DESKTOP_ENV}, DESKTOP_SCOPE=${DESKTOP_SCOPE}" >> /var/log/install-debug.log
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
     case "${DESKTOP_ENV}" in
         # GNOME Desktop
@@ -1125,10 +1132,12 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Installiere GNOME-Desktop-Umgebung..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 # Minimale Installation
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
@@ -1136,9 +1145,11 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         2)
             echo "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11  
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
@@ -1146,16 +1157,19 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         3)
             echo "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11  
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
         # Fallback
         *)
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
-            apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+            apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+            echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
 fi

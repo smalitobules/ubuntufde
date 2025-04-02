@@ -1046,19 +1046,25 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
-# GRUB Verzeichnis erstellen falls es nicht existiert
+# GRUB Verzeichnisse vorbereiten
 mkdir -p /etc/default/grub.d/
+mkdir -p /mnt/ubuntu/etc/default/
 
-# GRUB für Verschlüsselung und Display konfigurieren
-cat > /etc/default/grub.d/local.cfg <<GRUBCFG
-GRUB_ENABLE_CRYPTODISK=y
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+# GRUB-Konfiguration erstellen
+cat > /mnt/ubuntu/etc/default/grub <<GRUBCFG
+# Autogenerierte GRUB-Konfiguration
+GRUB_DEFAULT=0
+GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=1
+GRUB_DISTRIBUTOR="Ubuntu"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+GRUB_CMDLINE_LINUX=""
+GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXMODE=1024x768
 GRUBCFG
 
 # GRUB Konfigurationsdatei-Rechte setzen
-chmod 644 /etc/default/grub.d/local.cfg
+chmod 644 /mnt/ubuntu/etc/default/grub
 
 # GRUB Hauptkonfiguration aktualisieren
 sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
