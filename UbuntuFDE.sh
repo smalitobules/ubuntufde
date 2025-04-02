@@ -1176,7 +1176,19 @@ fi
 
 # Thorium Browser installieren
 if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1" ]; then
-    echo "Installiere Thorium Browser..."
+    echo "Installiere Thorium Browser..." > /var/log/thorium_install.log
+
+    # Teste die Netzwerkverbindung
+    echo "Teste Netzwerkverbindung zu GitHub..." >> /var/log/thorium_install.log
+    if ping -c 3 github.com >> /var/log/thorium_install.log 2>&1; then
+        echo "Netzwerkverbindung OK" >> /var/log/thorium_install.log
+    else
+        echo "Netzwerkverbindung fehlgeschlagen" >> /var/log/thorium_install.log 2>&1
+    fi
+    
+    # Teste API-Zugriff
+    echo "Teste GitHub API-Zugriff..." >> /var/log/thorium_install.log
+    curl -s https://api.github.com/repos/Alex313031/Thorium/releases/latest >> /var/log/thorium_install.log 2>&1
     
     # CPU-Erweiterungen prüfen
     echo "Prüfe CPU-Erweiterungen..."
@@ -1246,7 +1258,7 @@ if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1"
     # Installation ausführen
     if [ -f /tmp/thorium.deb ]; then
         echo "Download erfolgreich, installiere Thorium..."
-        apt-get install -y /tmp/thorium.deb
+        apt-get install -y /tmp/thorium.deb >> /var/log/thorium_install.log 2>&1
         rm /tmp/thorium.deb
         echo "Thorium-Installation abgeschlossen."
     fi
