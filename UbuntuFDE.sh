@@ -1175,7 +1175,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
 fi
 
 # Thorium Browser installieren
-THORIUM_INSTALLED=0
+THORIUM_INSTALLED=0  # Mit 0 initialisieren, um sicherzustellen, dass es eine Zahl ist
 if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1" ]; then
     echo "Installiere Thorium Browser..." > /var/log/thorium_install.log
 
@@ -1260,7 +1260,7 @@ if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1"
     fi
     
     # Installation ausführen
-    if [ "$THORIUM_INSTALLED" -eq 1 ]; then
+    if [ -f /tmp/thorium.deb ]; then  # Prüfe ob Datei existiert statt Variablenvergleich
         echo "Download erfolgreich, installiere Thorium..." >> /var/log/thorium_install.log
         apt-get install -y /tmp/thorium.deb >> /var/log/thorium_install.log 2>&1
         rm /tmp/thorium.deb
