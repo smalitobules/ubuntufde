@@ -966,6 +966,9 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 #!/bin/bash
 set -e
 
+set -x  # Detailliertes Debug-Logging aktivieren
+exec > >(tee -a /var/log/setup-debug.log) 2>&1
+
 export DEBIAN_FRONTEND=noninteractive
 
 # Zeitzone setzen
@@ -976,7 +979,9 @@ else
 fi
 
 # GPG-Schlüssel für lokales Repository importieren
-curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
+if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
+fi
 
 # Quellen einrichten
 cat > /etc/apt/sources.list <<SOURCES
@@ -1404,7 +1409,7 @@ sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${NETWORK_CONFIG}/$NETWORK_CONFIG/g" /mnt/ubuntu/setup.sh
-sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
+#sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
 
 # Ausführbar machen
 chmod +x /mnt/ubuntu/setup.sh
