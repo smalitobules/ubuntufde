@@ -1011,8 +1011,8 @@ apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
     shim-signed \
     timeshift \
-    bleachbit \  
-    coreutils \ 
+    bleachbit \
+    coreutils \
     stacer \
     fastfetch \
     gparted \
