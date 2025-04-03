@@ -1033,6 +1033,7 @@ fi
 
 apt-get install -y \${KERNEL_PACKAGES} shim-signed
 
+# Grundlegende Tools installieren
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
     shim-signed \
@@ -1204,9 +1205,6 @@ ufw default deny incoming
 ufw default allow outgoing
 ufw enable
 
-# Grundlegende Tools installieren - kein erneutes apt-get update
-apt-get install -y timeshift bleachbit fastfetch gparted vlc deluge ubuntu-gnome-wallpapers gnome-tweaks
-
 # Desktop-Umgebung installieren wenn gewünscht
 echo "DEBUG: INSTALL_DESKTOP=${INSTALL_DESKTOP}, DESKTOP_ENV=${DESKTOP_ENV}, DESKTOP_SCOPE=${DESKTOP_SCOPE}" >> /var/log/install-debug.log
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
@@ -1216,11 +1214,11 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Installiere GNOME-Desktop-Umgebung..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 # Minimale Installation
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1229,10 +1227,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         2)
             echo "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1241,10 +1239,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         3)
             echo "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1252,7 +1250,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         # Fallback
         *)
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
-            apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+            apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
             echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
