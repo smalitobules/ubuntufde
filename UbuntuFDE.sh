@@ -1248,32 +1248,113 @@ fi
 if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1" ]; then
     echo "Installiere Thorium Browser..." > /var/log/thorium_install.log
     
-    # Entferne eventuell vorhandene alte Repository-Einträge
-    rm -fv /etc/apt/sources.list.d/thorium.list >> /var/log/thorium_install.log 2>&1
+    # Farbdefinitionen für bessere Lesbarkeit (lokale Variablen im Skript)
+    T_GREEN='\033[0;32m'
+    T_YELLOW='\033[1;33m'
+    T_RED='\033[0;31m'
+    T_NC='\033[0m' # No Color
     
-    # Füge das offizielle Repository hinzu
-    echo "Füge Thorium-Repository hinzu..." >> /var/log/thorium_install.log
-    wget --no-hsts -P /etc/apt/sources.list.d/ http://dl.thorium.rocks/debian/dists/stable/thorium.list >> /var/log/thorium_install.log 2>&1
+    echo -e "${T_GREEN}Teste Thorium Browser Installation...${T_NC}" >> /var/log/thorium_install.log
     
-    # Aktualisiere Paketquellen
-    echo "Aktualisiere Paketquellen..." >> /var/log/thorium_install.log
-    apt-get update >> /var/log/thorium_install.log 2>&1
-    
-    # Installiere Thorium
-    echo "Installiere Thorium Browser..." >> /var/log/thorium_install.log
-    apt-get install -y thorium-browser >> /var/log/thorium_install.log 2>&1
-    
-    if [ $? -eq 0 ]; then
-        echo "Thorium Browser erfolgreich installiert." >> /var/log/thorium_install.log
+    # CPU-Erweiterungen prüfen
+    echo -e "${T_YELLOW}Prüfe CPU-Erweiterungen...${T_NC}" >> /var/log/thorium_install.log
+    if grep -q " avx2 " /proc/cpuinfo; then
+        CPU_EXT="AVX2"
+        echo "AVX2-Unterstützung gefunden." >> /var/log/thorium_install.log
+    elif grep -q " avx " /proc/cpuinfo; then
+        CPU_EXT="AVX"
+        echo "AVX-Unterstützung gefunden." >> /var/log/thorium_install.log
+    elif grep -q " sse4_1 " /proc/cpuinfo; then
+        CPU_EXT="SSE4"
+        echo "SSE4-Unterstützung gefunden." >> /var/log/thorium_install.log
     else
-        echo "Fehler bei der Installation von Thorium Browser." >> /var/log/thorium_install.log
+        CPU_EXT="SSE3"
+        echo "Verwende SSE3-Basisversion." >> /var/log/thorium_install.log
     fi
-fi
-
-# Weitere zusätzliche Pakete installieren
-if [ -n "${ADDITIONAL_PACKAGES}" ]; then
-    echo "Installiere zusätzliche Pakete: ${ADDITIONAL_PACKAGES}"
-    apt-get install -y ${ADDITIONAL_PACKAGES}
+    
+    # Prüfe, ob wichtige Tools installiert sind
+    for cmd in curl wget jq; do
+        if ! command -v $cmd &> /dev/null; then
+            echo -e "${T_RED}$cmd ist nicht installiert. Installiere...${T_NC}" >> /var/log/thorium_install.log
+            apt-get update && apt-get install -y $cmd
+        fi
+    done
+    
+    # Versuche automatisch die neueste Version zu ermitteln
+    echo -e "${T_YELLOW}Ermittle neueste Thorium-Version...${T_NC}" >> /var/log/thorium_install.log
+    THORIUM_VERSION=$(curl -s https://api.github.com/repos/Alex313031/Thorium/releases/latest | jq -r '.tag_name' | sed 's/^M//')
+    echo "Ermittelte Version: $THORIUM_VERSION" >> /var/log/thorium_install.log
+    
+    # Falls jq fehlschlägt, nutze einen Fallback-Ansatz
+    if [ -z "$THORIUM_VERSION" ]; then
+        echo -e "${T_YELLOW}Versuche alternativen Ansatz zur Ermittlung der Version...${T_NC}" >> /var/log/thorium_install.log
+        # Prüfe direkt die Releases-Seite
+        THORIUM_VERSION=$(curl -s https://github.com/Alex313031/Thorium/releases/latest | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^M//')
+        echo "Ermittelte Version mit Fallback-Methode: $THORIUM_VERSION" >> /var/log/thorium_install.log
+    fi
+    
+    THORIUM_SUCCESS=0  # Annahme: Installation schlägt fehl, bis sie erfolgreich ist
+    
+    # Download und Installation mit aktueller Version versuchen
+    if [ -n "$THORIUM_VERSION" ]; then
+        echo -e "${T_GREEN}Verwende Thorium-Version: $THORIUM_VERSION${T_NC}" >> /var/log/thorium_install.log
+        THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
+        
+        echo -e "${T_YELLOW}Lade Thorium herunter: $THORIUM_URL${T_NC}" >> /var/log/thorium_install.log
+        if wget -O /tmp/thorium.deb "$THORIUM_URL" >> /var/log/thorium_install.log 2>&1; then
+            THORIUM_SUCCESS=1
+        else
+            echo -e "${T_RED}Download fehlgeschlagen, versuche generische Version...${T_NC}" >> /var/log/thorium_install.log
+            # Versuche generische Version ohne CPU-Erweiterung
+            THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
+            
+            if wget -O /tmp/thorium.deb "$THORIUM_URL" >> /var/log/thorium_install.log 2>&1; then
+                THORIUM_SUCCESS=1
+            else
+                echo -e "${T_RED}Generischer Download fehlgeschlagen, verwende Fallback-Links...${T_NC}" >> /var/log/thorium_install.log
+                FALLBACK_VERSION="130.0.6723.174"
+                FALLBACK_URL="https://github.com/Alex313031/thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
+                echo -e "${T_YELLOW}Versuche Fallback URL: $FALLBACK_URL${T_NC}" >> /var/log/thorium_install.log
+                
+                if wget -O /tmp/thorium.deb "$FALLBACK_URL" >> /var/log/thorium_install.log 2>&1; then
+                    THORIUM_SUCCESS=1
+                else
+                    echo -e "${T_RED}Auch Fallback fehlgeschlagen, Installation von Thorium übersprungen.${T_NC}" >> /var/log/thorium_install.log
+                    # Hier stand ursprünglich exit 1, jetzt lassen wir das Skript weiterlaufen
+                    THORIUM_SUCCESS=0
+                fi
+            fi
+        fi
+    else
+        # Bei Fehler bei der Versionsermittlung direkt zu Fallback-Links
+        echo -e "${T_RED}Versionsermittlung fehlgeschlagen, verwende Fallback-Links...${T_NC}" >> /var/log/thorium_install.log
+        FALLBACK_VERSION="130.0.6723.174"
+        FALLBACK_URL="https://github.com/Alex313031/thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
+        echo -e "${T_YELLOW}Versuche Fallback URL: $FALLBACK_URL${T_NC}" >> /var/log/thorium_install.log
+        
+        if wget -O /tmp/thorium.deb "$FALLBACK_URL" >> /var/log/thorium_install.log 2>&1; then
+            THORIUM_SUCCESS=1
+        else
+            echo -e "${T_RED}Fallback-Download fehlgeschlagen, Installation von Thorium übersprungen.${T_NC}" >> /var/log/thorium_install.log
+            # Hier stand ursprünglich exit 1, jetzt lassen wir das Skript weiterlaufen
+            THORIUM_SUCCESS=0
+        fi
+    fi
+    
+    # Installation ausführen
+    if [ -f /tmp/thorium.deb ] && [ "$THORIUM_SUCCESS" -eq 1 ]; then
+        echo -e "${T_GREEN}Download erfolgreich, installiere Thorium...${T_NC}" >> /var/log/thorium_install.log
+        if apt-get install -y /tmp/thorium.deb >> /var/log/thorium_install.log 2>&1; then
+            rm /tmp/thorium.deb
+            echo -e "${T_GREEN}Installation abgeschlossen.${T_NC}" >> /var/log/thorium_install.log
+        else
+            echo -e "${T_RED}Installation fehlgeschlagen.${T_NC}" >> /var/log/thorium_install.log
+            rm -f /tmp/thorium.deb
+        fi
+    else
+        echo -e "${T_RED}Download fehlgeschlagen, keine Thorium-Datei zum Installieren.${T_NC}" >> /var/log/thorium_install.log
+        # Hier stand ursprünglich exit 1, jetzt lassen wir das Skript weiterlaufen
+    fi
 fi
 
 # Aufräumen
