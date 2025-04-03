@@ -985,15 +985,15 @@ fi
 
 # Quellen einrichten
 cat > /etc/apt/sources.list <<SOURCES
-deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+#deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
+#deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
+#deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
+#deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
 
-#deb https://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
-#deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted  universe multiverse
-#deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
-#deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
+deb https://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
+deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted  universe multiverse
+deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
+deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
 
 # Automatische Updates konfigurieren
@@ -1005,33 +1005,6 @@ AUTOUPDATE
 # Systemaktualisierung durchführen
 apt-get update
 apt-get dist-upgrade -y
-
-
-
-# Original sources.list sichern
-cp /etc/apt/sources.list /etc/apt/sources.list.local
-
-# Temporär die offiziellen Ubuntu-Repositories für Kernel-Installation verwenden
-cat > /etc/apt/sources.list <<SOURCES
-deb http://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
-deb http://archive.ubuntu.com/ubuntu/ oracular-updates main restricted universe multiverse
-deb http://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
-deb http://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
-SOURCES
-
-# Paketquellen aktualisieren
-apt-get update
-
-# Kernel-Pakete installieren
-echo "Installiere Kernel-Pakete..."
-KERNEL_PACKAGES=""
-if [ "${KERNEL_TYPE}" = "standard" ]; then
-    KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
-elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
-    KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
-fi
-
-apt-get install -y \${KERNEL_PACKAGES} shim-signed
 
 # Grundlegende Tools installieren
 apt-get install -y --no-install-recommends \
@@ -1050,19 +1023,14 @@ apt-get install -y --no-install-recommends \
     nala \
     jq
 
-# Zurück zum lokalen Mirror wechseln
-mv /etc/apt/sources.list.local /etc/apt/sources.list
-
-
-
-## Notwendige Pakete installieren 
-#echo "Installiere Basis-Pakete..."
-#KERNEL_PACKAGES=""
-#if [ "${KERNEL_TYPE}" = "standard" ]; then
-#    KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
-#elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
-#    KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
-#fi
+# Notwendige Pakete installieren 
+echo "Installiere Basis-Pakete..."
+KERNEL_PACKAGES=""
+if [ "${KERNEL_TYPE}" = "standard" ]; then
+    KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
+elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
+    KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
+fi
 
 # Liquorix-Kernel installieren wenn gewählt
 if [ "${KERNEL_TYPE}" = "liquorix" ]; then
