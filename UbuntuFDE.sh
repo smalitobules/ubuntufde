@@ -1004,7 +1004,7 @@ AUTOUPDATE
 
 # Systemaktualisierung durchführen
 apt-get update
-apt-get dist-upgrade -y
+#apt-get dist-upgrade -y
 
 # Notwendige Pakete installieren 
 echo "Installiere Basis-Pakete..."
@@ -1017,9 +1017,9 @@ fi
 
 # Grundlegende Tools installieren
 TOOLS=(
-    $(echo ${KERNEL_PACKAGES})
-    shim-signed timeshift bleachbit coreutils stacer
-    fastfetch gparted vlc deluge ufw zram-tools nala jq
+    $KERNEL_PACKAGES
+    #shim-signed timeshift bleachbit coreutils stacer
+    #fastfetch gparted vlc deluge ufw zram-tools nala jq
 )
 
 apt-get install -y --no-install-recommends "${TOOLS[@]}"
