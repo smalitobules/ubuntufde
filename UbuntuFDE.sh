@@ -838,19 +838,49 @@ install_base_system() {
     
     # Prüfe Netzwerkverbindung
     check_network_connectivity
+
+    # GPG-Schlüssel für lokalen Mirror importieren
+    mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
     
     # Ubuntu-Basissystem mit debootstrap installieren
     log_info "Installiere Ubuntu $UBUNTU_CODENAME Basissystem (dies kann einige Minuten dauern)..."
     
     # Bei Netzwerkinstallation nur Minimal-System installieren
     echo "Installiere Ubuntu $UBUNTU_CODENAME mit debootstrap..."
+
+    # Zu inkludierende Pakete definieren
+    PACKAGES=(
+        curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano vim wget
+        apt-transport-https console-setup bash-completion systemd-resolved
+        initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
+        coreutils efibootmgr timeshift bleachbit stacer fastfetch gparted vlc deluge
+        ufw zram-tools 
+    )
+
+    # Pakete zu kommagetrennter Liste zusammenfügen
+    PACKAGELIST=$(IFS=,; echo "${PACKAGES[*]}")
+
     if [ "$UBUNTU_INSTALL_OPTION" = "3" ]; then
-        debootstrap --variant=minbase --arch=amd64 oracular /mnt/ubuntu https://archive.ubuntu.com/ubuntu
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --variant=minbase \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
         if [ $? -ne 0 ]; then
             log_error "debootstrap fehlgeschlagen für oracular"
         fi
     else
-        debootstrap --arch=amd64 oracular /mnt/ubuntu https://archive.ubuntu.com/ubuntu
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
         if [ $? -ne 0 ]; then
             log_error "debootstrap fehlgeschlagen für oracular"
         fi
@@ -951,15 +981,15 @@ curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/truste
 
 # Quellen einrichten
 cat > /etc/apt/sources.list <<SOURCES
-deb http://192.168.56.120/ubuntu/ oracular main restricted
-deb http://192.168.56.120/ubuntu/ oracular-updates main restricted
-deb http://192.168.56.120/ubuntu/ oracular-security main restricted
-deb http://192.168.56.120/ubuntu/ oracular-backports main restricted
+deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
 
-deb https://archive.ubuntu.com/ubuntu/ oracular universe multiverse
-deb https://archive.ubuntu.com/ubuntu/ oracular-updates  universe multiverse
-deb https://archive.ubuntu.com/ubuntu/ oracular-security universe multiverse
-deb https://archive.ubuntu.com/ubuntu/ oracular-backports universe multiverse
+#deb https://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
+#deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted  universe multiverse
+#deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
+#deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
 
 # Automatische Updates konfigurieren
@@ -968,12 +998,9 @@ APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "${UPDATE_OPTION}";
 AUTOUPDATE
 
-# Systemaktualisierung durchführen und Nala installieren
-# Einmal apt-get update zu Beginn der Installation im chroot
+# Systemaktualisierung durchführen
 apt-get update
 apt-get dist-upgrade -y
-apt-get install -y nala
-#nala fetch --auto --https-only
 
 # Notwendige Pakete installieren 
 echo "Installiere Basis-Pakete..."
@@ -986,28 +1013,9 @@ fi
 
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
-    initramfs-tools \
-    cryptsetup-initramfs \
-    cryptsetup \
-    lvm2 \
-    grub-efi-amd64 \
-    grub-efi-amd64-signed \
     shim-signed \
-    efibootmgr \
-    zram-tools \
-    sudo \
-    locales \
-    console-setup \
-    systemd-resolved \
-    coreutils \
-    nano \
-    vim \
-    curl \
-    wget \
-    gnupg \
-    ca-certificates \
-    jq \
-    bash-completion
+    nala \
+    jq
 
 # Liquorix-Kernel installieren wenn gewählt
 if [ "${KERNEL_TYPE}" = "liquorix" ]; then
@@ -1162,11 +1170,11 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Installiere GNOME-Desktop-Umgebung..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 # Minimale Installation
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1175,10 +1183,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         2)
             echo "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1187,10 +1195,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         3)
             echo "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1198,7 +1206,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         # Fallback
         *)
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
-            apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+            apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
             echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
