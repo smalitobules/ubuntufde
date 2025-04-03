@@ -1033,20 +1033,6 @@ fi
 
 apt-get install -y \${KERNEL_PACKAGES} shim-signed
 
-# Zurück zum lokalen Mirror wechseln
-mv /etc/apt/sources.list.local /etc/apt/sources.list
-
-
-
-## Notwendige Pakete installieren 
-#echo "Installiere Basis-Pakete..."
-#KERNEL_PACKAGES=""
-#if [ "${KERNEL_TYPE}" = "standard" ]; then
-#    KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
-#elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
-#    KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
-#fi
-
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
     shim-signed \
@@ -1062,6 +1048,20 @@ apt-get install -y --no-install-recommends \
     zram-tools \
     nala \
     jq
+
+# Zurück zum lokalen Mirror wechseln
+mv /etc/apt/sources.list.local /etc/apt/sources.list
+
+
+
+## Notwendige Pakete installieren 
+#echo "Installiere Basis-Pakete..."
+#KERNEL_PACKAGES=""
+#if [ "${KERNEL_TYPE}" = "standard" ]; then
+#    KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
+#elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
+#    KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
+#fi
 
 # Liquorix-Kernel installieren wenn gewählt
 if [ "${KERNEL_TYPE}" = "liquorix" ]; then
