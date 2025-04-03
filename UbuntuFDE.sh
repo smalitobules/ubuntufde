@@ -1017,10 +1017,9 @@ fi
 
 # Grundlegende Tools installieren
 TOOLS=(
-    ${KERNEL_PACKAGES}
+    ${KERNEL_PACKAGES[@]}
     shim-signed timeshift bleachbit coreutils stacer
     fastfetch gparted vlc deluge ufw zram-tools nala jq
-    linux-image-generic linux-headers-generic
 )
 
 apt-get install -y --no-install-recommends "${TOOLS[@]}"
