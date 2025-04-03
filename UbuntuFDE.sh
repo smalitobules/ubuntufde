@@ -1006,8 +1006,24 @@ AUTOUPDATE
 apt-get update
 apt-get dist-upgrade -y
 
-# Notwendige Pakete installieren 
-echo "Installiere Basis-Pakete..."
+
+
+# Original sources.list sichern
+cp /etc/apt/sources.list /etc/apt/sources.list.local
+
+# Temporär die offiziellen Ubuntu-Repositories für Kernel-Installation verwenden
+cat > /etc/apt/sources.list <<SOURCES
+deb http://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ oracular-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
+SOURCES
+
+# Paketquellen aktualisieren
+apt-get update
+
+# Kernel-Pakete installieren
+echo "Installiere Kernel-Pakete..."
 KERNEL_PACKAGES=""
 if [ "${KERNEL_TYPE}" = "standard" ]; then
     KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
@@ -1015,11 +1031,27 @@ elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
     KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
 fi
 
+apt-get install -y \${KERNEL_PACKAGES} shim-signed
+
+# Zurück zum lokalen Mirror wechseln
+mv /etc/apt/sources.list.local /etc/apt/sources.list
+
+
+
+## Notwendige Pakete installieren 
+#echo "Installiere Basis-Pakete..."
+#KERNEL_PACKAGES=""
+#if [ "${KERNEL_TYPE}" = "standard" ]; then
+#    KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
+#elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
+#    KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
+#fi
+
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
     shim-signed \
     timeshift \
-    bleachbit \ 
+    bleachbit \  
     coreutils \ 
     stacer \
     fastfetch \
