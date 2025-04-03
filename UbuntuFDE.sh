@@ -948,10 +948,10 @@ fi
 
 # Quellen einrichten
 cat > /etc/apt/sources.list <<SOURCES
-deb https://192.168.56.120/ubuntu/ oracular main restricted
-deb https://192.168.56.120/ubuntu/ oracular-updates main restricted
-deb https://192.168.56.120/ubuntu/ oracular-security main restricted
-deb https://192.168.56.120/ubuntu/ oracular-backports main restricted
+deb http://192.168.56.120/ubuntu/ oracular main restricted
+deb http://192.168.56.120/ubuntu/ oracular-updates main restricted
+deb http://192.168.56.120/ubuntu/ oracular-security main restricted
+deb http://192.168.56.120/ubuntu/ oracular-backports main restricted
 
 deb https://archive.ubuntu.com/ubuntu/ oracular universe multiverse
 deb https://archive.ubuntu.com/ubuntu/ oracular-updates  universe multiverse
