@@ -1017,7 +1017,7 @@ fi
 
 # Grundlegende Tools installieren
 TOOLS=(
-    ${KERNEL_PACKAGES[@]}
+    $(echo ${KERNEL_PACKAGES})
     shim-signed timeshift bleachbit coreutils stacer
     fastfetch gparted vlc deluge ufw zram-tools nala jq
 )
