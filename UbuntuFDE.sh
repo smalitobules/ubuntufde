@@ -854,8 +854,7 @@ install_base_system() {
         curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano vim wget
         apt-transport-https console-setup bash-completion systemd-resolved
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
-        coreutils efibootmgr timeshift bleachbit stacer fastfetch gparted vlc deluge
-        ufw zram-tools 
+        efibootmgr 
     )
 
     # Pakete zu kommagetrennter Liste zusammenfügen
@@ -1014,6 +1013,16 @@ fi
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
     shim-signed \
+    timeshift \
+    bleachbit \ 
+    coreutils \ 
+    stacer \
+    fastfetch \
+    gparted \
+    vlc \
+    deluge \
+    ufw \
+    zram-tools \
     nala \
     jq
 
