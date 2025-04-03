@@ -946,6 +946,9 @@ else
     ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime
 fi
 
+# GPG-Schlüssel für lokales Repository importieren
+curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
+
 # Quellen einrichten
 cat > /etc/apt/sources.list <<SOURCES
 deb http://192.168.56.120/ubuntu/ oracular main restricted
