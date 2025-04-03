@@ -4,6 +4,9 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 #!/bin/bash
 set -e
 
+set -x  # Detailliertes Debug-Logging aktivieren
+exec > >(tee -a /var/log/setup-debug.log) 2>&1
+
 export DEBIAN_FRONTEND=noninteractive
 
 # Zeitzone setzen
@@ -13,10 +16,20 @@ else
     ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime
 fi
 
+# GPG-Schlüssel für lokales Repository importieren
+if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
+fi
+
 # Quellen einrichten
 cat > /etc/apt/sources.list <<SOURCES
+#deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
+#deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
+#deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
+#deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+
 deb https://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
-deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted universe multiverse
+deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted  universe multiverse
 deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
 deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
@@ -27,11 +40,18 @@ APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "${UPDATE_OPTION}";
 AUTOUPDATE
 
-# Systemaktualisierung durchführen und Nala installieren
+# Systemaktualisierung durchführen
 apt-get update
 apt-get dist-upgrade -y
-apt-get install -y nala
-#nala fetch --auto --https-only
+
+# Grundlegende Tools installieren
+TOOLS=(
+    ${KERNEL_PACKAGES}
+    shim-signed timeshift bleachbit coreutils stacer
+    fastfetch gparted vlc deluge ufw zram-tools nala jq
+)
+
+apt-get install -y --no-install-recommends "${TOOLS[@]}"
 
 # Notwendige Pakete installieren 
 echo "Installiere Basis-Pakete..."
@@ -42,31 +62,6 @@ elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
     KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
 fi
 
-apt-get install -y --no-install-recommends \
-    \${KERNEL_PACKAGES} \
-    initramfs-tools \
-    cryptsetup-initramfs \
-    cryptsetup \
-    lvm2 \
-    grub-efi-amd64 \
-    grub-efi-amd64-signed \
-    shim-signed \
-    efibootmgr \
-    zram-tools \
-    sudo \
-    locales \
-    console-setup \
-    systemd-resolved \
-    coreutils \
-    nano \
-    vim \
-    curl \
-    wget \
-    gnupg \
-    ca-certificates \
-    jq \
-    bash-completion
-
 # Liquorix-Kernel installieren wenn gewählt
 if [ "${KERNEL_TYPE}" = "liquorix" ]; then
     apt-get install -y apt-transport-https
@@ -74,6 +69,7 @@ if [ "${KERNEL_TYPE}" = "liquorix" ]; then
     mkdir -p /etc/apt/keyrings
     curl -s 'https://liquorix.net/linux-liquorix-keyring.gpg' | gpg --dearmor -o /etc/apt/keyrings/liquorix-keyring.gpg
     echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
+    # apt-get update hier notwendig, da neue Paketquelle hinzugefügt wurde
     apt-get update
     apt-get install -y linux-image-liquorix-amd64 linux-headers-liquorix-amd64
 fi
@@ -135,19 +131,25 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
-# GRUB Verzeichnis erstellen falls es nicht existiert
+# GRUB Verzeichnisse vorbereiten
+mkdir -p /etc/default/
 mkdir -p /etc/default/grub.d/
 
-# GRUB für Verschlüsselung und Display konfigurieren
-cat > /etc/default/grub.d/local.cfg <<GRUBCFG
-GRUB_ENABLE_CRYPTODISK=y
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+# GRUB-Konfiguration erstellen
+cat > /etc/default/grub <<GRUBCFG
+# Autogenerierte GRUB-Konfiguration
+GRUB_DEFAULT=0
+GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=1
+GRUB_DISTRIBUTOR="$(. /etc/os-release && echo "$NAME")"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+GRUB_CMDLINE_LINUX=""
+GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXMODE=1024x768
 GRUBCFG
 
 # GRUB Konfigurationsdatei-Rechte setzen
-chmod 644 /etc/default/grub.d/local.cfg
+chmod 644 /etc/default/grub
 
 # GRUB Hauptkonfiguration aktualisieren
 sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
@@ -201,10 +203,8 @@ ufw default deny incoming
 ufw default allow outgoing
 ufw enable
 
-# Grundlegende Tools installieren
-apt-get install -y timeshift bleachbit fastfetch gparted vlc deluge ubuntu-gnome-wallpapers gnome-tweaks
-
 # Desktop-Umgebung installieren wenn gewünscht
+echo "DEBUG: INSTALL_DESKTOP=${INSTALL_DESKTOP}, DESKTOP_ENV=${DESKTOP_ENV}, DESKTOP_SCOPE=${DESKTOP_SCOPE}" >> /var/log/install-debug.log
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
     case "${DESKTOP_ENV}" in
         # GNOME Desktop
@@ -212,10 +212,12 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Installiere GNOME-Desktop-Umgebung..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 # Minimale Installation
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
@@ -223,9 +225,11 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         2)
             echo "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11  
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
@@ -233,84 +237,177 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         3)
             echo "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11  
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+                apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
         # Fallback
         *)
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
-            apt-get install -y gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11 
+            apt-get install -y --no-install-recommends gnome-session gnome-shell gdm3 nautilus nautilus-hide gnome-terminal gnome-text-editor ubuntu-gnome-wallpapers gnome-tweaks virtualbox-guest-additions-iso virtualbox-guest-utils virtualbox-guest-x11
+            echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
 fi
 
-# Thorium Browser installieren
-if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1" ]; then
-    echo "Installiere Thorium Browser..."
+# Desktop-Sprachpakete installieren
+if [ "${INSTALL_DESKTOP}" = "1" ]; then
+    echo "Installiere Sprachpakete für ${UI_LANGUAGE}..."
     
-    # CPU-Erweiterungen prüfen
-    echo "Prüfe CPU-Erweiterungen..."
-    if grep -q " avx2 " /proc/cpuinfo; then
-        CPU_EXT="AVX2"
-        echo "AVX2-Unterstützung gefunden."
-    elif grep -q " avx " /proc/cpuinfo; then
-        CPU_EXT="AVX"
-        echo "AVX-Unterstützung gefunden."
-    elif grep -q " sse4_1 " /proc/cpuinfo; then
-        CPU_EXT="SSE4"
-        echo "SSE4-Unterstützung gefunden."
-    else
-        CPU_EXT="SSE3"
-        echo "Verwende SSE3-Basisversion."
-    fi
+    # Gemeinsame Sprachpakete für alle Desktop-Umgebungen
+    apt-get install -y language-pack-${UI_LANGUAGE%_*} language-selector-common
     
-    # Alternativer Ansatz mit jq für stabilere JSON-Verarbeitung
-    THORIUM_VERSION=$(curl -s https://api.github.com/repos/Alex313031/Thorium/releases/latest | jq -r '.tag_name' | sed 's/^M//')
+    # Desktop-spezifische Sprachpakete
+    case "${DESKTOP_ENV}" in
+        # GNOME Desktop
+        1)
+            apt-get install -y language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome
+            ;;
+        # KDE Plasma Desktop
+        2)
+            apt-get install -y language-pack-kde-${UI_LANGUAGE%_*} kde-l10n-${UI_LANGUAGE%_*} || true
+            ;;
+        # Xfce Desktop
+        3)
+            apt-get install -y language-pack-${UI_LANGUAGE%_*}-base xfce4-session-l10n || true
+            ;;
+    esac
     
-    # Falls jq fehlschlägt, nutze einen Fallback-Ansatz
-    if [ -z "$THORIUM_VERSION" ]; then
-        echo "Versuche alternativen Ansatz zur Ermittlung der Version..."
-        # Prüfe direkt die Releases-Seite
-        THORIUM_VERSION=$(curl -s https://github.com/Alex313031/Thorium/releases/latest | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^M//')
-    fi
-    
-    # Wenn immer noch keine Version gefunden wurde, verwende eine feste Version
-    if [ -z "$THORIUM_VERSION" ]; then
-        echo "Konnte Version nicht dynamisch ermitteln, verwende feste Version..."
-        THORIUM_VERSION="130.0.6723.174"
-    fi
-    
-    echo "Verwende Thorium-Version: $THORIUM_VERSION"
-    
-    # Download und Installation
-    THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
-    
-    echo "Lade Thorium herunter: $THORIUM_URL"
-    if wget -O /tmp/thorium.deb "$THORIUM_URL"; then
-        echo "Download erfolgreich, installiere Thorium..."
-        apt-get install -y /tmp/thorium.deb
-        rm /tmp/thorium.deb
-    else
-        echo "Download fehlgeschlagen, versuche generische Version..."
-        # Versuche generische Version ohne CPU-Erweiterung
-        THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
-        if wget -O /tmp/thorium.deb "$THORIUM_URL"; then
-            echo "Download erfolgreich, installiere generische Thorium-Version..."
-            apt-get install -y /tmp/thorium.deb
-            rm /tmp/thorium.deb
-        else
-            echo "Konnte Thorium nicht herunterladen, Installation übersprungen."
-        fi
+    # Default-Sprache für das System setzen
+    cat > /etc/default/locale <<LOCALE
+LANG=${LOCALE}
+LC_MESSAGES=${UI_LANGUAGE}.UTF-8
+LOCALE
+
+    # AccountsService-Konfiguration für GDM/Anmeldebildschirm
+    if [ -d "/var/lib/AccountsService/users" ]; then
+        mkdir -p /var/lib/AccountsService/users/
+        for user in /home/*; do
+            username=$(basename "$user")
+            if [ -d "$user" ] && [ "$username" != "lost+found" ]; then
+                echo "[User]" > "/var/lib/AccountsService/users/$username"
+                echo "Language=${UI_LANGUAGE}.UTF-8" >> "/var/lib/AccountsService/users/$username"
+                echo "XSession=ubuntu" >> "/var/lib/AccountsService/users/$username"
+            fi
+        done
     fi
 fi
 
-# Weitere zusätzliche Pakete installieren
-if [ -n "${ADDITIONAL_PACKAGES}" ]; then
-    echo "Installiere zusätzliche Pakete: ${ADDITIONAL_PACKAGES}"
-    apt-get install -y ${ADDITIONAL_PACKAGES}
+# Thorium Browser installieren
+if [[ "${ADDITIONAL_PACKAGES}" == *"thorium"* ]] || [ "${INSTALL_DESKTOP}" = "1" ]; then
+    echo "Installiere Thorium Browser..." > /var/log/thorium_install.log
+    
+    # Farbdefinitionen für bessere Lesbarkeit (lokale Variablen im Skript)
+    T_GREEN='\033[0;32m'
+    T_YELLOW='\033[1;33m'
+    T_RED='\033[0;31m'
+    T_NC='\033[0m' # No Color
+    
+    echo -e "${T_GREEN}Teste Thorium Browser Installation...${T_NC}" >> /var/log/thorium_install.log
+    
+    # CPU-Erweiterungen prüfen
+    echo -e "${T_YELLOW}Prüfe CPU-Erweiterungen...${T_NC}" >> /var/log/thorium_install.log
+    if grep -q " avx2 " /proc/cpuinfo; then
+        CPU_EXT="AVX2"
+        echo "AVX2-Unterstützung gefunden." >> /var/log/thorium_install.log
+    elif grep -q " avx " /proc/cpuinfo; then
+        CPU_EXT="AVX"
+        echo "AVX-Unterstützung gefunden." >> /var/log/thorium_install.log
+    elif grep -q " sse4_1 " /proc/cpuinfo; then
+        CPU_EXT="SSE4"
+        echo "SSE4-Unterstützung gefunden." >> /var/log/thorium_install.log
+    else
+        CPU_EXT="SSE3"
+        echo "Verwende SSE3-Basisversion." >> /var/log/thorium_install.log
+    fi
+    
+    # Prüfe, ob wichtige Tools installiert sind
+    for cmd in curl wget jq; do
+        if ! command -v $cmd &> /dev/null; then
+            echo -e "${T_RED}$cmd ist nicht installiert. Installiere...${T_NC}" >> /var/log/thorium_install.log
+            apt-get update && apt-get install -y $cmd
+        fi
+    done
+    
+    # Versuche automatisch die neueste Version zu ermitteln
+    echo -e "${T_YELLOW}Ermittle neueste Thorium-Version...${T_NC}" >> /var/log/thorium_install.log
+    THORIUM_VERSION=$(curl -s https://api.github.com/repos/Alex313031/Thorium/releases/latest | jq -r '.tag_name' | sed 's/^M//')
+    echo "Ermittelte Version: $THORIUM_VERSION" >> /var/log/thorium_install.log
+    
+    # Falls jq fehlschlägt, nutze einen Fallback-Ansatz
+    if [ -z "$THORIUM_VERSION" ]; then
+        echo -e "${T_YELLOW}Versuche alternativen Ansatz zur Ermittlung der Version...${T_NC}" >> /var/log/thorium_install.log
+        # Prüfe direkt die Releases-Seite
+        THORIUM_VERSION=$(curl -s https://github.com/Alex313031/Thorium/releases/latest | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^M//')
+        echo "Ermittelte Version mit Fallback-Methode: $THORIUM_VERSION" >> /var/log/thorium_install.log
+    fi
+    
+    THORIUM_SUCCESS=0  # Annahme: Installation schlägt fehl, bis sie erfolgreich ist
+    
+    # Download und Installation mit aktueller Version versuchen
+    if [ -n "$THORIUM_VERSION" ]; then
+        echo -e "${T_GREEN}Verwende Thorium-Version: $THORIUM_VERSION${T_NC}" >> /var/log/thorium_install.log
+        THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
+        
+        echo -e "${T_YELLOW}Lade Thorium herunter: $THORIUM_URL${T_NC}" >> /var/log/thorium_install.log
+        if wget -O /tmp/thorium.deb "$THORIUM_URL" >> /var/log/thorium_install.log 2>&1; then
+            THORIUM_SUCCESS=1
+        else
+            echo -e "${T_RED}Download fehlgeschlagen, versuche generische Version...${T_NC}" >> /var/log/thorium_install.log
+            # Versuche generische Version ohne CPU-Erweiterung
+            THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
+            
+            if wget -O /tmp/thorium.deb "$THORIUM_URL" >> /var/log/thorium_install.log 2>&1; then
+                THORIUM_SUCCESS=1
+            else
+                echo -e "${T_RED}Generischer Download fehlgeschlagen, verwende Fallback-Links...${T_NC}" >> /var/log/thorium_install.log
+                FALLBACK_VERSION="130.0.6723.174"
+                FALLBACK_URL="https://github.com/Alex313031/thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
+                echo -e "${T_YELLOW}Versuche Fallback URL: $FALLBACK_URL${T_NC}" >> /var/log/thorium_install.log
+                
+                if wget -O /tmp/thorium.deb "$FALLBACK_URL" >> /var/log/thorium_install.log 2>&1; then
+                    THORIUM_SUCCESS=1
+                else
+                    echo -e "${T_RED}Auch Fallback fehlgeschlagen, Installation von Thorium übersprungen.${T_NC}" >> /var/log/thorium_install.log
+                    # Hier stand ursprünglich exit 1, jetzt lassen wir das Skript weiterlaufen
+                    THORIUM_SUCCESS=0
+                fi
+            fi
+        fi
+    else
+        # Bei Fehler bei der Versionsermittlung direkt zu Fallback-Links
+        echo -e "${T_RED}Versionsermittlung fehlgeschlagen, verwende Fallback-Links...${T_NC}" >> /var/log/thorium_install.log
+        FALLBACK_VERSION="130.0.6723.174"
+        FALLBACK_URL="https://github.com/Alex313031/thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
+        echo -e "${T_YELLOW}Versuche Fallback URL: $FALLBACK_URL${T_NC}" >> /var/log/thorium_install.log
+        
+        if wget -O /tmp/thorium.deb "$FALLBACK_URL" >> /var/log/thorium_install.log 2>&1; then
+            THORIUM_SUCCESS=1
+        else
+            echo -e "${T_RED}Fallback-Download fehlgeschlagen, Installation von Thorium übersprungen.${T_NC}" >> /var/log/thorium_install.log
+            # Hier stand ursprünglich exit 1, jetzt lassen wir das Skript weiterlaufen
+            THORIUM_SUCCESS=0
+        fi
+    fi
+    
+    # Installation ausführen
+    if [ -f /tmp/thorium.deb ] && [ "$THORIUM_SUCCESS" -eq 1 ]; then
+        echo -e "${T_GREEN}Download erfolgreich, installiere Thorium...${T_NC}" >> /var/log/thorium_install.log
+        if apt-get install -y /tmp/thorium.deb >> /var/log/thorium_install.log 2>&1; then
+            rm /tmp/thorium.deb
+            echo -e "${T_GREEN}Installation abgeschlossen.${T_NC}" >> /var/log/thorium_install.log
+        else
+            echo -e "${T_RED}Installation fehlgeschlagen.${T_NC}" >> /var/log/thorium_install.log
+            rm -f /tmp/thorium.deb
+        fi
+    else
+        echo -e "${T_RED}Download fehlgeschlagen, keine Thorium-Datei zum Installieren.${T_NC}" >> /var/log/thorium_install.log
+        # Hier stand ursprünglich exit 1, jetzt lassen wir das Skript weiterlaufen
+    fi
 fi
 
 # Aufräumen
