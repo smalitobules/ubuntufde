@@ -694,8 +694,21 @@ gather_user_input() {
         break
     done
 
-    # Hier rufen wir die Funktion für die Festplattenauswahl auf
+    # Festplattenauswahl
     gather_disk_input
+
+    # Warnung vor der Partitionierung
+    if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
+        log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
+        unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
+        gather_disk_input
+        # Erneute Bestätigung, bis der Benutzer ja sagt
+        while ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; do
+            log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
+            unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
+            gather_disk_input
+        done
+    fi    
     
     # Kernel-Auswahl
     echo -e "\n${CYAN}Kernel-Auswahl:${NC}"
@@ -775,21 +788,6 @@ gather_user_input() {
 prepare_disk() {
     log_progress "Beginne mit der Partitionierung..."
     show_progress 10
-    
-    # Letzte Warnung mit Möglichkeit zum Neustart
-    if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
-        log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
-        
-        # Zurücksetzen der Festplattenvariablen
-        unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
-        
-        # Neue Festplattenauswahl starten
-        gather_disk_input
-        
-        # Sich selbst erneut aufrufen, um Partitionierung neu zu starten
-        prepare_disk
-        return
-    fi
     
     # Grundlegende Variablen einrichten
     DM="${DEV##*/}"
