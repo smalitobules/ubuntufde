@@ -759,6 +759,7 @@ fi
 ###################
 # Partitionierung #
 ###################
+set -x  # Debugging aktivieren
 prepare_disk() {
     # Debug-Ausgabe hinzufügen
     echo "DEBUG: prepare_disk Funktion gestartet" > /tmp/install_debug.log
@@ -857,6 +858,7 @@ prepare_disk() {
         fi
     done
 }
+set +x  # Debugging deaktivieren
 
 setup_lvm() {
     log_progress "Richte LVM ein..."
