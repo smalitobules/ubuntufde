@@ -1004,7 +1004,7 @@ AUTOUPDATE
 
 # Systemaktualisierung durchführen
 apt-get update
-#apt-get dist-upgrade -y
+apt-get dist-upgrade -y
 
 # Notwendige Pakete installieren 
 echo "Installiere Basis-Pakete..."
