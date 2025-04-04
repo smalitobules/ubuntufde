@@ -1022,7 +1022,7 @@ apt-get install -y --no-install-recommends \
     zram-tools \
     coreutils \
     timeshift \
-    bleachtbit \
+    bleachbit \
     stacer \
     fastfetch \
     gparted \
