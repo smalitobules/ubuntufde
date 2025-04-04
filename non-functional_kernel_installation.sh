@@ -9,7 +9,7 @@ fi
 
 # Grundlegende Tools installieren
 TOOLS=(
-    $KERNEL_PACKAGES
+    $KERNEL_PACKAGES # Wahrscheinlich ist das-> \${KERNEL_PACKAGES} \ <-die Lösung!
     #shim-signed timeshift bleachbit coreutils stacer
     #fastfetch gparted vlc deluge ufw zram-tools nala jq
 )
