@@ -655,7 +655,7 @@ fi
     # Kernel-Auswahl
     echo -e "\n${CYAN}Kernel-Auswahl:${NC}"
     echo "1) Standard-Kernel (Ubuntu Stock)"
-    echo "2) Liquorix-Kernel (Optimiert für Desktop-Nutzung)"
+    echo "2) Liquorix-Kernel (Optimiert für Desktop-Nutzung / Nicht kompatibel mit VM's)"
     echo "3) Low-Latency-Kernel (Optimiert für Echtzeitanwendungen)"
     read -p "Wähle den Kernel-Typ [1]: " KERNEL_CHOICE
     case ${KERNEL_CHOICE:-1} in
@@ -1015,14 +1015,22 @@ elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
     KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
 fi
 
-# Grundlegende Tools installieren
-TOOLS=(
-    $KERNEL_PACKAGES
-    #shim-signed timeshift bleachbit coreutils stacer
-    #fastfetch gparted vlc deluge ufw zram-tools nala jq
-)
-
-apt-get install -y --no-install-recommends "${TOOLS[@]}"
+# Grundlegende Tools und Kernel installieren
+apt-get install -y --no-install-recommends \
+    \${KERNEL_PACKAGES} \
+    shim-signed \
+    zram-tools \
+    coreutils \
+    timeshift \
+    bleachtbit \
+    stacer \
+    fastfetch \
+    gparted \
+    vlc \
+    deluge \
+    ufw \
+    nala \
+    jq
 
 # Liquorix-Kernel installieren wenn gewählt
 if [ "${KERNEL_TYPE}" = "liquorix" ]; then
