@@ -1593,18 +1593,18 @@ main() {
     gather_user_input
     
     # Installation durchführen
-if  prepare_disk; then
-    setup_encryption
-    setup_lvm
-    mount_filesystems
-    install_base_system
-    prepare_chroot
-    execute_chroot
-    finalize_installation
-else
-    log_error "Partitionierung fehlgeschlagen oder abgebrochen."
-    exit 1
-fi
+    if prepare_disk; then
+        setup_encryption
+        setup_lvm
+        mount_filesystems
+        install_base_system
+        prepare_chroot
+        execute_chroot
+        finalize_installation
+    else
+        log_error "Partitionierung fehlgeschlagen oder abgebrochen."
+        exit 1
+    fi
 }
 
 # Skript starten
