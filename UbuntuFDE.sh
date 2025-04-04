@@ -397,6 +397,100 @@ calculate_available_space() {
     echo "$available_gb"
 }
 
+# Diese Funktion muss VOR gather_user_input() im Skript definiert werden
+gather_disk_input() {
+    # Feststellungen verfügbarer Laufwerke
+    available_devices=()
+    echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
+    echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
+    echo -e "-------------------------------------------------------"
+    i=0
+    while read device size model; do
+        # Überspringe Überschriften oder leere Zeilen
+        if [[ "$device" == "NAME" || -z "$device" ]]; then
+            continue
+        fi
+        available_devices+=("$device")
+        ((i++))
+        printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
+    done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
+    echo -e "-------------------------------------------------------"
+
+    # Wenn keine Geräte gefunden wurden
+    if [ ${#available_devices[@]} -eq 0 ]; then
+        log_error "Keine Laufwerke gefunden!"
+    fi
+
+    # Standardwert ist das erste Gerät
+    DEFAULT_DEV="1"
+    DEFAULT_DEV_PATH="${available_devices[0]}"
+
+    # Laufwerksauswahl
+    read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
+    DEVICE_CHOICE=${DEVICE_CHOICE:-1}
+
+    # Verarbeite die Auswahl
+    if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
+        # Nutzer hat Nummer ausgewählt
+        DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
+    else
+        # Nutzer hat möglicherweise einen Pfad eingegeben
+        if [ -b "$DEVICE_CHOICE" ]; then
+            DEV="$DEVICE_CHOICE"
+        else
+            # Ungültige Eingabe - verwende erstes Gerät als Fallback
+            DEV="${available_devices[0]}"
+            log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
+        fi
+    fi
+
+    # Berechne verfügbaren Speicherplatz
+    AVAILABLE_GB=$(calculate_available_space "$DEV")
+
+    # Zeige Gesamtspeicher und verfügbaren Speicher
+    TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
+    echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
+    echo -e "Gesamtspeicher: $TOTAL_SIZE"
+    echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
+
+    # LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
+    echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
+
+    # Swap-Konfiguration
+    RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    RAM_MB=$((RAM_KB / 1024))
+    RAM_GB=$((RAM_MB / 1024))
+    DEFAULT_SWAP=$((RAM_GB * 2))
+    
+    read -p "Größe für swap-LV (GB) [$DEFAULT_SWAP]: " SWAP_SIZE
+    SWAP_SIZE=${SWAP_SIZE:-$DEFAULT_SWAP}
+
+    # Berechne verbleibenden Speicher nach Swap
+    REMAINING_GB=$((AVAILABLE_GB - SWAP_SIZE))
+    echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+
+    # Root-Konfiguration
+    read -p "Größe für root-LV (GB) [$DEFAULT_ROOT_SIZE]: " ROOT_SIZE
+    ROOT_SIZE=${ROOT_SIZE:-$DEFAULT_ROOT_SIZE}
+
+    # Berechne verbleibenden Speicher nach Root
+    REMAINING_GB=$((REMAINING_GB - ROOT_SIZE))
+    echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+
+    # Data-Konfiguration
+    echo -e "Größe für data-LV (GB) [Restlicher Speicher (${REMAINING_GB} GB)]: "
+    read DATA_SIZE_INPUT
+
+    if [ -z "$DATA_SIZE_INPUT" ] || [ "$DATA_SIZE_INPUT" = "0" ]; then
+        DATA_SIZE="0"  # 0 bedeutet restlicher Platz
+        echo -e "data-LV verwendet den restlichen Speicher: ${REMAINING_GB} GB"
+    else
+        DATA_SIZE=$DATA_SIZE_INPUT
+        REMAINING_GB=$((REMAINING_GB - DATA_SIZE))
+        echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
+    fi
+}
+
 gather_user_input() {
     echo -e "${CYAN}===== INSTALLATIONSKONFIGURATION =====${NC}"
     
@@ -546,153 +640,63 @@ gather_user_input() {
         *) LOCALE="de_DE.UTF-8"; KEYBOARD_LAYOUT="de" ;;
     esac
     
-# Hostname und Benutzername
-echo -e "\n${CYAN}Systemkonfiguration:${NC}"
-read -p "Hostname [$DEFAULT_HOSTNAME]: " HOSTNAME
-HOSTNAME=${HOSTNAME:-$DEFAULT_HOSTNAME}
+    # Hostname und Benutzername
+    echo -e "\n${CYAN}Systemkonfiguration:${NC}"
+    read -p "Hostname [$DEFAULT_HOSTNAME]: " HOSTNAME
+    HOSTNAME=${HOSTNAME:-$DEFAULT_HOSTNAME}
 
-read -p "Benutzername [$DEFAULT_USERNAME]: " USERNAME
-USERNAME=${USERNAME:-$DEFAULT_USERNAME}
+    read -p "Benutzername [$DEFAULT_USERNAME]: " USERNAME
+    USERNAME=${USERNAME:-$DEFAULT_USERNAME}
 
-# Benutzerpasswort mit Validierung
-while true; do
-    read -s -p "Benutzerpasswort: " USER_PASSWORD
-    echo
-    
-    # Prüfe ob Passwort leer ist
-    if [ -z "$USER_PASSWORD" ]; then
-        echo -e "${YELLOW}[WARNUNG]${NC} Das Passwort darf nicht leer sein. Bitte erneut versuchen."
-        continue
-    fi
-    
-    read -s -p "Benutzerpasswort (Bestätigung): " USER_PASSWORD_CONFIRM
-    echo
-    
-    # Prüfe ob Passwörter übereinstimmen
-    if [ "$USER_PASSWORD" != "$USER_PASSWORD_CONFIRM" ]; then
-        echo -e "${YELLOW}[WARNUNG]${NC} Passwörter stimmen nicht überein. Bitte erneut versuchen."
-        continue
-    fi
-    
-    break
-done
-
-# LUKS-Passwort mit Validierung
-while true; do
-    read -s -p "LUKS-Verschlüsselungs-Passwort: " LUKS_PASSWORD
-    echo
-    
-    # Prüfe ob Passwort leer ist
-    if [ -z "$LUKS_PASSWORD" ]; then
-        echo -e "${YELLOW}[WARNUNG]${NC} Das LUKS-Passwort darf nicht leer sein. Bitte erneut versuchen."
-        continue
-    fi
-    
-    read -s -p "LUKS-Verschlüsselungs-Passwort (Bestätigung): " LUKS_PASSWORD_CONFIRM
-    echo
-    
-    # Prüfe ob Passwörter übereinstimmen
-    if [ "$LUKS_PASSWORD" != "$LUKS_PASSWORD_CONFIRM" ]; then
-        echo -e "${YELLOW}[WARNUNG]${NC} LUKS-Passwörter stimmen nicht überein. Bitte erneut versuchen."
-        continue
-    fi
-    
-    break
-done
-
-gather_disk_input() {
-    # Feststellungen verfügbarer Laufwerke
-    available_devices=()
-    echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
-    echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
-    echo -e "-------------------------------------------------------"
-    i=0
-    while read device size model; do
-        # Überspringe Überschriften oder leere Zeilen
-        if [[ "$device" == "NAME" || -z "$device" ]]; then
+    # Benutzerpasswort mit Validierung
+    while true; do
+        read -s -p "Benutzerpasswort: " USER_PASSWORD
+        echo
+        
+        # Prüfe ob Passwort leer ist
+        if [ -z "$USER_PASSWORD" ]; then
+            echo -e "${YELLOW}[WARNUNG]${NC} Das Passwort darf nicht leer sein. Bitte erneut versuchen."
             continue
         fi
-        available_devices+=("$device")
-        ((i++))
-        printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
-    done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
-    echo -e "-------------------------------------------------------"
-
-    # Wenn keine Geräte gefunden wurden
-    if [ ${#available_devices[@]} -eq 0 ]; then
-        log_error "Keine Laufwerke gefunden!"
-    fi
-
-    # Standardwert ist das erste Gerät
-    DEFAULT_DEV="1"
-    DEFAULT_DEV_PATH="${available_devices[0]}"
-
-    # Laufwerksauswahl
-    read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
-    DEVICE_CHOICE=${DEVICE_CHOICE:-1}
-
-    # Verarbeite die Auswahl
-    if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
-        # Nutzer hat Nummer ausgewählt
-        DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
-    else
-        # Nutzer hat möglicherweise einen Pfad eingegeben
-        if [ -b "$DEVICE_CHOICE" ]; then
-            DEV="$DEVICE_CHOICE"
-        else
-            # Ungültige Eingabe - verwende erstes Gerät als Fallback
-            DEV="${available_devices[0]}"
-            log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
+        
+        read -s -p "Benutzerpasswort (Bestätigung): " USER_PASSWORD_CONFIRM
+        echo
+        
+        # Prüfe ob Passwörter übereinstimmen
+        if [ "$USER_PASSWORD" != "$USER_PASSWORD_CONFIRM" ]; then
+            echo -e "${YELLOW}[WARNUNG]${NC} Passwörter stimmen nicht überein. Bitte erneut versuchen."
+            continue
         fi
-    fi
+        
+        break
+    done
 
-    # Berechne verfügbaren Speicherplatz
-    AVAILABLE_GB=$(calculate_available_space "$DEV")
+    # LUKS-Passwort mit Validierung
+    while true; do
+        read -s -p "LUKS-Verschlüsselungs-Passwort: " LUKS_PASSWORD
+        echo
+        
+        # Prüfe ob Passwort leer ist
+        if [ -z "$LUKS_PASSWORD" ]; then
+            echo -e "${YELLOW}[WARNUNG]${NC} Das LUKS-Passwort darf nicht leer sein. Bitte erneut versuchen."
+            continue
+        fi
+        
+        read -s -p "LUKS-Verschlüsselungs-Passwort (Bestätigung): " LUKS_PASSWORD_CONFIRM
+        echo
+        
+        # Prüfe ob Passwörter übereinstimmen
+        if [ "$LUKS_PASSWORD" != "$LUKS_PASSWORD_CONFIRM" ]; then
+            echo -e "${YELLOW}[WARNUNG]${NC} LUKS-Passwörter stimmen nicht überein. Bitte erneut versuchen."
+            continue
+        fi
+        
+        break
+    done
 
-    # Zeige Gesamtspeicher und verfügbaren Speicher
-    TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
-    echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
-    echo -e "Gesamtspeicher: $TOTAL_SIZE"
-    echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
-
-    # LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
-    echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
-
-    # Swap-Konfiguration
-    RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    RAM_MB=$((RAM_KB / 1024))
-    RAM_GB=$((RAM_MB / 1024))
-    DEFAULT_SWAP=$((RAM_GB * 2))
+    # Hier rufen wir die Funktion für die Festplattenauswahl auf
+    gather_disk_input
     
-    read -p "Größe für swap-LV (GB) [$DEFAULT_SWAP]: " SWAP_SIZE
-    SWAP_SIZE=${SWAP_SIZE:-$DEFAULT_SWAP}
-
-    # Berechne verbleibenden Speicher nach Swap
-    REMAINING_GB=$((AVAILABLE_GB - SWAP_SIZE))
-    echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
-
-    # Root-Konfiguration
-    read -p "Größe für root-LV (GB) [$DEFAULT_ROOT_SIZE]: " ROOT_SIZE
-    ROOT_SIZE=${ROOT_SIZE:-$DEFAULT_ROOT_SIZE}
-
-    # Berechne verbleibenden Speicher nach Root
-    REMAINING_GB=$((REMAINING_GB - ROOT_SIZE))
-    echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
-
-    # Data-Konfiguration
-    echo -e "Größe für data-LV (GB) [Restlicher Speicher (${REMAINING_GB} GB)]: "
-    read DATA_SIZE_INPUT
-
-    if [ -z "$DATA_SIZE_INPUT" ] || [ "$DATA_SIZE_INPUT" = "0" ]; then
-        DATA_SIZE="0"  # 0 bedeutet restlicher Platz
-        echo -e "data-LV verwendet den restlichen Speicher: ${REMAINING_GB} GB"
-    else
-        DATA_SIZE=$DATA_SIZE_INPUT
-        REMAINING_GB=$((REMAINING_GB - DATA_SIZE))
-        echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
-    fi
-}
-
     # Kernel-Auswahl
     echo -e "\n${CYAN}Kernel-Auswahl:${NC}"
     echo "1) Standard-Kernel (Ubuntu Stock)"
