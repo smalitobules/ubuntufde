@@ -397,7 +397,6 @@ calculate_available_space() {
     echo "$available_gb"
 }
 
-# Diese Funktion muss VOR gather_user_input() im Skript definiert werden
 gather_disk_input() {
     # Feststellungen verfügbarer Laufwerke
     available_devices=()
@@ -708,7 +707,10 @@ gather_user_input() {
             unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
             gather_disk_input
         done
-    fi    
+    fi
+
+    DISK_CONFIRMED=true
+    export DISK_CONFIRMED
     
     # Kernel-Auswahl
     echo -e "\n${CYAN}Kernel-Auswahl:${NC}"
@@ -788,6 +790,19 @@ gather_user_input() {
 prepare_disk() {
     log_progress "Beginne mit der Partitionierung..."
     show_progress 10
+
+    # Bestätigung nur einholen, wenn sie nicht bereits erfolgt ist
+    if [ "${DISK_CONFIRMED:-false}" != "true" ]; then
+        if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
+            log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
+            unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
+            gather_disk_input
+            prepare_disk
+            return
+        fi
+    else
+        log_info "Festplattenauswahl bereits bestätigt, fahre mit Partitionierung fort..."
+    fi 
     
     # Grundlegende Variablen einrichten
     DM="${DEV##*/}"
