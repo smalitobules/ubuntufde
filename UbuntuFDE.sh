@@ -760,9 +760,10 @@ fi
 # Partitionierung #
 ###################
 prepare_disk() {
-    local device_selected=false
-
-    while [ "$device_selected" = false ]; do
+    # Debug-Ausgabe hinzufügen
+    echo "DEBUG: prepare_disk Funktion gestartet" > /tmp/install_debug.log
+    
+    while true; do
         # Zeige verfügbare Laufwerke an
         available_devices=()
         echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
@@ -782,17 +783,15 @@ prepare_disk() {
         
         # Wenn keine Geräte gefunden wurden
         if [ ${#available_devices[@]} -eq 0 ]; then
+            echo "DEBUG: Keine Laufwerke gefunden" >> /tmp/install_debug.log
             log_error "Keine Laufwerke gefunden!"
             return 1
         fi
         
-        # Standardwert ist das erste Gerät
-        DEFAULT_DEV="1"
-        DEFAULT_DEV_PATH="${available_devices[0]}"
-        
         # Laufwerksauswahl
         read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
         DEVICE_CHOICE=${DEVICE_CHOICE:-1}
+        echo "DEBUG: Nutzer wählte: $DEVICE_CHOICE" >> /tmp/install_debug.log
         
         # Verarbeite die Auswahl
         if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
@@ -808,6 +807,7 @@ prepare_disk() {
                 log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
             fi
         fi
+        echo "DEBUG: Ausgewähltes Laufwerk: $DEV" >> /tmp/install_debug.log
         
         # Bestätigungsfrage für die Partitionierung
         log_progress "Beginne mit der Partitionierung..."
@@ -817,8 +817,9 @@ prepare_disk() {
         read -p "Bist du sicher? (j/n) " -n 1 -r
         echo
         
+        echo "DEBUG: Nutzerantwort: $REPLY" >> /tmp/install_debug.log
         if [[ $REPLY =~ ^[Jj]$ ]]; then
-            device_selected=true
+            echo "DEBUG: Nutzer hat bestätigt" >> /tmp/install_debug.log
             
             # Grundlegende Variablen einrichten
             DM="${DEV##*/}"
@@ -847,10 +848,12 @@ prepare_disk() {
             log_info "Partitionierung abgeschlossen"
             show_progress 20
             
+            echo "DEBUG: Partitionierung erfolgreich, return 0" >> /tmp/install_debug.log
             return 0
         else
+            echo "DEBUG: Nutzer hat abgelehnt" >> /tmp/install_debug.log
             log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
-            # Die Schleife wird fortgesetzt
+            # Schleife wird fortgesetzt, wir zeigen wieder die Laufwerke an
         fi
     done
 }
