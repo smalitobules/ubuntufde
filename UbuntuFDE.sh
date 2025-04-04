@@ -1165,7 +1165,7 @@ systemctl disable ssh
 
 # Firewall konfigurieren
 apt-get install -y ufw
-# GUI-Tool nur installieren wenn Desktop
+# GUI nur installieren wenn Desktop
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
     apt-get install -y gufw
 fi
