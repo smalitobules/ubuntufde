@@ -763,103 +763,110 @@ prepare_disk() {
     log_progress "Beginne mit der Partitionierung..."
     show_progress 10
     
-    # Letzte Warnung mit Möglichkeit zur Rückkehr
-    echo -e "${YELLOW}[WARNUNG]${NC} ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"
-    read -p "Bist du sicher? (j/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Jj]$ ]]; then
-        log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
+    # Variable für die Schleife
+    local retry=true
+    
+    while $retry; do
+        # Letzte Warnung mit Möglichkeit zur Rückkehr
+        echo -e "${YELLOW}[WARNUNG]${NC} ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"
+        read -p "Bist du sicher? (j/n) " -n 1 -r
+        echo
         
-        # Zeige erneut die verfügbaren Laufwerke an
-        available_devices=()
-        echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
-        echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
-        echo -e "-------------------------------------------------------"
-        i=0
-        while read device size model; do
-            # Überspringe Überschriften oder leere Zeilen
-            if [[ "$device" == "NAME" || -z "$device" ]]; then
-                continue
-            fi
-            available_devices+=("$device")
-            ((i++))
-            printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
-        done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
-        echo -e "-------------------------------------------------------"
-        
-        # Wenn keine Geräte gefunden wurden
-        if [ ${#available_devices[@]} -eq 0 ]; then
-            log_error "Keine Laufwerke gefunden!"
-        fi
-        
-        # Standardwert ist das erste Gerät
-        DEFAULT_DEV="1"
-        DEFAULT_DEV_PATH="${available_devices[0]}"
-        
-        # Laufwerksauswahl
-        read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
-        DEVICE_CHOICE=${DEVICE_CHOICE:-1}
-        
-        # Verarbeite die Auswahl
-        if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
-            # Nutzer hat Nummer ausgewählt
-            DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
+        if [[ $REPLY =~ ^[Jj]$ ]]; then
+            # Nutzer hat bestätigt, beende die Schleife
+            retry=false
         else
-            # Nutzer hat möglicherweise einen Pfad eingegeben
-            if [ -b "$DEVICE_CHOICE" ]; then
-                DEV="$DEVICE_CHOICE"
+            log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
+            
+            # Zeige erneut die verfügbaren Laufwerke an
+            available_devices=()
+            echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
+            echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
+            echo -e "-------------------------------------------------------"
+            i=0
+            while read device size model; do
+                # Überspringe Überschriften oder leere Zeilen
+                if [[ "$device" == "NAME" || -z "$device" ]]; then
+                    continue
+                fi
+                available_devices+=("$device")
+                ((i++))
+                printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
+            done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
+            echo -e "-------------------------------------------------------"
+            
+            # Wenn keine Geräte gefunden wurden
+            if [ ${#available_devices[@]} -eq 0 ]; then
+                log_error "Keine Laufwerke gefunden!"
+            fi
+            
+            # Standardwert ist das erste Gerät
+            DEFAULT_DEV="1"
+            DEFAULT_DEV_PATH="${available_devices[0]}"
+            
+            # Laufwerksauswahl
+            read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
+            DEVICE_CHOICE=${DEVICE_CHOICE:-1}
+            
+            # Verarbeite die Auswahl
+            if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
+                # Nutzer hat Nummer ausgewählt
+                DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
             else
-                # Ungültige Eingabe - verwende erstes Gerät als Fallback
-                DEV="${available_devices[0]}"
-                log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
+                # Nutzer hat möglicherweise einen Pfad eingegeben
+                if [ -b "$DEVICE_CHOICE" ]; then
+                    DEV="$DEVICE_CHOICE"
+                else
+                    # Ungültige Eingabe - verwende erstes Gerät als Fallback
+                    DEV="${available_devices[0]}"
+                    log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
+                fi
             fi
+            
+            # Berechne verfügbaren Speicherplatz
+            AVAILABLE_GB=$(calculate_available_space "$DEV")
+            
+            # Zeige Gesamtspeicher und verfügbaren Speicher
+            TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
+            echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
+            echo -e "Gesamtspeicher: $TOTAL_SIZE"
+            echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
+            
+            # LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
+            echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
+            
+            # Swap-Konfiguration
+            read -p "Größe für swap-LV (GB) [$DEFAULT_SWAP]: " SWAP_SIZE
+            SWAP_SIZE=${SWAP_SIZE:-$DEFAULT_SWAP}
+            
+            # Berechne verbleibenden Speicher nach Swap
+            REMAINING_GB=$((AVAILABLE_GB - SWAP_SIZE))
+            echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+            
+            # Root-Konfiguration
+            read -p "Größe für root-LV (GB) [$DEFAULT_ROOT_SIZE]: " ROOT_SIZE
+            ROOT_SIZE=${ROOT_SIZE:-$DEFAULT_ROOT_SIZE}
+            
+            # Berechne verbleibenden Speicher nach Root
+            REMAINING_GB=$((REMAINING_GB - ROOT_SIZE))
+            echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+            
+            # Data-Konfiguration
+            echo -e "Größe für data-LV (GB) [Restlicher Speicher (${REMAINING_GB} GB)]: "
+            read DATA_SIZE_INPUT
+            
+            if [ -z "$DATA_SIZE_INPUT" ] || [ "$DATA_SIZE_INPUT" = "0" ]; then
+                DATA_SIZE="0"  # 0 bedeutet restlicher Platz
+                echo -e "data-LV verwendet den restlichen Speicher: ${REMAINING_GB} GB"
+            else
+                DATA_SIZE=$DATA_SIZE_INPUT
+                REMAINING_GB=$((REMAINING_GB - DATA_SIZE))
+                echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
+            fi
+            
+            # Bleibe in der Schleife und zeige die Bestätigungsfrage erneut an
         fi
-        
-        # Berechne verfügbaren Speicherplatz
-        AVAILABLE_GB=$(calculate_available_space "$DEV")
-        
-        # Zeige Gesamtspeicher und verfügbaren Speicher
-        TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
-        echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
-        echo -e "Gesamtspeicher: $TOTAL_SIZE"
-        echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
-        
-        # LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
-        echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
-        
-        # Swap-Konfiguration
-        read -p "Größe für swap-LV (GB) [$DEFAULT_SWAP]: " SWAP_SIZE
-        SWAP_SIZE=${SWAP_SIZE:-$DEFAULT_SWAP}
-        
-        # Berechne verbleibenden Speicher nach Swap
-        REMAINING_GB=$((AVAILABLE_GB - SWAP_SIZE))
-        echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
-        
-        # Root-Konfiguration
-        read -p "Größe für root-LV (GB) [$DEFAULT_ROOT_SIZE]: " ROOT_SIZE
-        ROOT_SIZE=${ROOT_SIZE:-$DEFAULT_ROOT_SIZE}
-        
-        # Berechne verbleibenden Speicher nach Root
-        REMAINING_GB=$((REMAINING_GB - ROOT_SIZE))
-        echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
-        
-        # Data-Konfiguration
-        echo -e "Größe für data-LV (GB) [Restlicher Speicher (${REMAINING_GB} GB)]: "
-        read DATA_SIZE_INPUT
-        
-        if [ -z "$DATA_SIZE_INPUT" ] || [ "$DATA_SIZE_INPUT" = "0" ]; then
-            DATA_SIZE="0"  # 0 bedeutet restlicher Platz
-            echo -e "data-LV verwendet den restlichen Speicher: ${REMAINING_GB} GB"
-        else
-            DATA_SIZE=$DATA_SIZE_INPUT
-            REMAINING_GB=$((REMAINING_GB - DATA_SIZE))
-            echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
-        fi
-        
-        # NEUER Aufruf der prepare_disk()
-        prepare_disk
-        return
-    fi
+    done
     
     # Grundlegende Variablen einrichten
     DM="${DEV##*/}"
