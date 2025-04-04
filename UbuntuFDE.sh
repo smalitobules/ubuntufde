@@ -770,8 +770,8 @@ prepare_disk() {
     if [[ ! $REPLY =~ ^[Jj]$ ]]; then
         log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
         
-        # Zurück zur Laufwerksauswahl
-        # Hier zeigen wir erneut die verfügbaren Laufwerke an
+        # Springe nur zum Laufwerksauswahl-Teil zurück
+        # Zeige verfügbare Laufwerke an
         available_devices=()
         echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
         echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
@@ -814,6 +814,47 @@ prepare_disk() {
                 DEV="${available_devices[0]}"
                 log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
             fi
+        fi
+        
+        # Berechne verfügbaren Speicherplatz für das neue Gerät
+        AVAILABLE_GB=$(calculate_available_space "$DEV")
+        
+        # Zeige Gesamtspeicher und verfügbaren Speicher
+        TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
+        echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
+        echo -e "Gesamtspeicher: $TOTAL_SIZE"
+        echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
+        
+        # LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
+        echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
+        
+        # Swap-Konfiguration
+        read -p "Größe für swap-LV (GB) [$DEFAULT_SWAP]: " SWAP_SIZE
+        SWAP_SIZE=${SWAP_SIZE:-$DEFAULT_SWAP}
+        
+        # Berechne verbleibenden Speicher nach Swap
+        REMAINING_GB=$((AVAILABLE_GB - SWAP_SIZE))
+        echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+        
+        # Root-Konfiguration
+        read -p "Größe für root-LV (GB) [$DEFAULT_ROOT_SIZE]: " ROOT_SIZE
+        ROOT_SIZE=${ROOT_SIZE:-$DEFAULT_ROOT_SIZE}
+        
+        # Berechne verbleibenden Speicher nach Root
+        REMAINING_GB=$((REMAINING_GB - ROOT_SIZE))
+        echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+        
+        # Data-Konfiguration
+        echo -e "Größe für data-LV (GB) [Restlicher Speicher (${REMAINING_GB} GB)]: "
+        read DATA_SIZE_INPUT
+        
+        if [ -z "$DATA_SIZE_INPUT" ] || [ "$DATA_SIZE_INPUT" = "0" ]; then
+            DATA_SIZE="0"  # 0 bedeutet restlicher Platz
+            echo -e "data-LV verwendet den restlichen Speicher: ${REMAINING_GB} GB"
+        else
+            DATA_SIZE=$DATA_SIZE_INPUT
+            REMAINING_GB=$((REMAINING_GB - DATA_SIZE))
+            echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
         fi
         
         # Rekursiver Aufruf, um die Funktion mit dem neuen Gerät erneut zu starten
