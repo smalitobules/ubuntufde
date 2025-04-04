@@ -542,29 +542,59 @@ gather_user_input() {
         *) LOCALE="de_DE.UTF-8"; KEYBOARD_LAYOUT="de" ;;
     esac
     
-    # Hostname und Benutzername
-    echo -e "\n${CYAN}Systemkonfiguration:${NC}"
-    read -p "Hostname [$DEFAULT_HOSTNAME]: " HOSTNAME
-    HOSTNAME=${HOSTNAME:-$DEFAULT_HOSTNAME}
-    
-    read -p "Benutzername [$DEFAULT_USERNAME]: " USERNAME
-    USERNAME=${USERNAME:-$DEFAULT_USERNAME}
-    
+# Hostname und Benutzername
+echo -e "\n${CYAN}Systemkonfiguration:${NC}"
+read -p "Hostname [$DEFAULT_HOSTNAME]: " HOSTNAME
+HOSTNAME=${HOSTNAME:-$DEFAULT_HOSTNAME}
+
+read -p "Benutzername [$DEFAULT_USERNAME]: " USERNAME
+USERNAME=${USERNAME:-$DEFAULT_USERNAME}
+
+# Benutzerpasswort mit Validierung
+while true; do
     read -s -p "Benutzerpasswort: " USER_PASSWORD
     echo
-    read -s -p "Benutzerpasswort (Bestätigung): " USER_PASSWORD_CONFIRM
-    echo
-    if [ "$USER_PASSWORD" != "$USER_PASSWORD_CONFIRM" ]; then
-        log_error "Passwörter stimmen nicht überein"
+    
+    # Prüfe ob Passwort leer ist
+    if [ -z "$USER_PASSWORD" ]; then
+        echo -e "${YELLOW}[WARNUNG]${NC} Das Passwort darf nicht leer sein. Bitte erneut versuchen."
+        continue
     fi
     
+    read -s -p "Benutzerpasswort (Bestätigung): " USER_PASSWORD_CONFIRM
+    echo
+    
+    # Prüfe ob Passwörter übereinstimmen
+    if [ "$USER_PASSWORD" != "$USER_PASSWORD_CONFIRM" ]; then
+        echo -e "${YELLOW}[WARNUNG]${NC} Passwörter stimmen nicht überein. Bitte erneut versuchen."
+        continue
+    fi
+    
+    break
+done
+
+# LUKS-Passwort mit Validierung
+while true; do
     read -s -p "LUKS-Verschlüsselungs-Passwort: " LUKS_PASSWORD
     echo
+    
+    # Prüfe ob Passwort leer ist
+    if [ -z "$LUKS_PASSWORD" ]; then
+        echo -e "${YELLOW}[WARNUNG]${NC} Das LUKS-Passwort darf nicht leer sein. Bitte erneut versuchen."
+        continue
+    fi
+    
     read -s -p "LUKS-Verschlüsselungs-Passwort (Bestätigung): " LUKS_PASSWORD_CONFIRM
     echo
+    
+    # Prüfe ob Passwörter übereinstimmen
     if [ "$LUKS_PASSWORD" != "$LUKS_PASSWORD_CONFIRM" ]; then
-        log_error "LUKS-Passwörter stimmen nicht überein"
+        echo -e "${YELLOW}[WARNUNG]${NC} LUKS-Passwörter stimmen nicht überein. Bitte erneut versuchen."
+        continue
     fi
+    
+    break
+done
 
 # Feststellungen verfügbarer Laufwerke
 available_devices=()
