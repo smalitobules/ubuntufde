@@ -846,6 +846,8 @@ prepare_disk() {
             
             log_info "Partitionierung abgeschlossen"
             show_progress 20
+            
+            return 0
         else
             log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
             # Die Schleife wird fortgesetzt
@@ -1591,7 +1593,7 @@ main() {
     gather_user_input
     
     # Installation durchführen
-    prepare_disk
+if  prepare_disk; then
     setup_encryption
     setup_lvm
     mount_filesystems
@@ -1599,6 +1601,10 @@ main() {
     prepare_chroot
     execute_chroot
     finalize_installation
+else
+    log_error "Partitionierung fehlgeschlagen oder abgebrochen."
+    exit 1
+fi
 }
 
 # Skript starten
