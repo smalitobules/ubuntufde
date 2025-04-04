@@ -819,62 +819,38 @@ prepare_disk() {
         
         if [[ $REPLY =~ ^[Jj]$ ]]; then
             device_selected=true
+            
+            # Grundlegende Variablen einrichten
+            DM="${DEV##*/}"
+            if [[ "$DEV" =~ "nvme" ]]; then
+                DEVP="${DEV}p"
+                DM="${DM}p"
+            else
+                DEVP="${DEV}"
+            fi
+            
+            # Export für spätere Verwendung
+            export DEV DEVP DM
+            
+            # Partitionierung
+            log_info "Partitioniere $DEV..."
+            sgdisk --zap-all "$DEV"
+            sgdisk --new=1:0:+1536M "$DEV"   # /boot verdoppelt (1536MB statt 768MB)
+            sgdisk --new=2:0:+2M "$DEV"      # GRUB
+            sgdisk --new=3:0:+256M "$DEV"    # EFI-SP verdoppelt (256MB statt 128MB)
+            sgdisk --new=5:0:0 "$DEV"        # rootfs
+            sgdisk --typecode=1:8301 --typecode=2:ef02 --typecode=3:ef00 --typecode=5:8301 "$DEV"
+            sgdisk --change-name=1:/boot --change-name=2:GRUB --change-name=3:EFI-SP --change-name=5:rootfs "$DEV"
+            sgdisk --hybrid 1:2:3 "$DEV"
+            sgdisk --print "$DEV"
+            
+            log_info "Partitionierung abgeschlossen"
+            show_progress 20
         else
             log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
             # Die Schleife wird fortgesetzt
         fi
     done
-    
-    # Grundlegende Variablen einrichten
-    DM="${DEV##*/}"
-    if [[ "$DEV" =~ "nvme" ]]; then
-        DEVP="${DEV}p"
-        DM="${DM}p"
-    else
-        DEVP="${DEV}"
-    fi
-    
-    # Export für spätere Verwendung
-    export DEV DEVP DM
-    
-    # Partitionierung
-    log_info "Partitioniere $DEV..."
-    sgdisk --zap-all "$DEV"
-    sgdisk --new=1:0:+1536M "$DEV"   # /boot verdoppelt (1536MB statt 768MB)
-    sgdisk --new=2:0:+2M "$DEV"      # GRUB
-    sgdisk --new=3:0:+256M "$DEV"    # EFI-SP verdoppelt (256MB statt 128MB)
-    sgdisk --new=5:0:0 "$DEV"        # rootfs
-    sgdisk --typecode=1:8301 --typecode=2:ef02 --typecode=3:ef00 --typecode=5:8301 "$DEV"
-    sgdisk --change-name=1:/boot --change-name=2:GRUB --change-name=3:EFI-SP --change-name=5:rootfs "$DEV"
-    sgdisk --hybrid 1:2:3 "$DEV"
-    sgdisk --print "$DEV"
-    
-    log_info "Partitionierung abgeschlossen"
-    show_progress 20
-}
-
-setup_encryption() {
-    log_progress "Richte Verschlüsselung ein..."
-    
-    log_info "Erstelle LUKS-Verschlüsselung für Boot-Partition..."
-    # LUKS1 für /boot mit dem eingegebenen Passwort
-    echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type=luks1 --batch-mode "${DEVP}1" -
-    
-    log_info "Erstelle LUKS-Verschlüsselung für Root-Partition..."
-    # LUKS2 für das Root-System
-    echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --batch-mode "${DEVP}5" -
-    
-    # Öffne die verschlüsselten Geräte
-    log_info "Öffne die verschlüsselten Partitionen..."
-    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}1" "${LUKS_BOOT_NAME}" -
-    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}5" "${LUKS_ROOT_NAME}" -
-    
-    # Dateisysteme erstellen
-    log_info "Formatiere Dateisysteme..."
-    mkfs.ext4 -L boot /dev/mapper/${LUKS_BOOT_NAME}
-    mkfs.vfat -F 16 -n EFI-SP "${DEVP}3"
-    
-    show_progress 30
 }
 
 setup_lvm() {
