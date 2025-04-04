@@ -1568,35 +1568,24 @@ main() {
         check_dependencies
     fi
     
-    # Debug-Information
-    echo "====DEBUG MAIN START====" > /tmp/debug_main.log
-    
     # Installation
     echo
     echo -e "${CYAN}Starte Installationsprozess...${NC}"
     echo
     
     # Benutzerkonfiguration
-    echo "====VOR GATHER_USER_INPUT====" >> /tmp/debug_main.log
     gather_user_input
-    echo "====NACH GATHER_USER_INPUT====" >> /tmp/debug_main.log
     
     # Installation durchführen
-    echo "====VOR PREPARE_DISK AUFRUF====" >> /tmp/debug_main.log
-    if prepare_disk; then
-        echo "====PREPARE_DISK ERFOLGREICH====" >> /tmp/debug_main.log
-        setup_encryption
-        setup_lvm
-        mount_filesystems
-        install_base_system
-        prepare_chroot
-        execute_chroot
-        finalize_installation
-    else
-        echo "====PREPARE_DISK FEHLGESCHLAGEN====" >> /tmp/debug_main.log
-        log_error "Partitionierung fehlgeschlagen oder abgebrochen."
-        exit 1
-    fi
-    
-    echo "====DEBUG MAIN ENDE====" >> /tmp/debug_main.log
+    prepare_disk
+    setup_encryption
+    setup_lvm
+    mount_filesystems
+    install_base_system
+    prepare_chroot
+    execute_chroot
+    finalize_installation
 }
+
+# Skript starten
+main "$@"
