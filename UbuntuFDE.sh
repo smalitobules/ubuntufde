@@ -770,8 +770,7 @@ prepare_disk() {
     if [[ ! $REPLY =~ ^[Jj]$ ]]; then
         log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
         
-        # Springe nur zum Laufwerksauswahl-Teil zurück
-        # Zeige verfügbare Laufwerke an
+        # Zeige erneut die verfügbaren Laufwerke an
         available_devices=()
         echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
         echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
@@ -816,7 +815,7 @@ prepare_disk() {
             fi
         fi
         
-        # Berechne verfügbaren Speicherplatz für das neue Gerät
+        # Berechne verfügbaren Speicherplatz
         AVAILABLE_GB=$(calculate_available_space "$DEV")
         
         # Zeige Gesamtspeicher und verfügbaren Speicher
@@ -857,7 +856,7 @@ prepare_disk() {
             echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
         fi
         
-        # Rekursiver Aufruf, um die Funktion mit dem neuen Gerät erneut zu starten
+        # NEUER Aufruf der prepare_disk()
         prepare_disk
         return
     fi
