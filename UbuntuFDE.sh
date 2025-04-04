@@ -85,8 +85,10 @@ confirm() {
     echo -e "${YELLOW}[WARNUNG]${NC} $1"
     read -p "Bist du sicher? (j/n) " -n 1 -r
     echo
-    if [[ ! $REPLY =~ ^[Jj]$ ]]; then
-        log_error "Abgebrochen durch Benutzer"
+    if [[ $REPLY =~ ^[Jj]$ ]]; then
+        return 0  # Erfolg zurückgeben (true in Bash)
+    else
+        return 1  # Fehler zurückgeben (false in Bash)
     fi
 }
 
@@ -598,91 +600,98 @@ while true; do
     break
 done
 
-# Feststellungen verfügbarer Laufwerke
-available_devices=()
-echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
-echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
-echo -e "-------------------------------------------------------"
-i=0
-while read device size model; do
-    # Überspringe Überschriften oder leere Zeilen
-    if [[ "$device" == "NAME" || -z "$device" ]]; then
-        continue
+gather_disk_input() {
+    # Feststellungen verfügbarer Laufwerke
+    available_devices=()
+    echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
+    echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
+    echo -e "-------------------------------------------------------"
+    i=0
+    while read device size model; do
+        # Überspringe Überschriften oder leere Zeilen
+        if [[ "$device" == "NAME" || -z "$device" ]]; then
+            continue
+        fi
+        available_devices+=("$device")
+        ((i++))
+        printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
+    done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
+    echo -e "-------------------------------------------------------"
+
+    # Wenn keine Geräte gefunden wurden
+    if [ ${#available_devices[@]} -eq 0 ]; then
+        log_error "Keine Laufwerke gefunden!"
     fi
-    available_devices+=("$device")
-    ((i++))
-    printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
-done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
-echo -e "-------------------------------------------------------"
 
-# Wenn keine Geräte gefunden wurden
-if [ ${#available_devices[@]} -eq 0 ]; then
-    log_error "Keine Laufwerke gefunden!"
-fi
+    # Standardwert ist das erste Gerät
+    DEFAULT_DEV="1"
+    DEFAULT_DEV_PATH="${available_devices[0]}"
 
-# Standardwert ist das erste Gerät
-DEFAULT_DEV="1"
-DEFAULT_DEV_PATH="${available_devices[0]}"
+    # Laufwerksauswahl
+    read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
+    DEVICE_CHOICE=${DEVICE_CHOICE:-1}
 
-# Laufwerksauswahl
-read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
-DEVICE_CHOICE=${DEVICE_CHOICE:-1}
-
-# Verarbeite die Auswahl
-if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
-    # Nutzer hat Nummer ausgewählt
-    DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
-else
-    # Nutzer hat möglicherweise einen Pfad eingegeben
-    if [ -b "$DEVICE_CHOICE" ]; then
-        DEV="$DEVICE_CHOICE"
+    # Verarbeite die Auswahl
+    if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
+        # Nutzer hat Nummer ausgewählt
+        DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
     else
-        # Ungültige Eingabe - verwende erstes Gerät als Fallback
-        DEV="${available_devices[0]}"
-        log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
+        # Nutzer hat möglicherweise einen Pfad eingegeben
+        if [ -b "$DEVICE_CHOICE" ]; then
+            DEV="$DEVICE_CHOICE"
+        else
+            # Ungültige Eingabe - verwende erstes Gerät als Fallback
+            DEV="${available_devices[0]}"
+            log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
+        fi
     fi
-fi
 
-# Berechne verfügbaren Speicherplatz
-AVAILABLE_GB=$(calculate_available_space "$DEV")
+    # Berechne verfügbaren Speicherplatz
+    AVAILABLE_GB=$(calculate_available_space "$DEV")
 
-# Zeige Gesamtspeicher und verfügbaren Speicher
-TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
-echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
-echo -e "Gesamtspeicher: $TOTAL_SIZE"
-echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
+    # Zeige Gesamtspeicher und verfügbaren Speicher
+    TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
+    echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
+    echo -e "Gesamtspeicher: $TOTAL_SIZE"
+    echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
 
-# LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
-echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
+    # LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
+    echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
 
-# Swap-Konfiguration
-read -p "Größe für swap-LV (GB) [$DEFAULT_SWAP]: " SWAP_SIZE
-SWAP_SIZE=${SWAP_SIZE:-$DEFAULT_SWAP}
+    # Swap-Konfiguration
+    RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    RAM_MB=$((RAM_KB / 1024))
+    RAM_GB=$((RAM_MB / 1024))
+    DEFAULT_SWAP=$((RAM_GB * 2))
+    
+    read -p "Größe für swap-LV (GB) [$DEFAULT_SWAP]: " SWAP_SIZE
+    SWAP_SIZE=${SWAP_SIZE:-$DEFAULT_SWAP}
 
-# Berechne verbleibenden Speicher nach Swap
-REMAINING_GB=$((AVAILABLE_GB - SWAP_SIZE))
-echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+    # Berechne verbleibenden Speicher nach Swap
+    REMAINING_GB=$((AVAILABLE_GB - SWAP_SIZE))
+    echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
 
-# Root-Konfiguration
-read -p "Größe für root-LV (GB) [$DEFAULT_ROOT_SIZE]: " ROOT_SIZE
-ROOT_SIZE=${ROOT_SIZE:-$DEFAULT_ROOT_SIZE}
+    # Root-Konfiguration
+    read -p "Größe für root-LV (GB) [$DEFAULT_ROOT_SIZE]: " ROOT_SIZE
+    ROOT_SIZE=${ROOT_SIZE:-$DEFAULT_ROOT_SIZE}
 
-# Berechne verbleibenden Speicher nach Root
-REMAINING_GB=$((REMAINING_GB - ROOT_SIZE))
-echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
+    # Berechne verbleibenden Speicher nach Root
+    REMAINING_GB=$((REMAINING_GB - ROOT_SIZE))
+    echo -e "Verbleibender Speicher: ${REMAINING_GB} GB"
 
-# Data-Konfiguration
-echo -e "Größe für data-LV (GB) [Restlicher Speicher (${REMAINING_GB} GB)]: "
-read DATA_SIZE_INPUT
+    # Data-Konfiguration
+    echo -e "Größe für data-LV (GB) [Restlicher Speicher (${REMAINING_GB} GB)]: "
+    read DATA_SIZE_INPUT
 
-if [ -z "$DATA_SIZE_INPUT" ] || [ "$DATA_SIZE_INPUT" = "0" ]; then
-    DATA_SIZE="0"  # 0 bedeutet restlicher Platz
-    echo -e "data-LV verwendet den restlichen Speicher: ${REMAINING_GB} GB"
-else
-    DATA_SIZE=$DATA_SIZE_INPUT
-    REMAINING_GB=$((REMAINING_GB - DATA_SIZE))
-    echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
-fi
+    if [ -z "$DATA_SIZE_INPUT" ] || [ "$DATA_SIZE_INPUT" = "0" ]; then
+        DATA_SIZE="0"  # 0 bedeutet restlicher Platz
+        echo -e "data-LV verwendet den restlichen Speicher: ${REMAINING_GB} GB"
+    else
+        DATA_SIZE=$DATA_SIZE_INPUT
+        REMAINING_GB=$((REMAINING_GB - DATA_SIZE))
+        echo -e "Verbleibender ungenutzter Speicher: ${REMAINING_GB} GB"
+    fi
+}
 
     # Kernel-Auswahl
     echo -e "\n${CYAN}Kernel-Auswahl:${NC}"
@@ -759,106 +768,76 @@ fi
 ###################
 # Partitionierung #
 ###################
-set -x  # Debugging aktivieren
 prepare_disk() {
-    # Debug-Ausgabe hinzufügen
-    echo "DEBUG: prepare_disk Funktion gestartet" > /tmp/install_debug.log
+    log_progress "Beginne mit der Partitionierung..."
+    show_progress 10
     
-    while true; do
-        # Zeige verfügbare Laufwerke an
-        available_devices=()
-        echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
-        echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
-        echo -e "-------------------------------------------------------"
-        i=0
-        while read device size model; do
-            # Überspringe Überschriften oder leere Zeilen
-            if [[ "$device" == "NAME" || -z "$device" ]]; then
-                continue
-            fi
-            available_devices+=("$device")
-            ((i++))
-            printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
-        done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
-        echo -e "-------------------------------------------------------"
+    # Letzte Warnung mit Möglichkeit zum Neustart
+    if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
+        log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
         
-        # Wenn keine Geräte gefunden wurden
-        if [ ${#available_devices[@]} -eq 0 ]; then
-            echo "DEBUG: Keine Laufwerke gefunden" >> /tmp/install_debug.log
-            log_error "Keine Laufwerke gefunden!"
-            return 1
-        fi
+        # Zurücksetzen der Festplattenvariablen
+        unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
         
-        # Laufwerksauswahl
-        read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
-        DEVICE_CHOICE=${DEVICE_CHOICE:-1}
-        echo "DEBUG: Nutzer wählte: $DEVICE_CHOICE" >> /tmp/install_debug.log
+        # Neue Festplattenauswahl starten
+        gather_disk_input
         
-        # Verarbeite die Auswahl
-        if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
-            # Nutzer hat Nummer ausgewählt
-            DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
-        else
-            # Nutzer hat möglicherweise einen Pfad eingegeben
-            if [ -b "$DEVICE_CHOICE" ]; then
-                DEV="$DEVICE_CHOICE"
-            else
-                # Ungültige Eingabe - verwende erstes Gerät als Fallback
-                DEV="${available_devices[0]}"
-                log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
-            fi
-        fi
-        echo "DEBUG: Ausgewähltes Laufwerk: $DEV" >> /tmp/install_debug.log
-        
-        # Bestätigungsfrage für die Partitionierung
-        log_progress "Beginne mit der Partitionierung..."
-        show_progress 10
-        
-        echo -e "${YELLOW}[WARNUNG]${NC} ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"
-        read -p "Bist du sicher? (j/n) " -n 1 -r
-        echo
-        
-        echo "DEBUG: Nutzerantwort: $REPLY" >> /tmp/install_debug.log
-        if [[ $REPLY =~ ^[Jj]$ ]]; then
-            echo "DEBUG: Nutzer hat bestätigt" >> /tmp/install_debug.log
-            
-            # Grundlegende Variablen einrichten
-            DM="${DEV##*/}"
-            if [[ "$DEV" =~ "nvme" ]]; then
-                DEVP="${DEV}p"
-                DM="${DM}p"
-            else
-                DEVP="${DEV}"
-            fi
-            
-            # Export für spätere Verwendung
-            export DEV DEVP DM
-            
-            # Partitionierung
-            log_info "Partitioniere $DEV..."
-            sgdisk --zap-all "$DEV"
-            sgdisk --new=1:0:+1536M "$DEV"   # /boot verdoppelt (1536MB statt 768MB)
-            sgdisk --new=2:0:+2M "$DEV"      # GRUB
-            sgdisk --new=3:0:+256M "$DEV"    # EFI-SP verdoppelt (256MB statt 128MB)
-            sgdisk --new=5:0:0 "$DEV"        # rootfs
-            sgdisk --typecode=1:8301 --typecode=2:ef02 --typecode=3:ef00 --typecode=5:8301 "$DEV"
-            sgdisk --change-name=1:/boot --change-name=2:GRUB --change-name=3:EFI-SP --change-name=5:rootfs "$DEV"
-            sgdisk --hybrid 1:2:3 "$DEV"
-            sgdisk --print "$DEV"
-            
-            log_info "Partitionierung abgeschlossen"
-            show_progress 20
-            
-            echo "DEBUG: Partitionierung erfolgreich, return 0" >> /tmp/install_debug.log
-            return 0
-        else
-            echo "DEBUG: Nutzer hat abgelehnt" >> /tmp/install_debug.log
-            log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
-            # Schleife wird fortgesetzt, wir zeigen wieder die Laufwerke an
-        fi
-    done
+        # Sich selbst erneut aufrufen, um Partitionierung neu zu starten
+        prepare_disk
+        return
+    fi
+    
+    # Grundlegende Variablen einrichten
+    DM="${DEV##*/}"
+    if [[ "$DEV" =~ "nvme" ]]; then
+        DEVP="${DEV}p"
+        DM="${DM}p"
+    else
+        DEVP="${DEV}"
+    fi
+    
+    # Export für spätere Verwendung
+    export DEV DEVP DM
+    
+    # Partitionierung
+    log_info "Partitioniere $DEV..."
+    sgdisk --zap-all "$DEV"
+    sgdisk --new=1:0:+1536M "$DEV"   # /boot verdoppelt (1536MB statt 768MB)
+    sgdisk --new=2:0:+2M "$DEV"      # GRUB
+    sgdisk --new=3:0:+256M "$DEV"    # EFI-SP verdoppelt (256MB statt 128MB)
+    sgdisk --new=5:0:0 "$DEV"        # rootfs
+    sgdisk --typecode=1:8301 --typecode=2:ef02 --typecode=3:ef00 --typecode=5:8301 "$DEV"
+    sgdisk --change-name=1:/boot --change-name=2:GRUB --change-name=3:EFI-SP --change-name=5:rootfs "$DEV"
+    sgdisk --hybrid 1:2:3 "$DEV"
+    sgdisk --print "$DEV"
+    
+    log_info "Partitionierung abgeschlossen"
+    show_progress 20
 }
-set +x  # Debugging deaktivieren
+
+setup_encryption() {
+    log_progress "Richte Verschlüsselung ein..."
+    
+    log_info "Erstelle LUKS-Verschlüsselung für Boot-Partition..."
+    # LUKS1 für /boot mit dem eingegebenen Passwort
+    echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type=luks1 --batch-mode "${DEVP}1" -
+    
+    log_info "Erstelle LUKS-Verschlüsselung für Root-Partition..."
+    # LUKS2 für das Root-System
+    echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --batch-mode "${DEVP}5" -
+    
+    # Öffne die verschlüsselten Geräte
+    log_info "Öffne die verschlüsselten Partitionen..."
+    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}1" "${LUKS_BOOT_NAME}" -
+    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}5" "${LUKS_ROOT_NAME}" -
+    
+    # Dateisysteme erstellen
+    log_info "Formatiere Dateisysteme..."
+    mkfs.ext4 -L boot /dev/mapper/${LUKS_BOOT_NAME}
+    mkfs.vfat -F 16 -n EFI-SP "${DEVP}3"
+    
+    show_progress 30
+}
 
 setup_lvm() {
     log_progress "Richte LVM ein..."
@@ -1589,16 +1568,23 @@ main() {
         check_dependencies
     fi
     
+    # Debug-Information
+    echo "====DEBUG MAIN START====" > /tmp/debug_main.log
+    
     # Installation
     echo
     echo -e "${CYAN}Starte Installationsprozess...${NC}"
     echo
     
     # Benutzerkonfiguration
+    echo "====VOR GATHER_USER_INPUT====" >> /tmp/debug_main.log
     gather_user_input
+    echo "====NACH GATHER_USER_INPUT====" >> /tmp/debug_main.log
     
     # Installation durchführen
+    echo "====VOR PREPARE_DISK AUFRUF====" >> /tmp/debug_main.log
     if prepare_disk; then
+        echo "====PREPARE_DISK ERFOLGREICH====" >> /tmp/debug_main.log
         setup_encryption
         setup_lvm
         mount_filesystems
@@ -1607,11 +1593,10 @@ main() {
         execute_chroot
         finalize_installation
     else
+        echo "====PREPARE_DISK FEHLGESCHLAGEN====" >> /tmp/debug_main.log
         log_error "Partitionierung fehlgeschlagen oder abgebrochen."
         exit 1
     fi
+    
+    echo "====DEBUG MAIN ENDE====" >> /tmp/debug_main.log
 }
-
-# Skript starten
-main "$@"
-
