@@ -16,6 +16,8 @@ DEFAULT_DATA_SIZE="0"  # 0 bedeutet restlicher Platz
 DEFAULT_SSH_PORT="22"
 CONFIG_FILE="ubuntu-fde.conf"
 LOG_FILE="ubuntu-fde.log"
+LUKS_BOOT_NAME="BOOT"
+LUKS_ROOT_NAME="ROOT"
 
 ###################
 # Farben und Log  #
@@ -761,8 +763,63 @@ prepare_disk() {
     log_progress "Beginne mit der Partitionierung..."
     show_progress 10
     
-    # Letzte Warnung
-    confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"
+    # Letzte Warnung mit Möglichkeit zur Rückkehr
+    echo -e "${YELLOW}[WARNUNG]${NC} ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"
+    read -p "Bist du sicher? (j/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Jj]$ ]]; then
+        log_warn "Partitionierung abgebrochen. Kehre zur Laufwerksauswahl zurück."
+        
+        # Zurück zur Laufwerksauswahl
+        # Hier zeigen wir erneut die verfügbaren Laufwerke an
+        available_devices=()
+        echo -e "\n${CYAN}Verfügbare Laufwerke:${NC}"
+        echo -e "${YELLOW}NR   GERÄT                GRÖSSE      MODELL${NC}"
+        echo -e "-------------------------------------------------------"
+        i=0
+        while read device size model; do
+            # Überspringe Überschriften oder leere Zeilen
+            if [[ "$device" == "NAME" || -z "$device" ]]; then
+                continue
+            fi
+            available_devices+=("$device")
+            ((i++))
+            printf "%-4s %-20s %-12s %s\n" "[$i]" "$device" "$size" "$model"
+        done < <(lsblk -d -p -o NAME,SIZE,MODEL | grep -v loop)
+        echo -e "-------------------------------------------------------"
+        
+        # Wenn keine Geräte gefunden wurden
+        if [ ${#available_devices[@]} -eq 0 ]; then
+            log_error "Keine Laufwerke gefunden!"
+        fi
+        
+        # Standardwert ist das erste Gerät
+        DEFAULT_DEV="1"
+        DEFAULT_DEV_PATH="${available_devices[0]}"
+        
+        # Laufwerksauswahl
+        read -p "Wähle ein Laufwerk (Nummer oder vollständiger Pfad) [1]: " DEVICE_CHOICE
+        DEVICE_CHOICE=${DEVICE_CHOICE:-1}
+        
+        # Verarbeite die Auswahl
+        if [[ "$DEVICE_CHOICE" =~ ^[0-9]+$ ]] && [ "$DEVICE_CHOICE" -ge 1 ] && [ "$DEVICE_CHOICE" -le "${#available_devices[@]}" ]; then
+            # Nutzer hat Nummer ausgewählt
+            DEV="${available_devices[$((DEVICE_CHOICE-1))]}"
+        else
+            # Nutzer hat möglicherweise einen Pfad eingegeben
+            if [ -b "$DEVICE_CHOICE" ]; then
+                DEV="$DEVICE_CHOICE"
+            else
+                # Ungültige Eingabe - verwende erstes Gerät als Fallback
+                DEV="${available_devices[0]}"
+                log_info "Ungültige Eingabe. Verwende Standardgerät: $DEV"
+            fi
+        fi
+        
+        # Rekursiver Aufruf, um die Funktion mit dem neuen Gerät erneut zu starten
+        prepare_disk
+        return
+    fi
     
     # Grundlegende Variablen einrichten
     DM="${DEV##*/}"
@@ -779,9 +836,9 @@ prepare_disk() {
     # Partitionierung
     log_info "Partitioniere $DEV..."
     sgdisk --zap-all "$DEV"
-    sgdisk --new=1:0:+1536M "$DEV"   # /boot verdoppelt (1536MB statt 768MB)
+    sgdisk --new=1:0:+1024M "$DEV"   # boot
     sgdisk --new=2:0:+2M "$DEV"      # GRUB
-    sgdisk --new=3:0:+256M "$DEV"    # EFI-SP verdoppelt (256MB statt 128MB)
+    sgdisk --new=3:0:+256M "$DEV"    # EFI-SP
     sgdisk --new=5:0:0 "$DEV"        # rootfs
     sgdisk --typecode=1:8301 --typecode=2:ef02 --typecode=3:ef00 --typecode=5:8301 "$DEV"
     sgdisk --change-name=1:/boot --change-name=2:GRUB --change-name=3:EFI-SP --change-name=5:rootfs "$DEV"
@@ -805,12 +862,12 @@ setup_encryption() {
     
     # Öffne die verschlüsselten Geräte
     log_info "Öffne die verschlüsselten Partitionen..."
-    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}1" LUKS_BOOT -
-    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}5" "${DM}5_crypt" -
+    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}1" "${LUKS_BOOT_NAME}" -
+    echo -n "$LUKS_PASSWORD" | cryptsetup open "${DEVP}5" "${LUKS_ROOT_NAME}" -
     
     # Dateisysteme erstellen
     log_info "Formatiere Dateisysteme..."
-    mkfs.ext4 -L boot /dev/mapper/LUKS_BOOT
+    mkfs.ext4 -L boot /dev/mapper/${LUKS_BOOT_NAME}
     mkfs.vfat -F 16 -n EFI-SP "${DEVP}3"
     
     show_progress 30
@@ -820,10 +877,10 @@ setup_lvm() {
     log_progress "Richte LVM ein..."
     
     log_info "Erstelle LVM-Struktur..."
-    export VGNAME="vgubuntu"
+    export VGNAME="vg"
     
-    pvcreate /dev/mapper/${DM}5_crypt
-    vgcreate "${VGNAME}" /dev/mapper/${DM}5_crypt
+    pvcreate /dev/mapper/${LUKS_ROOT_NAME}
+    vgcreate "${VGNAME}" /dev/mapper/${LUKS_ROOT_NAME}
     
     # Erstelle LVs mit den angegebenen Größen
     lvcreate -L ${SWAP_SIZE}G -n swap "${VGNAME}"  # "swap" statt "swap_1"
@@ -854,7 +911,7 @@ mount_filesystems() {
     mkdir -p /mnt/ubuntu
     mount /dev/mapper/${VGNAME}-root /mnt/ubuntu
     mkdir -p /mnt/ubuntu/boot
-    mount /dev/mapper/LUKS_BOOT /mnt/ubuntu/boot
+    mount /dev/mapper/${LUKS_BOOT_NAME} /mnt/ubuntu/boot
     mkdir -p /mnt/ubuntu/boot/efi
     mount ${DEVP}3 /mnt/ubuntu/boot/efi
     mkdir -p /mnt/ubuntu/data
@@ -964,8 +1021,8 @@ EOF
 
 # crypttab erstellen
 cat > /mnt/ubuntu/etc/crypttab <<EOF
-LUKS_BOOT UUID=${LUKS_BOOT_UUID} /etc/luks/boot_os.keyfile luks,discard
-${DM}5_crypt UUID=${LUKS_ROOT_UUID} /etc/luks/boot_os.keyfile luks,discard
+${LUKS_BOOT_NAME} UUID=${LUKS_BOOT_UUID} /etc/luks/boot_os.keyfile luks,discard
+${LUKS_ROOT_NAME} UUID=${LUKS_ROOT_UUID} /etc/luks/boot_os.keyfile luks,discard
 EOF
 
 # Überprüfe die Konfiguration und erstelle systemd-Einheiten für boot
@@ -977,7 +1034,7 @@ Before=local-fs.target
 After=cryptsetup.target
 
 [Mount]
-What=/dev/mapper/LUKS_BOOT
+What=/dev/mapper/${LUKS_BOOT_NAME}
 Where=/boot
 Type=ext4
 Options=defaults
@@ -1174,8 +1231,8 @@ echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}1 /etc/luks/boot_os.ke
 echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}5 /etc/luks/boot_os.keyfile -
 
 # Crypttab aktualisieren
-echo "LUKS_BOOT UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard" > /etc/crypttab
-echo "${DM}5_crypt UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard" >> /etc/crypttab
+echo "${LUKS_BOOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard" > /etc/crypttab
+echo "${LUKS_ROOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard" >> /etc/crypttab
 
 # zram für Swap konfigurieren
 cat > /etc/default/zramswap <<EOZ
@@ -1447,7 +1504,9 @@ sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${NETWORK_CONFIG}/$NETWORK_CONFIG/g" /mnt/ubuntu/setup.sh
-#sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
+sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
+sed -i "s/\${LUKS_BOOT_NAME}/$LUKS_BOOT_NAME/g" /mnt/ubuntu/setup.sh
+sed -i "s/\${LUKS_ROOT_NAME}/$LUKS_ROOT_NAME/g" /mnt/ubuntu/setup.sh
 
 # Ausführbar machen
 chmod +x /mnt/ubuntu/setup.sh
