@@ -104,7 +104,7 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
     
-    local deps=("sgdisk" "cryptsetup" "multistrap" "lvm2" "curl" "wget")
+    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget")
     local missing_deps=()
     
     for dep in "${deps[@]}"; do
@@ -910,50 +910,51 @@ install_base_system() {
     # Prüfe Netzwerkverbindung
     check_network_connectivity
 
-    # GPG-Schlüssel für lokalen Mirror vor multistrap importieren
+    # GPG-Schlüssel für lokalen Mirror importieren
     mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
-    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor > /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
-
-    # Multistrap-Konfigurationsdatei erstellen
-    mkdir -p /mnt/ubuntu/etc/apt/
-    cat > /tmp/multistrap.conf << EOF
-[General]
-arch=amd64
-directory=/mnt/ubuntu
-cleanup=true
-noauth=true
-unpack=true
-bootstrap=Ubuntu
-aptsources=Ubuntu
-
-# Paketquellen konfigurieren
-[Ubuntu]
-packages=curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget apt-transport-https console-setup bash-completion systemd-resolved initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed efibootmgr
-source=http://192.168.56.120/ubuntu
-keyring=/mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
-suite=${UBUNTU_CODENAME}
-components=main restricted universe multiverse
-EOF
-
-    # Paketmanager für parallele Downloads konfigurieren
-    mkdir -p /mnt/ubuntu/etc/apt/apt.conf.d/
-    cat > /mnt/ubuntu/etc/apt/apt.conf.d/99parallel-downloads << EOF
-// Konfiguration für parallele Downloads
-Acquire::Queue-Mode "host";
-Acquire::http::Parallel "10";
-Acquire::https::Parallel "10";
-Acquire::http::Dl-Limit "0";
-Acquire::https::Dl-Limit "0";
-EOF
-
-    # System mit multistrap installieren
-    log_info "Installiere Ubuntu ${UBUNTU_CODENAME} mit multistrap (dies kann einige Minuten dauern)..."
-    if ! multistrap -f /tmp/multistrap.conf; then
-        log_error "multistrap ist fehlgeschlagen. Prüfen Sie die Netzwerkverbindung und Paketquellen."
-    fi
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
     
-    # Für ersten Boot vorbereiten
-    log_info "Konfiguriere installiertes System..."
+    # Ubuntu-Basissystem mit debootstrap installieren
+    log_info "Installiere Ubuntu $UBUNTU_CODENAME Basissystem (dies kann einige Minuten dauern)..."
+    
+    # Bei Netzwerkinstallation nur Minimal-System installieren
+    echo "Installiere Ubuntu $UBUNTU_CODENAME mit debootstrap..."
+
+    # Zu inkludierende Pakete definieren
+    PACKAGES=(
+        curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
+        apt-transport-https console-setup bash-completion systemd-resolved
+        initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
+        efibootmgr 
+    )
+
+    # Pakete zu kommagetrennter Liste zusammenfügen
+    PACKAGELIST=$(IFS=,; echo "${PACKAGES[*]}")
+
+    if [ "$UBUNTU_INSTALL_OPTION" = "3" ]; then
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --variant=minbase \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
+        if [ $? -ne 0 ]; then
+            log_error "debootstrap fehlgeschlagen für oracular"
+        fi
+    else
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
+        if [ $? -ne 0 ]; then
+            log_error "debootstrap fehlgeschlagen für oracular"
+        fi
+    fi
     
     # Basisverzeichnisse für chroot
     for dir in /dev /dev/pts /proc /sys /run; do
@@ -961,34 +962,11 @@ EOF
         mount -B $dir /mnt/ubuntu$dir
     done
     
-    # Paketdatenbank initialisieren
-    chroot /mnt/ubuntu /bin/bash -c "dpkg --configure -a || true"
-    
     show_progress 60
 }
 
 prepare_chroot() {
     log_progress "Bereite chroot-Umgebung vor..."
-
-# Grundlegende Systemkonfigurationen
-if [ ! -f /mnt/ubuntu/etc/hostname ]; then
-    echo "${HOSTNAME}" > /mnt/ubuntu/etc/hostname
-fi
-
-if [ ! -f /mnt/ubuntu/etc/hosts ]; then
-    cat > /mnt/ubuntu/etc/hosts << EOF
-127.0.0.1   localhost
-127.0.1.1   ${HOSTNAME}
-
-# IPv6
-::1         localhost ip6-localhost ip6-loopback
-ff02::1     ip6-allnodes
-ff02::2     ip6-allrouters
-EOF
-fi
-
-# Benutzer und Passwörter
-mkdir -p /mnt/ubuntu/root
     
 # Aktuelle UUIDs für die Konfigurationsdateien ermitteln
 LUKS_BOOT_UUID=$(blkid -s UUID -o value ${DEVP}1)
@@ -1190,8 +1168,7 @@ apt-get install -y --no-install-recommends \
     ufw \
     nala \
     jq
-    
-#$([ "${INSTALL_DESKTOP}" = "1" ] && echo "thorium-browser")
+    #$([ "${INSTALL_DESKTOP}" = "1" ] && echo "thorium-browser")
 
 # Spracheinstellungen
 locale-gen ${LOCALE} en_US.UTF-8
