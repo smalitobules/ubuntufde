@@ -912,7 +912,7 @@ install_base_system() {
 
     # GPG-Schlüssel für lokalen Mirror vor multistrap importieren
     mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
-    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /tmp/local-mirror.gpg
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor > /tmp/local-mirror.gpg
     cp /tmp/local-mirror.gpg /mnt/ubuntu/etc/apt/trusted.gpg.d/
 
     # Multistrap-Konfigurationsdatei erstellen
