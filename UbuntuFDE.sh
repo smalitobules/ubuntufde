@@ -1115,24 +1115,6 @@ elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
     KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
 fi
 
-# Thorium CPU-Erkennung loggen
-mkdir -p /var/log/installation
-echo "CPU-Erweiterungen für Thorium:" > /var/log/installation/thorium-cpu.log
-if grep -q " avx2 " /proc/cpuinfo; then
-    echo "AVX2-Unterstützung gefunden" >> /var/log/installation/thorium-cpu.log
-    echo "CPU_EXT=AVX2" >> /var/log/installation/thorium-cpu.log
-elif grep -q " avx " /proc/cpuinfo; then
-    echo "AVX-Unterstützung gefunden" >> /var/log/installation/thorium-cpu.log
-    echo "CPU_EXT=AVX" >> /var/log/installation/thorium-cpu.log
-elif grep -q " sse4_1 " /proc/cpuinfo; then
-    echo "SSE4-Unterstützung gefunden" >> /var/log/installation/thorium-cpu.log
-    echo "CPU_EXT=SSE4" >> /var/log/installation/thorium-cpu.log
-else
-    echo "SSE3-Basisversion verwendet" >> /var/log/installation/thorium-cpu.log
-    echo "CPU_EXT=SSE3" >> /var/log/installation/thorium-cpu.log
-fi
-cat /proc/cpuinfo | grep -E 'model name|flags' | head -2 >> /var/log/installation/thorium-cpu.log
-
 # Thorium Browser direkt von GitHub installieren (wenn Desktop aktiviert)
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
     echo "Installiere Thorium Browser direkt von GitHub..."
@@ -1149,7 +1131,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     fi
     echo "CPU-Erweiterung: ${CPU_EXT}"
     
-    # Neueste Version dynamisch ermitteln durch Folgen der Umleitung
+    # Neueste Version ermitteln
     echo "Ermittle neueste Thorium-Version..."
     REDIRECT_URL=$(curl -L -s -o /dev/null -w '%{url_effective}' https://github.com/Alex313031/Thorium/releases/latest)
     THORIUM_VERSION=$(echo "$REDIRECT_URL" | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | sed 's/^M//')
@@ -1163,7 +1145,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     fi
     
     # URL direkt zum Release-Asset
-    THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
+    THORIUM_URL="https://github.com/Alex313031/Thorium/releases/tag/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
     echo "Download-URL: ${THORIUM_URL}"
     
     # Download mit Fehlerbehandlung
@@ -1176,7 +1158,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         fi
     else
         echo "Download fehlgeschlagen, versuche generische Version..."
-        THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
+        THORIUM_URL="https://github.com/Alex313031/Thorium/releases/tag/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
         if wget --tries=3 --timeout=15 -O /tmp/thorium.deb "${THORIUM_URL}"; then
             if dpkg -i /tmp/thorium.deb || apt-get -f install -y; then
                 echo "Thorium (generische Version) wurde erfolgreich installiert."
