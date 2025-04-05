@@ -785,23 +785,6 @@ gather_user_input() {
         
         break
     done
-
-    # Warnung vor der Partitionierung
-    if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
-        log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
-        unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
-        gather_disk_input
-        # Erneute Bestätigung, bis der Benutzer ja sagt
-        while ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; do
-            log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
-            unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
-            gather_disk_input
-        done
-    fi
-
-    echo -e "\n${GREEN}[INFO]${NC} Partitionierung bestätigt. Die Festplatte wird nach Abschluss aller Konfigurationsfragen partitioniert."
-    DISK_CONFIRMED=true
-    export DISK_CONFIRMED
     
     # Kernel-Auswahl
     echo -e "\n${CYAN}Kernel-Auswahl:${NC}"
@@ -1743,6 +1726,23 @@ main() {
     # Benutzereingaben sammeln
     gather_user_input
     gather_disk_input
+
+    # Warnung vor der Partitionierung
+    if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
+        log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
+        unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
+        gather_disk_input
+        # Erneute Bestätigung, bis der Benutzer ja sagt
+        while ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; do
+            log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
+            unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
+            gather_disk_input
+        done
+    fi
+
+    echo -e "\n${GREEN}[INFO]${NC} Partitionierung bestätigt. Die Festplatte wird nach Abschluss aller Konfigurationsfragen partitioniert."
+    DISK_CONFIRMED=true
+    export DISK_CONFIRMED
     
     # Installation durchführen
     prepare_disk
