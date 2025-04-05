@@ -912,8 +912,7 @@ install_base_system() {
 
     # GPG-Schlüssel für lokalen Mirror vor multistrap importieren
     mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
-    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor > /tmp/local-mirror.gpg
-    cp /tmp/local-mirror.gpg /mnt/ubuntu/etc/apt/trusted.gpg.d/
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor > /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
 
     # Multistrap-Konfigurationsdatei erstellen
     mkdir -p /mnt/ubuntu/etc/apt/
@@ -930,8 +929,8 @@ aptsources=Ubuntu
 # Paketquellen konfigurieren
 [Ubuntu]
 packages=curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget apt-transport-https console-setup bash-completion systemd-resolved initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed efibootmgr
-source=http://archive.ubuntu.com/ubuntu
-keyring=ubuntu-keyring
+source=http://192.168.56.120/ubuntu
+keyring=/mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
 suite=${UBUNTU_CODENAME}
 components=main restricted universe multiverse
 EOF
@@ -952,10 +951,6 @@ EOF
     if ! multistrap -f /tmp/multistrap.conf; then
         log_error "multistrap ist fehlgeschlagen. Prüfen Sie die Netzwerkverbindung und Paketquellen."
     fi
-
-    # GPG-Schlüssel für lokalen Mirror importieren
-    mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
-    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
     
     # Für ersten Boot vorbereiten
     log_info "Konfiguriere installiertes System..."
