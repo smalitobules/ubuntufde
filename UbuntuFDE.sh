@@ -1003,6 +1003,11 @@ install_base_system() {
     # Prüfe Netzwerkverbindung
     check_network_connectivity
 
+    # GPG-Schlüssel für lokalen Mirror importieren
+    log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
+    mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
+    
     # Zu inkludierende Pakete definieren
     PACKAGES=(
         curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
@@ -1025,7 +1030,7 @@ install_base_system() {
         log_info "Verwende Standard-Installation..."
     fi
     
-    # Installation mit cdebootstrap durchführen
+    # Installation mit cdebootstrap durchführen und lokalen Mirror verwenden
     cdebootstrap \
         --include="$PACKAGELIST" \
         --flavour="$FLAVOUR" \
@@ -1033,7 +1038,7 @@ install_base_system() {
         --arch=amd64 \
         oracular \
         /mnt/ubuntu \
-        ${MIRROR_URL:-http://archive.ubuntu.com/ubuntu}
+        http://192.168.56.120/ubuntu
         
     if [ $? -ne 0 ]; then
         log_error "cdebootstrap fehlgeschlagen für Ubuntu $UBUNTU_CODENAME. Installation wird abgebrochen."
