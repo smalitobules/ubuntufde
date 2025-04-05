@@ -1034,7 +1034,7 @@ install_base_system() {
     cdebootstrap \
         --include="$PACKAGELIST" \
         --flavour="$FLAVOUR" \
-        $GNUPG_DIR \
+        --allow-unauthenticated \
         --arch=amd64 \
         oracular \
         /mnt/ubuntu \
