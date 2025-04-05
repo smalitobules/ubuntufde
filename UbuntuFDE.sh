@@ -1139,7 +1139,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     # Download mit Fehlerbehandlung
     if wget --tries=3 --timeout=15 -O /tmp/thorium.deb "${THORIUM_URL}"; then
         echo "Download erfolgreich, installiere Thorium..."
-        if dpkg -i /tmp/thorium.deb || apt-get -f install -y; then
+        if sudo dpkg -i /tmp/thorium.deb || sudo apt-get -f install -y; then
             echo "Thorium wurde erfolgreich installiert."
         else
             echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
