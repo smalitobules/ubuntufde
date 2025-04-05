@@ -92,47 +92,6 @@ confirm() {
     fi
 }
 
-# Wrapper-Funktion für Paketinstallationen
-pkg_install() {
-    if command -v nala &> /dev/null; then
-        nala install -y "$@"
-    else
-        apt-get install -y "$@"
-    fi
-}
-
-pkg_update() {
-    if command -v nala &> /dev/null; then
-        nala update
-    else
-        apt-get update
-    fi
-}
-
-pkg_upgrade() {
-    if command -v nala &> /dev/null; then
-        nala upgrade -y
-    else
-        apt-get dist-upgrade -y
-    fi
-}
-
-pkg_clean() {
-    if command -v nala &> /dev/null; then
-        nala clean
-    else
-        apt-get clean
-    fi
-}
-
-pkg_autoremove() {
-    if command -v nala &> /dev/null; then
-        nala autoremove -y
-    else
-        apt-get autoremove -y
-    fi
-}
-
 ###################
 # Systemcheck     #
 ###################
@@ -145,7 +104,7 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
     
-    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
+    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget")
     local missing_deps=()
     
     for dep in "${deps[@]}"; do
@@ -156,9 +115,9 @@ check_dependencies() {
     
     if [ ${#missing_deps[@]} -ne 0 ]; then
         log_info "Aktualisiere Paketquellen..."
-        pkg_update
+        apt-get update
         log_info "Installiere fehlende Abhängigkeiten: ${missing_deps[*]}..."
-        pkg_install "${missing_deps[@]}"
+        apt-get install -y "${missing_deps[@]}"
     fi
 }
 
@@ -181,8 +140,8 @@ setup_ssh_access() {
     # Root-Passwort setzen
     echo "root:${SSH_PASSWORD}" | chpasswd
     
-    # SSH-Server einrichten
-    pkg_install openssh-server
+    # SSH-Server einrichten - Kein erneutes apt-get update
+    apt-get install -y screen openssh-server
     
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
     sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
@@ -194,7 +153,7 @@ setup_ssh_access() {
     echo "CONFIG_OPTION=${CONFIG_OPTION}" >> /tmp/install_config
     echo "SKIP_INITIAL_QUESTIONS=true" >> /tmp/install_config
     
-    # Skript kopieren
+    # Skript kopieren - SICHERSTELLEN, DASS ES MIT VOLLEM PFAD KOPIERT WIRD
     SCRIPT_PATH=$(readlink -f "$0")
     cp "$SCRIPT_PATH" /root/install_script.sh
     chmod +x /root/install_script.sh
@@ -966,7 +925,7 @@ install_base_system() {
         curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
         apt-transport-https console-setup bash-completion systemd-resolved
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
-        efibootmgr nala
+        efibootmgr 
     )
 
     # Pakete zu kommagetrennter Liste zusammenfügen
@@ -1109,48 +1068,10 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 #!/bin/bash
 set -e
 
+#set -x  # Detailliertes Debug-Logging aktivieren
+#exec > >(tee -a /var/log/setup-debug.log) 2>&1
+
 export DEBIAN_FRONTEND=noninteractive
-
-# Wrapper-Funktionen für Paketoperationen
-pkg_install() {
-    if command -v nala &> /dev/null; then
-        nala install -y "\$@"
-    else
-        apt-get install -y "\$@"
-    fi
-}
-
-pkg_update() {
-    if command -v nala &> /dev/null; then
-        nala update
-    else
-        apt-get update
-    fi
-}
-
-pkg_upgrade() {
-    if command -v nala &> /dev/null; then
-        nala upgrade -y
-    else
-        apt-get dist-upgrade -y
-    fi
-}
-
-pkg_clean() {
-    if command -v nala &> /dev/null; then
-        nala clean
-    else
-        apt-get clean
-    fi
-}
-
-pkg_autoremove() {
-    if command -v nala &> /dev/null; then
-        nala autoremove -y
-    else
-        apt-get autoremove -y
-    fi
-}
 
 # Zeitzone setzen
 if [ -n "${TIMEZONE}" ]; then
@@ -1205,8 +1126,8 @@ AUTOUPDATE
 
 # Systemaktualisierung durchführen
 echo "Aktualisiere Paketquellen und System..."
-pkg_update
-pkg_upgrade
+apt-get update
+apt-get dist-upgrade -y
 
 # Notwendige Pakete installieren 
 echo "Installiere Basis-Pakete..."
@@ -1220,7 +1141,7 @@ elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
 fi
 
 # Grundlegende Programme und Kernel installieren
-pkg_install --no-install-recommends \
+apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
     shim-signed \
     zram-tools \
@@ -1241,7 +1162,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ] && [ -f /tmp/thorium.deb ]; then
     echo "Thorium-Browser-Paket gefunden, installiere..."
     
     # Installation ohne Download oder CPU-Erkennung
-    if dpkg -i /tmp/thorium.deb || pkg_install -f; then
+    if dpkg -i /tmp/thorium.deb || apt-get -f install -y; then
         echo "Thorium wurde erfolgreich installiert."
     else
         echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
@@ -1366,15 +1287,15 @@ useradd -m -s /bin/bash -G sudo ${USERNAME}
 echo "${USERNAME}:${USER_PASSWORD}" | chpasswd
 
 # SSH-Server installieren (aber nicht aktivieren)
-pkg_install openssh-server
+apt-get install -y openssh-server
 # SSH-Server deaktivieren
 systemctl disable ssh
 
 # Firewall konfigurieren
-pkg_install ufw
+apt-get install -y ufw
 # GUI nur installieren wenn Desktop
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    pkg_install gufw
+    apt-get install -y gufw
 fi
 ufw default deny incoming
 ufw default allow outgoing
@@ -1389,7 +1310,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Installiere GNOME-Desktop-Umgebung..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation
-                pkg_install --no-install-recommends \
+                apt-get install -y --no-install-recommends \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
@@ -1405,7 +1326,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 # Minimale Installation
-                pkg_install --no-install-recommends \
+                apt-get install -y --no-install-recommends \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
@@ -1426,13 +1347,13 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         2)
             echo "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                pkg_install --no-install-recommends \
+                apt-get install -y --no-install-recommends \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                pkg_install --no-install-recommends \
+                apt-get install -y --no-install-recommends \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11                
@@ -1444,13 +1365,13 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         3)
             echo "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                pkg_install --no-install-recommends \
+                apt-get install -y --no-install-recommends \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                pkg_install --no-install-recommends \
+                apt-get install -y --no-install-recommends \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1462,7 +1383,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         *)
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
             # Fallback-Paketliste (GNOME)
-            pkg_install --no-install-recommends \
+            apt-get install -y --no-install-recommends \
                 gnome-session \
                 gnome-shell \
                 gdm3 \
@@ -1485,21 +1406,21 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     echo "Installiere Sprachpakete für ${UI_LANGUAGE}..."
     
     # Gemeinsame Sprachpakete für alle Desktop-Umgebungen
-    pkg_install language-pack-${UI_LANGUAGE%_*} language-selector-common
+    apt-get install -y language-pack-${UI_LANGUAGE%_*} language-selector-common
     
     # Desktop-spezifische Sprachpakete
     case "${DESKTOP_ENV}" in
         # GNOME Desktop
         1)
-            pkg_install language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome
+            apt-get install -y language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome
             ;;
         # KDE Plasma Desktop
         2)
-            pkg_install language-pack-kde-${UI_LANGUAGE%_*} kde-l10n-${UI_LANGUAGE%_*} || true
+            apt-get install -y language-pack-kde-${UI_LANGUAGE%_*} kde-l10n-${UI_LANGUAGE%_*} || true
             ;;
         # Xfce Desktop
         3)
-            pkg_install language-pack-${UI_LANGUAGE%_*}-base xfce4-session-l10n || true
+            apt-get install -y language-pack-${UI_LANGUAGE%_*}-base xfce4-session-l10n || true
             ;;
     esac
     
@@ -1530,14 +1451,14 @@ fi
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
     # GNOME Shell Erweiterungen installieren
     echo "Installiere GNOME Shell Erweiterungen..."
-    pkg_install gnome-shell-extensions chrome-gnome-shell
+    apt-get install -y gnome-shell-extensions chrome-gnome-shell
 fi   
     
 
 # Aufräumen
 echo "Bereinige temporäre Dateien..."
-pkg_clean
-pkg_autoremove
+apt-get clean
+apt-get autoremove -y
 rm -f /setup.sh
 MAINEOF
 
