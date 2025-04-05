@@ -989,22 +989,31 @@ install_base_system() {
     curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
     
     # Zu inkludierende Pakete definieren
-    PACKAGES=(
+    INCLUDED_PACKAGES=(
         curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
         apt-transport-https console-setup bash-completion systemd-resolved
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
         efibootmgr nala
     )
 
-    # Pakete zu kommagetrennter Liste zusammenfügen
-    PACKAGELIST=$(IFS=,; echo "${PACKAGES[*]}")
+    # Optional auszuschließende Pakete definieren
+    EXCLUDED_PACKAGES=(
+        snapd cloud-init
+    )
 
-    log_info "Installiere Ubuntu mit debootstrap (dies kann einige Minuten dauern)..."
-    
+    # Pakete zu kommagetrennter Liste zusammenfügen
+    INCLUDED_PACKAGELIST=$(IFS=,; echo "${INCLUDED_PACKAGES[*]}")
+
+    # Auszuschließende Pakete zu kommagetrennter Liste zusammenfügen
+    EXCLUDED_PACKAGELIST=$(IFS=,; echo "${EXCLUDED_PACKAGES[*]}")
+
+    log_info "Installiere das Ubuntu Basissystem..."
+
     # Installation mit debootstrap durchführen
     if [ "$UBUNTU_INSTALL_OPTION" = "3" ]; then
         debootstrap \
-            --include="$PACKAGELIST" \
+            --include="$INCLUDED_PACKAGELIST" \
+            --exclude="$EXCLUDED_PACKAGELIST" \
             --variant=minbase \
             --components=main,restricted,universe,multiverse \
             --arch=amd64 \
@@ -1013,7 +1022,8 @@ install_base_system() {
             http://192.168.56.120/ubuntu
     else
         debootstrap \
-            --include="$PACKAGELIST" \
+            --include="$INCLUDED_PACKAGELIST" \
+            --exclude="$EXCLUDED_PACKAGELIST" \
             --components=main,restricted,universe,multiverse \
             --arch=amd64 \
             oracular \
