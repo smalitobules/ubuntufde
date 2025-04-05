@@ -709,6 +709,7 @@ gather_user_input() {
         done
     fi
 
+    echo -e "\n${GREEN}[INFO]${NC} Partitionierung bestätigt. Die Festplatte wird nach Abschluss aller Konfigurationsfragen partitioniert."
     DISK_CONFIRMED=true
     export DISK_CONFIRMED
     
@@ -1244,36 +1245,43 @@ ufw default allow outgoing
 ufw enable
 
 # Desktop-Umgebung installieren
-echo "DEBUG: INSTALL_DESKTOP=${INSTALL_DESKTOP}, DESKTOP_ENV=${DESKTOP_ENV}, DESKTOP_SCOPE=${DESKTOP_SCOPE}" >> /var/log/install-debug.log
-
+echo "INSTALL_DESKTOP=${INSTALL_DESKTOP}, DESKTOP_ENV=${DESKTOP_ENV}, DESKTOP_SCOPE=${DESKTOP_SCOPE}" >> /var/log/install.log
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
     case "${DESKTOP_ENV}" in
         # GNOME Desktop
         1)
             echo "Installiere GNOME-Desktop-Umgebung..."
-            # GNOME-Paketliste
-            GNOME_PACKAGES=(
-                gnome-session
-                gnome-shell
-                gdm3
-                gnome-terminal
-                gnome-text-editor
-                gnome-tweaks
-                nautilus
-                nautilus-hide
-                ubuntu-gnome-wallpapers
-                virtualbox-guest-additions-iso
-                virtualbox-guest-utils
-                virtualbox-guest-x11
-            )
-            
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation
-                apt-get install -y --no-install-recommends "${GNOME_PACKAGES[@]}"
+                apt-get install -y --no-install-recommends \
+                    gnome-session \
+                    gnome-shell \
+                    gdm3 \
+                    gnome-terminal \
+                    gnome-text-editor \
+                    gnome-tweaks \
+                    nautilus \
+                    nautilus-hide \
+                    ubuntu-gnome-wallpapers \
+                    virtualbox-guest-additions-iso \
+                    virtualbox-guest-utils \
+                    virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 # Minimale Installation
-                apt-get install -y --no-install-recommends "${GNOME_PACKAGES[@]}"
+                apt-get install -y --no-install-recommends \
+                    gnome-session \
+                    gnome-shell \
+                    gdm3 \
+                    gnome-terminal \
+                    gnome-text-editor \
+                    gnome-tweaks \
+                    nautilus \
+                    nautilus-hide \
+                    ubuntu-gnome-wallpapers \
+                    virtualbox-guest-additions-iso \
+                    virtualbox-guest-utils \
+                    virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1281,18 +1289,17 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         # KDE Plasma Desktop (momentan nur Platzhalter)
         2)
             echo "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
-            # KDE-Paketliste (aktuell noch GNOME als Platzhalter)
-            KDE_PACKAGES=(
-                virtualbox-guest-additions-iso
-                virtualbox-guest-utils
-                virtualbox-guest-x11
-            )
-            
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y --no-install-recommends "${KDE_PACKAGES[@]}"
+                apt-get install -y --no-install-recommends \
+                    virtualbox-guest-additions-iso \
+                    virtualbox-guest-utils \
+                    virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y --no-install-recommends "${KDE_PACKAGES[@]}"
+                apt-get install -y --no-install-recommends \
+                    virtualbox-guest-additions-iso \
+                    virtualbox-guest-utils \
+                    virtualbox-guest-x11                
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1300,18 +1307,17 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         # Xfce Desktop (momentan nur Platzhalter)
         3)
             echo "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
-            # Xfce-Paketliste (aktuell noch GNOME als Platzhalter)
-            XFCE_PACKAGES=(
-                virtualbox-guest-additions-iso
-                virtualbox-guest-utils
-                virtualbox-guest-x11
-            )
-            
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                apt-get install -y --no-install-recommends "${XFCE_PACKAGES[@]}"
+                apt-get install -y --no-install-recommends \
+                    virtualbox-guest-additions-iso \
+                    virtualbox-guest-utils \
+                    virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                apt-get install -y --no-install-recommends "${XFCE_PACKAGES[@]}"
+                apt-get install -y --no-install-recommends \
+                    virtualbox-guest-additions-iso \
+                    virtualbox-guest-utils \
+                    virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
@@ -1320,22 +1326,19 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         *)
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
             # Fallback-Paketliste (GNOME)
-            FALLBACK_PACKAGES=(
-                gnome-session
-                gnome-shell
-                gdm3
-                gnome-terminal
-                gnome-text-editor
-                gnome-tweaks
-                nautilus
-                nautilus-hide
-                ubuntu-gnome-wallpapers
-                virtualbox-guest-additions-iso
-                virtualbox-guest-utils
+            apt-get install -y --no-install-recommends \
+                gnome-session \
+                gnome-shell \
+                gdm3 \
+                gnome-terminal \
+                gnome-text-editor \
+                gnome-tweaks \
+                nautilus \
+                nautilus-hide \
+                ubuntu-gnome-wallpapers \
+                virtualbox-guest-additions-iso \
+                virtualbox-guest-utils \
                 virtualbox-guest-x11
-            )
-            
-            apt-get install -y --no-install-recommends "${FALLBACK_PACKAGES[@]}"
             echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
