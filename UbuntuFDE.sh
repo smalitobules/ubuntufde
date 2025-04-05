@@ -1140,48 +1140,56 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     # CPU-Erweiterungen prüfen
     if grep -q " avx2 " /proc/cpuinfo; then
         CPU_EXT="AVX2"
-        echo "AVX2-Unterstützung gefunden."
     elif grep -q " avx " /proc/cpuinfo; then
         CPU_EXT="AVX"
-        echo "AVX-Unterstützung gefunden."
     elif grep -q " sse4_1 " /proc/cpuinfo; then
         CPU_EXT="SSE4"
-        echo "SSE4-Unterstützung gefunden."
     else
         CPU_EXT="SSE3"
-        echo "Verwende SSE3-Basisversion."
     fi
+    echo "CPU-Erweiterung: ${CPU_EXT}"
     
-    # Aktuelle Version ermitteln
-    THORIUM_VERSION=$(curl -s https://api.github.com/repos/Alex313031/Thorium/releases/latest | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^M//')
+    # Neueste Version dynamisch ermitteln durch Folgen der Umleitung
+    echo "Ermittle neueste Thorium-Version..."
+    REDIRECT_URL=$(curl -L -s -o /dev/null -w '%{url_effective}' https://github.com/Alex313031/Thorium/releases/latest)
+    THORIUM_VERSION=$(echo "$REDIRECT_URL" | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | sed 's/^M//')
+    
+    # Fallback-Version falls die Ermittlung fehlschlägt
     if [ -z "$THORIUM_VERSION" ]; then
-        # Fallback-Version
         THORIUM_VERSION="130.0.6723.174"
+        echo "Versionserkennung fehlgeschlagen, verwende Fallback-Version: ${THORIUM_VERSION}"
+    else
+        echo "Neueste Version erkannt: ${THORIUM_VERSION}"
     fi
     
-    echo "Verwende Thorium-Version: $THORIUM_VERSION"
+    # URL direkt zum Release-Asset
     THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
+    echo "Download-URL: ${THORIUM_URL}"
     
-    # Download und Installation
-    wget -O /tmp/thorium.deb "$THORIUM_URL" || {
+    # Download mit Fehlerbehandlung
+    if wget --tries=3 --timeout=15 -O /tmp/thorium.deb "${THORIUM_URL}"; then
+        echo "Download erfolgreich, installiere Thorium..."
+        if dpkg -i /tmp/thorium.deb || apt-get -f install -y; then
+            echo "Thorium wurde erfolgreich installiert."
+        else
+            echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
+        fi
+    else
         echo "Download fehlgeschlagen, versuche generische Version..."
         THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
-        wget -O /tmp/thorium.deb "$THORIUM_URL" || {
-            echo "Generischer Download fehlgeschlagen, verwende Fallback-Links..."
-            FALLBACK_VERSION="130.0.6723.174"
-            FALLBACK_URL="https://github.com/Alex313031/Thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
-            wget -O /tmp/thorium.deb "$FALLBACK_URL" || {
-                echo "Auch Fallback fehlgeschlagen, Installation von Thorium übersprungen."
-            }
-        }
-    }
-    
-    # Installation, wenn Download erfolgreich
-    if [ -f /tmp/thorium.deb ]; then
-        apt-get install -y /tmp/thorium.deb
-        rm /tmp/thorium.deb
-        echo "Thorium-Installation abgeschlossen."
+        if wget --tries=3 --timeout=15 -O /tmp/thorium.deb "${THORIUM_URL}"; then
+            if dpkg -i /tmp/thorium.deb || apt-get -f install -y; then
+                echo "Thorium (generische Version) wurde erfolgreich installiert."
+            else
+                echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
+            fi
+        else
+            echo "Alle Download-Versuche fehlgeschlagen. Thorium wird nicht installiert."
+        fi
     fi
+    
+    # Aufräumen
+    rm -f /tmp/thorium.deb
 fi
 
 # Grundlegende Programme und Kernel installieren
