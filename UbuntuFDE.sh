@@ -930,7 +930,7 @@ aptsources=Ubuntu
 # Paketquellen konfigurieren
 [Ubuntu]
 packages=curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget apt-transport-https console-setup bash-completion systemd-resolved initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed efibootmgr
-source=http://192.168.56.120/ubuntu
+source=http://192.168.56.120/ubuntu/
 keyring=ubuntu-keyring
 suite=${UBUNTU_CODENAME}
 components=main restricted universe multiverse
