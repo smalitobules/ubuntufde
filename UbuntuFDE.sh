@@ -1631,15 +1631,19 @@ fi
 
 # Deaktiviere unnötige systemd-Dienste
 systemctl disable --now \
-    apt-daily.timer \
-    apt-daily-upgrade.timer \
-    systemd-resolved.service \
-    systemd-networkd.service \
+    #apt-daily.timer \
+    #apt-daily-upgrade.timer \
+    #systemd-resolved.service \
+    #systemd-networkd.service \
+    #rtkit-daemon.service \
+    apport.service \
+    apport-autoreport.service \
+    avahi-daemon.service \
     bluetooth.service \
     cups.service \
     ModemManager.service \
-    upower.service \
-    rtkit-daemon.service
+    upower.service
+    
 
 # Optional: Zusätzliche Bereinigung für Desktop-Systeme
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
