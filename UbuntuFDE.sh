@@ -1037,8 +1037,8 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 #!/bin/bash
 set -e
 
-set -x  # Detailliertes Debug-Logging aktivieren
-exec > >(tee -a /var/log/setup-debug.log) 2>&1
+#set -x  # Detailliertes Debug-Logging aktivieren
+#exec > >(tee -a /var/log/setup-debug.log) 2>&1
 
 export DEBIAN_FRONTEND=noninteractive
 
