@@ -145,7 +145,7 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
     
-    local deps=("sgdisk" "cryptsetup" "cdebootstrap" "lvm2" "curl" "wget" "nala")
+    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
     local missing_deps=()
     
     for dep in "${deps[@]}"; do
@@ -1019,29 +1019,30 @@ install_base_system() {
     # Pakete zu kommagetrennter Liste zusammenfügen
     PACKAGELIST=$(IFS=,; echo "${PACKAGES[*]}")
 
-    log_info "Installiere Ubuntu $UBUNTU_CODENAME mit cdebootstrap (dies kann einige Minuten dauern)..."
+    log_info "Installiere Ubuntu mit debootstrap (dies kann einige Minuten dauern)..."
     
-    # Flavor basierend auf der Installationsoption wählen
+    # Installation mit debootstrap durchführen
     if [ "$UBUNTU_INSTALL_OPTION" = "3" ]; then
-        FLAVOUR="minimal"
-        log_info "Verwende minimale Installation..."
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --variant=minbase \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
     else
-        FLAVOUR="standard"
-        log_info "Verwende Standard-Installation..."
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
     fi
     
-    # Installation mit cdebootstrap durchführen und lokalen Mirror verwenden
-    cdebootstrap \
-        --include="$PACKAGELIST" \
-        --flavour="$FLAVOUR" \
-        --allow-unauthenticated \
-        --arch=amd64 \
-        oracular \
-        /mnt/ubuntu \
-        http://192.168.56.120/ubuntu
-        
     if [ $? -ne 0 ]; then
-        log_error "cdebootstrap fehlgeschlagen für Ubuntu $UBUNTU_CODENAME. Installation wird abgebrochen."
+        log_error "debootstrap fehlgeschlagen für Ubuntu. Installation wird abgebrochen."
     fi
     
     log_info "Basissystem erfolgreich installiert."
