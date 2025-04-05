@@ -1069,7 +1069,7 @@ deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted univers
 deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
 
-    # Thorium Browser Repository
+    ## Thorium Browser Repository
     #if [ "${INSTALL_DESKTOP}" = "1" ]; then
     #    echo "Füge Thorium-Repository hinzu..."
     #    echo "deb [trusted=yes] http://dl.thorium.rocks/debian/ stable main" > /etc/apt/sources.list.d/thorium.list
@@ -1199,8 +1199,9 @@ apt-get install -y --no-install-recommends \
     deluge \
     ufw \
     nala \
-    jq \
-    #$([ "${INSTALL_DESKTOP}" = "1" ] && echo "thorium-browser")
+    jq
+    
+#$([ "${INSTALL_DESKTOP}" = "1" ] && echo "thorium-browser")
 
 # Spracheinstellungen
 locale-gen ${LOCALE} en_US.UTF-8
