@@ -998,7 +998,7 @@ install_base_system() {
 
     # Optional auszuschließende Pakete definieren
     EXCLUDED_PACKAGES=(
-        snapd cloud-init
+        snapd cloud-init ubuntu-docs*
     )
 
     # Pakete zu kommagetrennter Liste zusammenfügen
@@ -1235,7 +1235,7 @@ fi
 # Paketquellen und Repositories einrichten
 
     # Ubuntu Paketquellen
-cat > /etc/apt/sources.list <<-SOURCES
+    cat > /etc/apt/sources.list <<-SOURCES
 #deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
 #deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
 #deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
@@ -1256,6 +1256,37 @@ SOURCES
         echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
     fi
 
+    # Lade Mozilla Team GPG-Schlüssel
+    echo "Füge Firefox-Repository hinzu..."
+    if [ ! -f "/etc/apt/keyrings/mozillateam.gpg" ]; then
+        # GPG-Schlüssel für Mozilla Team Repository
+        mkdir -p /etc/apt/keyrings
+        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozillateam.gpg
+    fi
+
+    # Mozilla Team Repository mit dynamischem Ubuntu-Codenamen hinzufügen
+    echo "deb [signed-by=/etc/apt/keyrings/mozillateam.gpg] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu ${UBUNTU_CODENAME} main" | tee /etc/apt/sources.list.d/mozilla-firefox.list
+
+    # Paket-Präferenzen für Firefox setzen
+    cat > /etc/apt/preferences.d/mozilla-firefox <<EOF
+Package: firefox*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001
+
+Package: firefox*
+Pin: release o=Ubuntu
+Pin-Priority: -1
+
+Package: thunderbird*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001
+
+Package: thunderbird*
+Pin: release o=Ubuntu
+Pin-Priority: -1
+EOF
+
+
     # Hier Platz für zukünftige Paketquellen
     # BEISPIEL: Multimedia-Codecs
     # if [ "${INSTALL_MULTIMEDIA}" = "1" ]; then
@@ -1273,7 +1304,7 @@ AUTOUPDATE
 
 ## Systemaktualisierung durchführen
 #echo "Aktualisiere Paketquellen und System..."
-#pkg_update
+pkg_update
 #pkg_upgrade
 
 # Notwendige Pakete installieren 
@@ -1297,11 +1328,14 @@ pkg_install --no-install-recommends \
     bleachbit \
     stacer \
     fastfetch \
+    firefox \
+    thunderbird \
     gparted \
     vlc \
     deluge \
     ufw \
     jq
+
 
 # Thorium Browser installieren
 if [ "${INSTALL_DESKTOP}" = "1" ] && [ -f /tmp/thorium.deb ]; then
@@ -1460,8 +1494,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-session \
                     gnome-shell \
                     gdm3 \
-                    gnome-terminal \
+                    gnome-disk-utility \
                     gnome-text-editor \
+                    gnome-terminal \
                     gnome-tweaks \
                     nautilus \
                     nautilus-hide \
@@ -1476,8 +1511,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-session \
                     gnome-shell \
                     gdm3 \
-                    gnome-terminal \
+                    gnome-disk-utility \
                     gnome-text-editor \
+                    gnome-terminal \
                     gnome-tweaks \
                     nautilus \
                     nautilus-hide \
@@ -1530,18 +1566,19 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
             # Fallback-Paketliste (GNOME)
             pkg_install --no-install-recommends \
-                gnome-session \
-                gnome-shell \
-                gdm3 \
-                gnome-terminal \
-                gnome-text-editor \
-                gnome-tweaks \
-                nautilus \
-                nautilus-hide \
-                ubuntu-gnome-wallpapers \
-                virtualbox-guest-additions-iso \
-                virtualbox-guest-utils \
-                virtualbox-guest-x11
+                    gnome-session \
+                    gnome-shell \
+                    gdm3 \
+                    gnome-disk-utility \
+                    gnome-text-editor \
+                    gnome-terminal \
+                    gnome-tweaks \
+                    nautilus \
+                    nautilus-hide \
+                    ubuntu-gnome-wallpapers \
+                    virtualbox-guest-additions-iso \
+                    virtualbox-guest-utils \
+                    virtualbox-guest-x11
             echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
