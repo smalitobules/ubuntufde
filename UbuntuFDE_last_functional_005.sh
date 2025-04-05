@@ -145,7 +145,7 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
     
-    local deps=("sgdisk" "cryptsetup" "cdebootstrap" "lvm2" "curl" "wget" "nala")
+    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
     local missing_deps=()
     
     for dep in "${deps[@]}"; do
@@ -160,58 +160,6 @@ check_dependencies() {
         log_info "Installiere fehlende Abhängigkeiten: ${missing_deps[*]}..."
         pkg_install "${missing_deps[@]}"
     fi
-}
-
-find_fastest_mirrors() {
-    log_info "Suche nach schnellsten Paketquellen..."
-    
-    # Sicherstellen, dass nala installiert ist
-    if ! command -v nala &> /dev/null; then
-        log_warn "Nala nicht gefunden, überspringe Mirror-Optimierung."
-        MIRROR_URL="http://archive.ubuntu.com/ubuntu"
-        return
-    fi
-    
-    # Ländererkennung basierend auf IP-Adresse
-    log_info "Ermittle Land basierend auf IP-Adresse..."
-    COUNTRY_CODE=$(curl -s https://ipapi.co/country_code)
-    
-    if [ -z "$COUNTRY_CODE" ]; then
-        # Fallback wenn API nicht funktioniert
-        log_warn "Ländererkennung fehlgeschlagen, versuche alternative API..."
-        COUNTRY_CODE=$(curl -s https://ipinfo.io/country)
-    fi
-    
-    if [ -z "$COUNTRY_CODE" ]; then
-        # Letzter Fallback
-        log_warn "Ländererkennung fehlgeschlagen, verwende 'all'."
-        COUNTRY_CODE="all"
-    else
-        log_info "Erkanntes Land: $COUNTRY_CODE"
-    fi
-    
-    # Führe nala fetch mit dem erkannten Land aus
-    nala fetch --auto --fetches 3 --country "$COUNTRY_CODE"
-    
-    # Extrahiere den schnellsten Mirror
-    if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-        MIRROR_URL=$(grep -m 1 "deb http" /etc/apt/sources.list.d/nala-sources.list | awk '{print $2}')
-        log_info "Schnellster Mirror gefunden: $MIRROR_URL"
-        
-        # Kopiere die Konfiguration ins chroot-System
-        mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
-        cp /etc/apt/sources.list.d/nala-sources.list /mnt/ubuntu/etc/apt/sources.list.d/
-        
-        if [ -f /etc/nala/nala.list ]; then
-            mkdir -p /mnt/ubuntu/etc/nala/
-            cp /etc/nala/nala.list /mnt/ubuntu/etc/nala/
-        fi
-    else
-        log_warn "Keine optimierten Mirrors gefunden, verwende Standard-Mirror."
-        MIRROR_URL="http://archive.ubuntu.com/ubuntu"
-    fi
-    
-    export MIRROR_URL
 }
 
 check_system() {
@@ -1003,6 +951,16 @@ install_base_system() {
     # Prüfe Netzwerkverbindung
     check_network_connectivity
 
+    # GPG-Schlüssel für lokalen Mirror importieren
+    mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
+    
+    # Ubuntu-Basissystem mit debootstrap installieren
+    log_info "Installiere Ubuntu $UBUNTU_CODENAME Basissystem (dies kann einige Minuten dauern)..."
+    
+    # Bei Netzwerkinstallation nur Minimal-System installieren
+    echo "Installiere Ubuntu $UBUNTU_CODENAME mit debootstrap..."
+
     # Zu inkludierende Pakete definieren
     PACKAGES=(
         curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
@@ -1014,32 +972,30 @@ install_base_system() {
     # Pakete zu kommagetrennter Liste zusammenfügen
     PACKAGELIST=$(IFS=,; echo "${PACKAGES[*]}")
 
-    log_info "Installiere Ubuntu $UBUNTU_CODENAME mit cdebootstrap (dies kann einige Minuten dauern)..."
-    
-    # Flavor basierend auf der Installationsoption wählen
     if [ "$UBUNTU_INSTALL_OPTION" = "3" ]; then
-        FLAVOUR="minimal"
-        log_info "Verwende minimale Installation..."
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --variant=minbase \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
+        if [ $? -ne 0 ]; then
+            log_error "debootstrap fehlgeschlagen für oracular"
+        fi
     else
-        FLAVOUR="standard"
-        log_info "Verwende Standard-Installation..."
+        debootstrap \
+            --include="$PACKAGELIST" \
+            --components=main,restricted,universe,multiverse \
+            --arch=amd64 \
+            oracular \
+            /mnt/ubuntu \
+            http://192.168.56.120/ubuntu
+        if [ $? -ne 0 ]; then
+            log_error "debootstrap fehlgeschlagen für oracular"
+        fi
     fi
-    
-    # Installation mit cdebootstrap durchführen
-    cdebootstrap \
-        --include="$PACKAGELIST" \
-        --flavour="$FLAVOUR" \
-        --allow-unauthenticated \
-        --arch=amd64 \
-        oracular \
-        /mnt/ubuntu \
-        ${MIRROR_URL:-http://archive.ubuntu.com/ubuntu}
-        
-    if [ $? -ne 0 ]; then
-        log_error "cdebootstrap fehlgeschlagen für Ubuntu $UBUNTU_CODENAME. Installation wird abgebrochen."
-    fi
-    
-    log_info "Basissystem erfolgreich installiert."
     
     # Basisverzeichnisse für chroot
     for dir in /dev /dev/pts /proc /sys /run; do
@@ -1196,34 +1152,6 @@ pkg_autoremove() {
     fi
 }
 
-# Nala-Mirror-Optimierung für das finale System
-if command -v nala &> /dev/null; then
-    echo "Konfiguriere nala im neuen System..."
-    
-    # Falls wir bereits optimierte Mirrors haben, nutze diese
-    if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-        echo "Übernehme optimierte Mirror-Konfiguration..."
-    else
-        # Ermittle Land basierend auf IP-Adresse
-        echo "Ermittle Land basierend auf IP-Adresse..."
-        COUNTRY_CODE=\$(curl -s https://ipapi.co/country_code)
-        
-        if [ -z "\$COUNTRY_CODE" ]; then
-            # Fallback
-            COUNTRY_CODE=\$(curl -s https://ipinfo.io/country)
-        fi
-        
-        if [ -z "\$COUNTRY_CODE" ]; then
-            # Letzter Fallback
-            COUNTRY_CODE="all"
-        fi
-        
-        echo "Erkanntes Land: \$COUNTRY_CODE"
-        echo "Suche nach schnellsten Mirrors für das neue System..."
-        nala fetch --auto --fetches 3 --country "\$COUNTRY_CODE"
-    fi
-fi
-
 # Zeitzone setzen
 if [ -n "${TIMEZONE}" ]; then
     ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
@@ -1275,10 +1203,10 @@ APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "${UPDATE_OPTION}";
 AUTOUPDATE
 
-## Systemaktualisierung durchführen
-#echo "Aktualisiere Paketquellen und System..."
-#pkg_update
-#pkg_upgrade
+# Systemaktualisierung durchführen
+echo "Aktualisiere Paketquellen und System..."
+pkg_update
+pkg_upgrade
 
 # Notwendige Pakete installieren 
 echo "Installiere Basis-Pakete..."
@@ -1729,7 +1657,6 @@ main() {
         check_root
         check_system
         check_dependencies
-        find_fastest_mirrors
     fi
     
     # Installation
