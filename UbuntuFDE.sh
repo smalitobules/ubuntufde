@@ -645,8 +645,8 @@ gather_user_input() {
     if [ "$INSTALL_DESKTOP" = "1" ]; then
         echo -e "\n${CYAN}Desktop-Umgebung:${NC}"
         echo "1) GNOME (Standard Ubuntu Desktop)"
-        echo "2) KDE Plasma (leichtgewichtiger, Windows-ähnlich)"
-        echo "3) Xfce (sehr leichtgewichtig)"
+        echo "2) KDE Plasma (Umfangreicher Desktop, Ähnlich wie Windows)"
+        echo "3) Xfce (Leichter Desktop, Optimal für ältere Systeme)"
         read -p "Wähle eine Desktop-Umgebung [1]: " DE_CHOICE
         DESKTOP_ENV=${DE_CHOICE:-1}
         
@@ -1291,7 +1291,6 @@ pkg_install --no-install-recommends \
     vlc \
     deluge \
     ufw \
-    nala \
     jq
 
 # Thorium Browser installieren
