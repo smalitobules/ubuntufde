@@ -1068,7 +1068,7 @@ download_thorium() {
         log_info "Download-URL: ${THORIUM_URL}"
         
         # Download direkt ins chroot-Verzeichnis
-        if wget --tries=3 --timeout=15 -O /mnt/ubuntu/tmp/thorium.deb "${THORIUM_URL}"; then
+        if wget -q --show-progress --progress=bar:force:noscroll --tries=3 --timeout=10 -O /mnt/ubuntu/tmp/thorium.deb "${THORIUM_URL}"; then
             log_info "Download erfolgreich - Thorium wird später in chroot installiert"
             chmod 644 /mnt/ubuntu/tmp/thorium.deb
         else
@@ -1247,7 +1247,7 @@ deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted univers
 deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
 
-    # Liquorix-Kernel Repository (nur falls ausgewählt)
+    # Liquorix-Kernel Repository
     if [ "${KERNEL_TYPE}" = "liquorix" ]; then
         echo "Füge Liquorix-Kernel-Repository hinzu..."
         echo "deb http://liquorix.net/debian stable main" > /etc/apt/sources.list.d/liquorix.list
@@ -1256,16 +1256,8 @@ SOURCES
         echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
     fi
 
-    # Lade Mozilla Team GPG-Schlüssel
-    echo "Füge Firefox-Repository hinzu..."
-    if [ ! -f "/etc/apt/keyrings/mozillateam.gpg" ]; then
-        # GPG-Schlüssel für Mozilla Team Repository
-        mkdir -p /etc/apt/keyrings
-        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozillateam.gpg
-    fi
-
-    # Mozilla Team Repository mit dynamischem Ubuntu-Codenamen hinzufügen
-    echo "deb [signed-by=/etc/apt/keyrings/mozillateam.gpg] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu ${UBUNTU_CODENAME} main" | tee /etc/apt/sources.list.d/mozilla-firefox.list
+    # Mozilla Team Repository
+    add-apt-repository -y ppa:mozillateam/ppa
 
     # Paket-Präferenzen für Firefox setzen
     cat > /etc/apt/preferences.d/mozilla-firefox <<EOF
@@ -1635,8 +1627,27 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     # GNOME Shell Erweiterungen installieren
     echo "Installiere GNOME Shell Erweiterungen..."
     pkg_install gnome-shell-extensions chrome-gnome-shell
-fi   
-    
+fi
+
+# Deaktiviere unnötige systemd-Dienste
+systemctl disable --now \
+    apt-daily.timer \
+    apt-daily-upgrade.timer \
+    systemd-resolved.service \
+    systemd-networkd.service \
+    bluetooth.service \
+    cups.service \
+    ModemManager.service \
+    upower.service \
+    rtkit-daemon.service
+
+# Optional: Zusätzliche Bereinigung für Desktop-Systeme
+if [ "${INSTALL_DESKTOP}" = "1" ]; then
+    systemctl disable --now \
+        whoopsie.service \
+        kerneloops.service \
+        NetworkManager-wait-online.service
+fi
 
 # Aufräumen
 echo "Bereinige temporäre Dateien..."
