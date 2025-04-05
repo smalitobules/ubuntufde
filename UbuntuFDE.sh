@@ -1132,8 +1132,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     echo "CPU-Erweiterung erkannt: ${CPU_EXT}"
     
     # Feste Thorium-Version und direkter Download
+    echo "THORIUM_VERSION=${THORIUM_VERSION}"
+    echo "CPU_EXT=${CPU_EXT}"
     THORIUM_VERSION="130.0.6723.174"
-    THORIUM_URL="https://github.com/Alex313031/thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
+    THORIUM_URL="https://github.com/Alex313031/thorium/releases/download/M130.0.6723.174/thorium-browser_130.0.6723.174_SSE4.deb"
     echo "Download-URL: ${THORIUM_URL}"
     
     # Download mit Fehlerbehandlung
