@@ -1070,10 +1070,10 @@ deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted univer
 SOURCES
 
     # Thorium Browser Repository
-    #if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    #    echo "Füge Thorium-Repository hinzu..."
-    #    echo "deb [trusted=yes] http://dl.thorium.rocks/debian/ stable main" > /etc/apt/sources.list.d/thorium.list
-    #fi
+    if [ "${INSTALL_DESKTOP}" = "1" ]; then
+        echo "Füge Thorium-Repository hinzu..."
+        echo "deb [trusted=yes] http://dl.thorium.rocks/debian/ stable main" > /etc/apt/sources.list.d/thorium.list
+    fi
 
     # Liquorix-Kernel Repository (nur falls ausgewählt)
     if [ "${KERNEL_TYPE}" = "liquorix" ]; then
@@ -1133,57 +1133,6 @@ else
 fi
 cat /proc/cpuinfo | grep -E 'model name|flags' | head -2 >> /var/log/installation/thorium-cpu.log
 
-# Thorium Browser direkt von GitHub installieren (wenn Desktop aktiviert)
-if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    echo "Installiere Thorium Browser direkt von GitHub..."
-    
-    # CPU-Erweiterungen prüfen
-    if grep -q " avx2 " /proc/cpuinfo; then
-        CPU_EXT="AVX2"
-        echo "AVX2-Unterstützung gefunden."
-    elif grep -q " avx " /proc/cpuinfo; then
-        CPU_EXT="AVX"
-        echo "AVX-Unterstützung gefunden."
-    elif grep -q " sse4_1 " /proc/cpuinfo; then
-        CPU_EXT="SSE4"
-        echo "SSE4-Unterstützung gefunden."
-    else
-        CPU_EXT="SSE3"
-        echo "Verwende SSE3-Basisversion."
-    fi
-    
-    # Aktuelle Version ermitteln
-    THORIUM_VERSION=$(curl -s https://api.github.com/repos/Alex313031/Thorium/releases/latest | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^M//')
-    if [ -z "$THORIUM_VERSION" ]; then
-        # Fallback-Version
-        THORIUM_VERSION="130.0.6723.174"
-    fi
-    
-    echo "Verwende Thorium-Version: $THORIUM_VERSION"
-    THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
-    
-    # Download und Installation
-    wget -O /tmp/thorium.deb "$THORIUM_URL" || {
-        echo "Download fehlgeschlagen, versuche generische Version..."
-        THORIUM_URL="https://github.com/Alex313031/Thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
-        wget -O /tmp/thorium.deb "$THORIUM_URL" || {
-            echo "Generischer Download fehlgeschlagen, verwende Fallback-Links..."
-            FALLBACK_VERSION="130.0.6723.174"
-            FALLBACK_URL="https://github.com/Alex313031/Thorium/releases/download/M${FALLBACK_VERSION}/thorium-browser_${FALLBACK_VERSION}_${CPU_EXT}.deb"
-            wget -O /tmp/thorium.deb "$FALLBACK_URL" || {
-                echo "Auch Fallback fehlgeschlagen, Installation von Thorium übersprungen."
-            }
-        }
-    }
-    
-    # Installation, wenn Download erfolgreich
-    if [ -f /tmp/thorium.deb ]; then
-        apt-get install -y /tmp/thorium.deb
-        rm /tmp/thorium.deb
-        echo "Thorium-Installation abgeschlossen."
-    fi
-fi
-
 # Grundlegende Programme und Kernel installieren
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
@@ -1200,7 +1149,7 @@ apt-get install -y --no-install-recommends \
     ufw \
     nala \
     jq \
-    #$([ "${INSTALL_DESKTOP}" = "1" ] && echo "thorium-browser")
+    $([ "${INSTALL_DESKTOP}" = "1" ] && echo "thorium-browser")
 
 # Spracheinstellungen
 locale-gen ${LOCALE} en_US.UTF-8
