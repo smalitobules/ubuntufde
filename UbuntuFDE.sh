@@ -1413,7 +1413,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     # GNOME Shell Erweiterungen installieren
     echo "Installiere GNOME Shell Erweiterungen..."
     apt-get install -y gnome-shell-extensions chrome-gnome-shell
-    
+fi   
     
 
 # Aufräumen
