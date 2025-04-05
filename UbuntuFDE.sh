@@ -875,9 +875,6 @@ gather_user_input() {
     fi
 }
 
-# Festplattenauswahl
-gather_disk_input
-
 ###################
 # Partitionierung #
 ###################
