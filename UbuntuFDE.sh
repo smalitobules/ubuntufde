@@ -802,7 +802,7 @@ prepare_disk() {
             return
         fi
     else
-        log_info "Festplattenauswahl bereits bestätigt, fahre mit Partitionierung fort..."
+        log_info "Festplattenauswahl bestätigt, führe Partitionierung durch..."
     fi 
     
     # Grundlegende Variablen einrichten
