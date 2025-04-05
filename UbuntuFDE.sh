@@ -965,6 +965,37 @@ install_base_system() {
     show_progress 60
 }
 
+download_thorium() {
+    if [ "$INSTALL_DESKTOP" = "1" ]; then
+        log_info "Downloade Thorium Browser für chroot-Installation..."
+        
+        # CPU-Erweiterungen prüfen
+        if grep -q " avx2 " /proc/cpuinfo; then
+            CPU_EXT="AVX2"
+        elif grep -q " avx " /proc/cpuinfo; then
+            CPU_EXT="AVX"
+        elif grep -q " sse4_1 " /proc/cpuinfo; then
+            CPU_EXT="SSE4"
+        else
+            CPU_EXT="SSE3"
+        fi
+        log_info "CPU-Erweiterung erkannt: ${CPU_EXT}"
+        
+        # Thorium-Version und direkter Download
+        THORIUM_VERSION="130.0.6723.174"
+        THORIUM_URL="https://github.com/Alex313031/thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
+        log_info "Download-URL: ${THORIUM_URL}"
+        
+        # Download direkt ins chroot-Verzeichnis
+        if wget --tries=3 --timeout=15 -O /mnt/ubuntu/tmp/thorium.deb "${THORIUM_URL}"; then
+            log_info "Download erfolgreich - Thorium wird später in chroot installiert"
+            chmod 644 /mnt/ubuntu/tmp/thorium.deb
+        else
+            log_error "Download fehlgeschlagen!"
+        fi
+    fi
+}
+
 prepare_chroot() {
     log_progress "Bereite chroot-Umgebung vor..."
     
@@ -1069,12 +1100,6 @@ deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted univers
 deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
 
-    ## Thorium Browser Repository
-    #if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    #    echo "Füge Thorium-Repository hinzu..."
-    #    echo "deb [trusted=yes] http://dl.thorium.rocks/debian/ stable main" > /etc/apt/sources.list.d/thorium.list
-    #fi
-
     # Liquorix-Kernel Repository (nur falls ausgewählt)
     if [ "${KERNEL_TYPE}" = "liquorix" ]; then
         echo "Füge Liquorix-Kernel-Repository hinzu..."
@@ -1115,45 +1140,6 @@ elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
     KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
 fi
 
-# Thorium Browser installieren
-if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    echo "Installiere Thorium Browser direkt von GitHub..."
-    
-    # CPU-Erweiterungen prüfen
-    if grep -q " avx2 " /proc/cpuinfo; then
-        CPU_EXT="AVX2"
-    elif grep -q " avx " /proc/cpuinfo; then
-        CPU_EXT="AVX"
-    elif grep -q " sse4_1 " /proc/cpuinfo; then
-        CPU_EXT="SSE4"
-    else
-        CPU_EXT="SSE3"
-    fi
-    echo "CPU-Erweiterung erkannt: ${CPU_EXT}"
-    
-    # Feste Thorium-Version und direkter Download
-    echo "THORIUM_VERSION=${THORIUM_VERSION}"
-    echo "CPU_EXT=${CPU_EXT}"
-    THORIUM_VERSION="130.0.6723.174"
-    THORIUM_URL="https://github.com/Alex313031/thorium/releases/download/M130.0.6723.174/thorium-browser_130.0.6723.174_SSE4.deb"
-    echo "Download-URL: ${THORIUM_URL}"
-    
-    # Download mit Fehlerbehandlung
-    if wget --tries=3 --timeout=15 -O /tmp/thorium.deb "${THORIUM_URL}"; then
-        echo "Download erfolgreich, installiere Thorium..."
-        if sudo dpkg -i /tmp/thorium.deb || sudo apt-get -f install -y; then
-            echo "Thorium wurde erfolgreich installiert."
-        else
-            echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
-        fi
-    else
-        echo "Download fehlgeschlagen, fahre mit restlicher Installation fort."
-    fi
-    
-    # Aufräumen
-    rm -f /tmp/thorium.deb
-fi
-
 # Grundlegende Programme und Kernel installieren
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
@@ -1170,7 +1156,21 @@ apt-get install -y --no-install-recommends \
     ufw \
     nala \
     jq
-    #$([ "${INSTALL_DESKTOP}" = "1" ] && echo "thorium-browser")
+
+# Thorium Browser installieren
+if [ "${INSTALL_DESKTOP}" = "1" ] && [ -f /tmp/thorium.deb ]; then
+    echo "Thorium-Browser-Paket gefunden, installiere..."
+    
+    # Installation ohne Download oder CPU-Erkennung
+    if dpkg -i /tmp/thorium.deb || apt-get -f install -y; then
+        echo "Thorium wurde erfolgreich installiert."
+    else
+        echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
+    fi
+    
+    # Aufräumen
+    rm -f /tmp/thorium.deb
+fi
 
 # Spracheinstellungen
 locale-gen ${LOCALE} en_US.UTF-8
@@ -1553,8 +1553,8 @@ main() {
     if [ "$1" = "ssh_connect" ]; then
         clear
         echo -e "${CYAN}============================================================${NC}"
-        echo -e "${CYAN}   Ubuntu Server FDE - Automatisches Installationsskript   ${NC}"
-        echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                              ${NC}"
+        echo -e "${CYAN}   UbuntuFDE - Automatisches Installationsskript            ${NC}"
+        echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                               ${NC}"
         echo -e "${CYAN}============================================================${NC}"
         echo -e "${GREEN}[INFO]${NC} Neustart der Installation via SSH."
         
@@ -1566,8 +1566,8 @@ main() {
         # Normale Initialisierung
         clear
         echo -e "${CYAN}============================================================${NC}"
-        echo -e "${CYAN}   Ubuntu Server FDE - Automatisches Installationsskript   ${NC}"
-        echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                              ${NC}"
+        echo -e "${CYAN}   UbuntuFDE - Automatisches Installationsskript            ${NC}"
+        echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                               ${NC}"
         echo -e "${CYAN}============================================================${NC}"
         echo
         
@@ -1594,6 +1594,7 @@ main() {
     setup_lvm
     mount_filesystems
     install_base_system
+    download_thorium
     prepare_chroot
     execute_chroot
     finalize_installation
