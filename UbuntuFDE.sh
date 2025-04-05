@@ -104,7 +104,7 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
     
-    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget")
+    local deps=("sgdisk" "cryptsetup" "multistrap" "lvm2" "curl" "wget")
     local missing_deps=()
     
     for dep in "${deps[@]}"; do
@@ -910,51 +910,55 @@ install_base_system() {
     # Prüfe Netzwerkverbindung
     check_network_connectivity
 
+    # GPG-Schlüssel für lokalen Mirror vor multistrap importieren
+    mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /tmp/local-mirror.gpg
+    cp /tmp/local-mirror.gpg /mnt/ubuntu/etc/apt/trusted.gpg.d/
+
+    # Multistrap-Konfigurationsdatei erstellen
+    mkdir -p /mnt/ubuntu/etc/apt/
+    cat > /tmp/multistrap.conf << EOF
+[General]
+arch=amd64
+directory=/mnt/ubuntu
+cleanup=true
+noauth=true
+unpack=true
+bootstrap=Ubuntu
+aptsources=Ubuntu
+
+# Paketquellen konfigurieren
+[Ubuntu]
+packages=curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget apt-transport-https console-setup bash-completion systemd-resolved initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed efibootmgr
+source=http://192.168.56.120/ubuntu
+keyring=ubuntu-keyring
+suite=${UBUNTU_CODENAME}
+components=main restricted universe multiverse
+EOF
+
+    # Paketmanager für parallele Downloads konfigurieren
+    mkdir -p /mnt/ubuntu/etc/apt/apt.conf.d/
+    cat > /mnt/ubuntu/etc/apt/apt.conf.d/99parallel-downloads << EOF
+// Konfiguration für parallele Downloads
+Acquire::Queue-Mode "host";
+Acquire::http::Parallel "10";
+Acquire::https::Parallel "10";
+Acquire::http::Dl-Limit "0";
+Acquire::https::Dl-Limit "0";
+EOF
+
+    # System mit multistrap installieren
+    log_info "Installiere Ubuntu ${UBUNTU_CODENAME} mit multistrap (dies kann einige Minuten dauern)..."
+    if ! multistrap -f /tmp/multistrap.conf; then
+        log_error "multistrap ist fehlgeschlagen. Prüfen Sie die Netzwerkverbindung und Paketquellen."
+    fi
+
     # GPG-Schlüssel für lokalen Mirror importieren
     mkdir -p /mnt/ubuntu/etc/apt/trusted.gpg.d/
     curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
     
-    # Ubuntu-Basissystem mit debootstrap installieren
-    log_info "Installiere Ubuntu $UBUNTU_CODENAME Basissystem (dies kann einige Minuten dauern)..."
-    
-    # Bei Netzwerkinstallation nur Minimal-System installieren
-    echo "Installiere Ubuntu $UBUNTU_CODENAME mit debootstrap..."
-
-    # Zu inkludierende Pakete definieren
-    PACKAGES=(
-        curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
-        apt-transport-https console-setup bash-completion systemd-resolved
-        initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
-        efibootmgr 
-    )
-
-    # Pakete zu kommagetrennter Liste zusammenfügen
-    PACKAGELIST=$(IFS=,; echo "${PACKAGES[*]}")
-
-    if [ "$UBUNTU_INSTALL_OPTION" = "3" ]; then
-        debootstrap \
-            --include="$PACKAGELIST" \
-            --variant=minbase \
-            --components=main,restricted,universe,multiverse \
-            --arch=amd64 \
-            oracular \
-            /mnt/ubuntu \
-            http://192.168.56.120/ubuntu
-        if [ $? -ne 0 ]; then
-            log_error "debootstrap fehlgeschlagen für oracular"
-        fi
-    else
-        debootstrap \
-            --include="$PACKAGELIST" \
-            --components=main,restricted,universe,multiverse \
-            --arch=amd64 \
-            oracular \
-            /mnt/ubuntu \
-            http://192.168.56.120/ubuntu
-        if [ $? -ne 0 ]; then
-            log_error "debootstrap fehlgeschlagen für oracular"
-        fi
-    fi
+    # Für ersten Boot vorbereiten
+    log_info "Konfiguriere installiertes System..."
     
     # Basisverzeichnisse für chroot
     for dir in /dev /dev/pts /proc /sys /run; do
@@ -962,11 +966,34 @@ install_base_system() {
         mount -B $dir /mnt/ubuntu$dir
     done
     
+    # Paketdatenbank initialisieren
+    chroot /mnt/ubuntu /bin/bash -c "dpkg --configure -a || true"
+    
     show_progress 60
 }
 
 prepare_chroot() {
     log_progress "Bereite chroot-Umgebung vor..."
+
+# Grundlegende Systemkonfigurationen
+if [ ! -f /mnt/ubuntu/etc/hostname ]; then
+    echo "${HOSTNAME}" > /mnt/ubuntu/etc/hostname
+fi
+
+if [ ! -f /mnt/ubuntu/etc/hosts ]; then
+    cat > /mnt/ubuntu/etc/hosts << EOF
+127.0.0.1   localhost
+127.0.1.1   ${HOSTNAME}
+
+# IPv6
+::1         localhost ip6-localhost ip6-loopback
+ff02::1     ip6-allnodes
+ff02::2     ip6-allrouters
+EOF
+fi
+
+# Benutzer und Passwörter
+mkdir -p /mnt/ubuntu/root
     
 # Aktuelle UUIDs für die Konfigurationsdateien ermitteln
 LUKS_BOOT_UUID=$(blkid -s UUID -o value ${DEVP}1)
@@ -1115,7 +1142,7 @@ elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
     KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
 fi
 
-# Thorium Browser direkt von GitHub installieren (wenn Desktop aktiviert)
+# Thorium Browser installieren
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
     echo "Installiere Thorium Browser direkt von GitHub..."
     
@@ -1129,23 +1156,11 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
     else
         CPU_EXT="SSE3"
     fi
-    echo "CPU-Erweiterung: ${CPU_EXT}"
+    echo "CPU-Erweiterung erkannt: ${CPU_EXT}"
     
-    # Neueste Version ermitteln
-    echo "Ermittle neueste Thorium-Version..."
-    REDIRECT_URL=$(curl -L -s -o /dev/null -w '%{url_effective}' https://github.com/Alex313031/Thorium/releases/latest)
-    THORIUM_VERSION=$(echo "$REDIRECT_URL" | grep -o 'M[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | sed 's/^M//')
-    
-    # Fallback-Version falls die Ermittlung fehlschlägt
-    if [ -z "$THORIUM_VERSION" ]; then
-        THORIUM_VERSION="130.0.6723.174"
-        echo "Versionserkennung fehlgeschlagen, verwende Fallback-Version: ${THORIUM_VERSION}"
-    else
-        echo "Neueste Version erkannt: ${THORIUM_VERSION}"
-    fi
-    
-    # URL direkt zum Release-Asset
-    THORIUM_URL="https://github.com/Alex313031/Thorium/releases/tag/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
+    # Feste Thorium-Version und direkter Download
+    THORIUM_VERSION="130.0.6723.174"
+    THORIUM_URL="https://github.com/Alex313031/thorium/releases/download/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_${CPU_EXT}.deb"
     echo "Download-URL: ${THORIUM_URL}"
     
     # Download mit Fehlerbehandlung
@@ -1157,17 +1172,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
         fi
     else
-        echo "Download fehlgeschlagen, versuche generische Version..."
-        THORIUM_URL="https://github.com/Alex313031/Thorium/releases/tag/M${THORIUM_VERSION}/thorium-browser_${THORIUM_VERSION}_amd64.deb"
-        if wget --tries=3 --timeout=15 -O /tmp/thorium.deb "${THORIUM_URL}"; then
-            if dpkg -i /tmp/thorium.deb || apt-get -f install -y; then
-                echo "Thorium (generische Version) wurde erfolgreich installiert."
-            else
-                echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
-            fi
-        else
-            echo "Alle Download-Versuche fehlgeschlagen. Thorium wird nicht installiert."
-        fi
+        echo "Download fehlgeschlagen, fahre mit restlicher Installation fort."
     fi
     
     # Aufräumen
