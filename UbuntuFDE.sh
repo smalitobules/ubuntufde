@@ -1115,6 +1115,24 @@ elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
     KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
 fi
 
+# Thorium CPU-Erkennung loggen
+mkdir -p /var/log/installation
+echo "CPU-Erweiterungen für Thorium:" > /var/log/installation/thorium-cpu.log
+if grep -q " avx2 " /proc/cpuinfo; then
+    echo "AVX2-Unterstützung gefunden" >> /var/log/installation/thorium-cpu.log
+    echo "CPU_EXT=AVX2" >> /var/log/installation/thorium-cpu.log
+elif grep -q " avx " /proc/cpuinfo; then
+    echo "AVX-Unterstützung gefunden" >> /var/log/installation/thorium-cpu.log
+    echo "CPU_EXT=AVX" >> /var/log/installation/thorium-cpu.log
+elif grep -q " sse4_1 " /proc/cpuinfo; then
+    echo "SSE4-Unterstützung gefunden" >> /var/log/installation/thorium-cpu.log
+    echo "CPU_EXT=SSE4" >> /var/log/installation/thorium-cpu.log
+else
+    echo "SSE3-Basisversion verwendet" >> /var/log/installation/thorium-cpu.log
+    echo "CPU_EXT=SSE3" >> /var/log/installation/thorium-cpu.log
+fi
+cat /proc/cpuinfo | grep -E 'model name|flags' | head -2 >> /var/log/installation/thorium-cpu.log
+
 # Grundlegende Programme und Kernel installieren
 apt-get install -y --no-install-recommends \
     \${KERNEL_PACKAGES} \
