@@ -786,9 +786,6 @@ gather_user_input() {
         break
     done
 
-    # Festplattenauswahl
-    gather_disk_input
-
     # Warnung vor der Partitionierung
     if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
         log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
@@ -877,6 +874,9 @@ gather_user_input() {
         read -p "Gib zusätzliche Pakete an (durch Leerzeichen getrennt): " ADDITIONAL_PACKAGES
     fi
 }
+
+# Festplattenauswahl
+gather_disk_input
 
 ###################
 # Partitionierung #
@@ -1743,8 +1743,9 @@ main() {
     echo -e "${CYAN}Starte Installationsprozess...${NC}"
     echo
     
-    # Benutzerkonfiguration
+    # Benutzereingaben sammeln
     gather_user_input
+    gather_disk_input
     
     # Installation durchführen
     prepare_disk
