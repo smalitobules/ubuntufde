@@ -547,11 +547,11 @@ gather_disk_input() {
     # Zeige Systempartitionen mit ihren Größen
     echo -e "\n${CYAN}Übersicht der Systempartitionen:${NC}"
     echo -e "${YELLOW}PARTITION    GRÖSSE    ZWECK${NC}"
-    echo -e "----------------------------------"
+    echo -e "-------------------------------------------------------------------------------"
     echo -e "EFI-SP       256 MB    EFI-System-Partition für den Bootloader"
     echo -e "GRUB         2 MB      GRUB Bios-Boot-Partition"
     echo -e "boot         1024 MB   Boot-Partition (enthält Kernel, initramfs)"
-    echo -e "----------------------------------"
+    echo -e "--------------------------------------------------------------------------------"
     echo -e "GESAMT       1282 MB   Reserviert für Systempartitionen"
     echo -e "\nVerfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
 
