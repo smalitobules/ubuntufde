@@ -991,6 +991,7 @@ install_base_system() {
         apt-transport-https console-setup bash-completion systemd-resolved
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
         efibootmgr nala openssh-server smbclient cifs-utils util-linux net-tools
+        ufw iputils
     )
 
     # Optional auszuschließende Pakete definieren
