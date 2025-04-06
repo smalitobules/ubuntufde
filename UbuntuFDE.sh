@@ -1570,6 +1570,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-terminal \
                     gnome-tweaks \
                     gufw \
+                    dconf-editor \
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
@@ -1589,6 +1590,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-terminal \
                     gnome-tweaks \
                     gufw \
+                    dconf-editor \
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
@@ -1649,6 +1651,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-terminal \
                     gnome-tweaks \
                     gufw \
+                    dconf-editor \
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
@@ -1841,51 +1844,62 @@ fi
 if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
     echo "Konfiguriere Gnome-Standardeinstellungen systemweit..."
     
-    # Verzeichnis für systemweite dconf-Profile erstellen
-    mkdir -p /etc/dconf/profile/
-    mkdir -p /etc/dconf/db/local.d/
+    # Verzeichnisstruktur erstellen
+    mkdir -p /etc/dconf/profile
+    mkdir -p /etc/dconf/db/local.d
+    mkdir -p /etc/dconf/db/gdm.d
     
-    # dconf-Profil erstellen
+    # Profile-Datei erstellen (user)
     cat > /etc/dconf/profile/user <<EOF
 user-db:user
 system-db:local
 EOF
-    
-# Systemweite Einstellungen definieren
-cat > /etc/dconf/db/local.d/00-system-settings <<EOF
+
+    # GDM-Profil erstellen
+    cat > /etc/dconf/profile/gdm <<EOF
+user-db:user
+system-db:gdm
+file-db:/usr/share/gdm/greeter-dconf-defaults
+EOF
+
+    # Systemweite Einstellungen erstellen
+    cat > /etc/dconf/db/local.d/00-system-settings <<EOF
 # Fensterknöpfe (Minimieren, Maximieren, Schließen) anzeigen
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
+focus-mode='sloppy'
+auto-raise=true
+auto-raise-delay=500
 
-# Dunkles Desktop-Theme aktivieren
+# Dunkles Theme aktivieren
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
 gtk-theme='Adwaita-dark'
+
+# Bildschirm nie ausschalten
+[org/gnome/settings-daemon/plugins/power]
+power-button-action='interactive'
+sleep-inactive-ac-type='nothing'
+sleep-inactive-battery-type='nothing'
+sleep-inactive-ac-timeout=0
+sleep-inactive-battery-timeout=0
+idle-dim=false
+
+# Bildschirm-Ausschaltverhalten konfigurieren
+[org/gnome/desktop/session]
+idle-delay=uint32 0
 
 # Desktop-Hintergrund
 [org/gnome/desktop/background]
 picture-uri='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
 picture-uri-dark='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
 
-# Bildschirm-Ausschaltverhalten konfigurieren
-[org/gnome/desktop/session]
-idle-delay=uint32 0
-
-# Bildschirm nie ausschalten
-[org/gnome/settings-daemon/plugins/power]
-power-button-action='interactive'
-sleep-inactive-ac-type='blank'
-sleep-inactive-battery-type='blank'
-sleep-inactive-ac-timeout=0
-sleep-inactive-battery-timeout=0
-idle-dim=false
-
-# Tastenkombination für Nautilus öffnen
+# Tastenkombination Nautilus öffnen
 [org/gnome/settings-daemon/plugins/media-keys]
 home=['<Super>e']
 screensaver=['']
 
-# Tastenkombination für Bildschirmsperre aktivieren
+# Tastenkombination für Benutzerwechsel
 [org/gnome/shell/keybindings]
 switch-user=['<Super>l']
 
@@ -1902,7 +1916,7 @@ color-shading-type='solid'
 primary-color='#000000'
 secondary-color='#000000'
 
-# Benutzerwechsel erlauben aber Bildschirmsperre vermeiden
+# Benutzerwechsel erlauben, aber Bildschirmsperre vermeiden
 [org/gnome/desktop/lockdown]
 disable-user-switching=false
 disable-lock-screen=true
@@ -1926,15 +1940,18 @@ show-delete-permanently=true
 [org/gnome/terminal/legacy]
 theme-variant='dark'
 EOF
-    
-# GDM (Login-Bildschirm) Konfiguration
-mkdir -p /etc/dconf/db/gdm.d/
-cat > /etc/dconf/db/gdm.d/01-gdm-settings <<EOF
+
+    # GDM-Einstellungen (Login-Bildschirm)
+    cat > /etc/dconf/db/gdm.d/01-gdm-settings <<EOF
 [org/gnome/login-screen]
 disable-user-list=true
 banner-message-enable=true
 banner-message-text='Zugriff nur für autorisierte Benutzer'
 logo=''
+
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+gtk-theme='Adwaita-dark'
 
 [org/gnome/desktop/background]
 picture-uri=''
@@ -1943,7 +1960,7 @@ secondary-color='#000000'
 color-shading-type='solid'
 picture-options='none'
 EOF
-    
+
     # Automatische Anmeldung für den erstellten Benutzer konfigurieren
     mkdir -p /etc/gdm3/
     cat > /etc/gdm3/custom.conf <<EOF
@@ -1963,52 +1980,52 @@ Enable=false
 [chooser]
 Hosts=
 EOF
+
+    # Datenbankaktualisierung erzwingen
+    dconf update
+
+    # Individuelle Benutzereinstellungen (für den ersten Login)
+    mkdir -p /home/${USERNAME}/.config/dconf/
     
-    # Keyring ohne Passwort konfigurieren für automatische Anmeldung
-    # Stelle sicher, dass libpam-gnome-keyring installiert ist
-    pkg_install libpam-gnome-keyring
-    
-    # PAM-Konfiguration anpassen - Keyring automatisch entsperren
-    if ! grep -q "pam_gnome_keyring.so" /etc/pam.d/login; then
-        echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/login
-        echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/login
-    fi
-    
-    if ! grep -q "pam_gnome_keyring.so" /etc/pam.d/gdm-password; then
-        echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/gdm-password
-        echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/gdm-password
-    fi
-    
-    # Herunterfahren ohne Anmeldung deaktivieren
-    # Erstelle PolicyKit-Regel
-    cat > /etc/polkit-1/localauthority/50-local.d/restrict-shutdown.pkla <<EOF
-[Restrict system shutdown]
-Identity=unix-user:*
-Action=org.freedesktop.login1.power-off;org.freedesktop.login1.power-off-multiple-sessions;org.freedesktop.login1.reboot;org.freedesktop.login1.reboot-multiple-sessions
-ResultActive=auth_admin
-ResultAny=auth_admin
-ResultInactive=auth_admin
+    # Sicherstellen, dass die Benutzereinstellungen als Vorlage richtig gesetzt werden
+    cat > /home/${USERNAME}/.config/dconf/user <<EOF
+# Dies ist eine Vorlage für die Benutzereinstellungen
+# Die tatsächlichen Einstellungen werden bei der ersten Anmeldung erstellt
 EOF
     
-    # Erstelle ein Skript zur Initialisierung des Keyrings ohne Passwort für den Benutzer
-    mkdir -p /home/${USERNAME}/.config/autostart/
-    cat > /home/${USERNAME}/.config/autostart/keyring-init.desktop <<EOF
-[Desktop Entry]
-Type=Application
-Name=Initialize Keyring
-Comment=Initialize Keyring without password
-Exec=/usr/bin/gnome-keyring-daemon --unlock
-Terminal=false
-X-GNOME-Autostart-enabled=true
-X-GNOME-Autostart-Phase=Application
-EOF
+    # gsettings-Befehle für den neu erstellten Benutzer direkt anwenden
+    sudo -u ${USERNAME} DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u ${USERNAME})/bus gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+    sudo -u ${USERNAME} DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u ${USERNAME})/bus gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+    sudo -u ${USERNAME} DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u ${USERNAME})/bus gsettings set org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close'
     
-    # Rechte anpassen
-    chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.config/
+    # Einstellungen sofort aktivieren
+    echo "Reload dconf Einstellungen..."
+    dconf update
+    
+    # GNOME Shell Extensions Registry Settings
+    mkdir -p /home/${USERNAME}/.local/share/gnome-shell/extensions/
+    chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.local/
+    
+    # Benutzer zur Gruppe plugdev hinzufügen (falls noch nicht geschehen)
+    usermod -a -G plugdev ${USERNAME}
 
-# Dconf-Datenbank aktualisieren
-dconf update
+# Systemd-Service zum Laden der dconf-Einstellungen nach dem Start erstellen
+cat > /etc/systemd/system/dconf-update.service <<EOF
+[Unit]
+Description=Update dconf databases at startup
+After=multi-user.target
 
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/dconf update
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Service aktivieren
+systemctl enable dconf-update.service
 fi
 #   Systemanpassungen   #
 #########################
