@@ -1117,7 +1117,7 @@ UUID=${ROOT_UUID} /               ext4    defaults        0       1
 UUID=${BOOT_UUID} /boot           ext4    defaults        0       2
 
 # EFI-Partition
-UUID=${EFI_UUID} /boot/efi        vfat    umask=0077      0       1
+UUID=${EFI_UUID}                            /boot/efi        vfat    umask=0077      0       1
 
 # Daten-Partition
 UUID=${DATA_UUID} /media/data     ext4    defaults        0       2
