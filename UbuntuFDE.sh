@@ -1109,7 +1109,7 @@ SWAP_UUID=$(blkid -s UUID -o value /dev/mapper/${VGNAME}-swap)
 # fstab mit den RICHTIGEN UUIDs erstellen
 cat > /mnt/ubuntu/etc/fstab <<EOF
 # /etc/fstab
-# <file system>                                          <mount point>   <type>   <options>       <dump>  <pass>
+# <file system>                           <mount point>   <type>   <options>       <dump>  <pass>
 # Root-Partition
 UUID=${ROOT_UUID} /               ext4    defaults        0       1
 
