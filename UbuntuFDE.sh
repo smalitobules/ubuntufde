@@ -1514,11 +1514,15 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=1
 GRUB_DISTRIBUTOR="$(. /etc/os-release && echo "$NAME")"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+GRUB_CMDLINE_LINUX_DEFAULT="nomodeset"
 GRUB_CMDLINE_LINUX=""
 GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXMODE=1024x768
 GRUBCFG
+
+#
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+#
 
 # GRUB Konfigurationsdatei-Rechte setzen
 chmod 644 /etc/default/grub
