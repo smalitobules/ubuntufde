@@ -1301,7 +1301,7 @@ AUTOUPDATE
 ## Systemaktualisierung durchführen
 #echo "Aktualisiere Paketquellen und System..."
 pkg_update
-#pkg_upgrade
+pkg_upgrade
 
 # Notwendige Pakete installieren 
 echo "Installiere Basis-Pakete..."
