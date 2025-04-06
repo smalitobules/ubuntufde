@@ -1436,7 +1436,7 @@ EOT
 
 # Crypttab mit initramfs flag für boot einrichten
 echo "${LUKS_BOOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard,initramfs" > /etc/crypttab
-echo "${LUKS_ROOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard" >> /etc/crypttab
+echo "${LUKS_ROOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard,initramfs" >> /etc/crypttab
 
 # Crypttab Datei-Rechte setzen
 chmod 600 /etc/crypttab
@@ -1483,15 +1483,17 @@ case "$1" in
         ;;
 esac
 
-# Erstelle persistentes Mapping für boot
-if [ -e "/dev/mapper/BOOT" ]; then
-    dmsetup table /dev/mapper/BOOT > /tmp/boot_table
-    dmsetup remove /dev/mapper/BOOT
-    dmsetup create BOOT --table "$(cat /tmp/boot_table)"
+# Erstelle persistentes Mapping für boot und root
+for vol in BOOT ROOT; do
+  if [ -e "/dev/mapper/$vol" ]; then
+    dmsetup table /dev/mapper/$vol > /tmp/${vol,,}_table
+    dmsetup remove /dev/mapper/$vol
+    dmsetup create $vol --table "$(cat /tmp/${vol,,}_table)"
     # Flag setzen für systemd
     mkdir -p /run/systemd
-    touch /run/systemd/cryptsetup-BOOT.service.active
-fi
+    touch /run/systemd/cryptsetup-$vol.service.active
+  fi
+done
 EOL
 
 chmod +x "$DESTDIR/usr/share/initramfs-tools/scripts/local-top/persist_boot"
@@ -1518,7 +1520,7 @@ GRUB_DISTRIBUTOR="$(. /etc/os-release && echo "$NAME")"
 GRUB_CMDLINE_LINUX_DEFAULT="nomodeset"
 GRUB_CMDLINE_LINUX=""
 GRUB_ENABLE_CRYPTODISK=y
-GRUB_GFXMODE=1024x768
+GRUB_GFXMODE=1280x1024
 GRUBCFG
 
 #

@@ -1,0 +1,1540 @@
+Apr 06 17:49:00 ubuntu-server kernel: Linux version 6.11.0-21-generic (buildd@lcy02-amd64-115) (x86_64-linux-gnu-gcc-14 (Ubuntu 14.2.0-4ubuntu2) 14.2.0, GNU ld (GNU Binutils for Ubuntu) 2.43.1) #21-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 19 16:50:40 UTC 2025 (Ubuntu 6.11.0-21.21-generic 6.11.11)
+Apr 06 17:49:00 ubuntu-server kernel: Command line: BOOT_IMAGE=/vmlinuz-6.11.0-21-generic root=/dev/mapper/vg-root ro nomodeset
+Apr 06 17:49:00 ubuntu-server kernel: KERNEL supported cpus:
+Apr 06 17:49:00 ubuntu-server kernel:   Intel GenuineIntel
+Apr 06 17:49:00 ubuntu-server kernel:   AMD AuthenticAMD
+Apr 06 17:49:00 ubuntu-server kernel:   Hygon HygonGenuine
+Apr 06 17:49:00 ubuntu-server kernel:   Centaur CentaurHauls
+Apr 06 17:49:00 ubuntu-server kernel:   zhaoxin   Shanghai  
+Apr 06 17:49:00 ubuntu-server kernel: [Firmware Bug]: TSC doesn't count with P0 frequency!
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-provided physical RAM map:
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x0000000000000000-0x000000000009ffff] usable
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x0000000000100000-0x00000000de15ffff] usable
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000de160000-0x00000000de1a8fff] reserved
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000de1a9000-0x00000000de6ecfff] usable
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000de6ed000-0x00000000de96cfff] reserved
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000de96d000-0x00000000de97efff] ACPI data
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000de97f000-0x00000000de9fefff] ACPI NVS
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000de9ff000-0x00000000df16dfff] usable
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000df16e000-0x00000000dffeffff] reserved
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x00000000ffc00000-0x00000000ffffffff] reserved
+Apr 06 17:49:00 ubuntu-server kernel: BIOS-e820: [mem 0x0000000100000000-0x000000011fffffff] usable
+Apr 06 17:49:00 ubuntu-server kernel: NX (Execute Disable) protection: active
+Apr 06 17:49:00 ubuntu-server kernel: APIC: Static calls initialized
+Apr 06 17:49:00 ubuntu-server kernel: efi: EFI v2.7 by EDK II
+Apr 06 17:49:00 ubuntu-server kernel: efi: ACPI=0xde97e000 ACPI 2.0=0xde97e014 SMBIOS=0xde9fd000 MOKvar=0xde6f5000 INITRD=0xdcde3998 RNG=0xde975018 
+Apr 06 17:49:00 ubuntu-server kernel: random: crng init done
+Apr 06 17:49:00 ubuntu-server kernel: efi: Remove mem132: MMIO range=[0xffc00000-0xffffffff] (4MB) from e820 map
+Apr 06 17:49:00 ubuntu-server kernel: e820: remove [mem 0xffc00000-0xffffffff] reserved
+Apr 06 17:49:00 ubuntu-server kernel: SMBIOS 2.5 present.
+Apr 06 17:49:00 ubuntu-server kernel: DMI: innotek GmbH VirtualBox/VirtualBox, BIOS VirtualBox 12/01/2006
+Apr 06 17:49:00 ubuntu-server kernel: DMI: Memory slots populated: 0/0
+Apr 06 17:49:00 ubuntu-server kernel: secureboot: Secure boot disabled
+Apr 06 17:49:00 ubuntu-server kernel: Hypervisor detected: KVM
+Apr 06 17:49:00 ubuntu-server kernel: kvm-clock: Using msrs 4b564d01 and 4b564d00
+Apr 06 17:49:00 ubuntu-server kernel: kvm-clock: using sched offset of 1069608421850 cycles
+Apr 06 17:49:00 ubuntu-server kernel: clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+Apr 06 17:49:00 ubuntu-server kernel: tsc: Detected 3293.686 MHz processor
+Apr 06 17:49:00 ubuntu-server kernel: e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+Apr 06 17:49:00 ubuntu-server kernel: e820: remove [mem 0x000a0000-0x000fffff] usable
+Apr 06 17:49:00 ubuntu-server kernel: last_pfn = 0x120000 max_arch_pfn = 0x400000000
+Apr 06 17:49:00 ubuntu-server kernel: total RAM covered: 4095M
+Apr 06 17:49:00 ubuntu-server kernel: Found optimal setting for mtrr clean up
+Apr 06 17:49:00 ubuntu-server kernel:  gran_size: 64K         chunk_size: 1G         num_reg: 4          lose cover RAM: 0G
+Apr 06 17:49:00 ubuntu-server kernel: MTRR map: 6 entries (3 fixed + 3 variable; max 19), built from 8 variable MTRRs
+Apr 06 17:49:00 ubuntu-server kernel: x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+Apr 06 17:49:00 ubuntu-server kernel: e820: update [mem 0xdfff0000-0xffffffff] usable ==> reserved
+Apr 06 17:49:00 ubuntu-server kernel: last_pfn = 0xdf16e max_arch_pfn = 0x400000000
+Apr 06 17:49:00 ubuntu-server kernel: secureboot: Secure boot disabled
+Apr 06 17:49:00 ubuntu-server kernel: RAMDISK: [mem 0xd3f6e000-0xd7da3fff]
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Early table checksum verification disabled
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: RSDP 0x00000000DE97E014 000024 (v02 VBOX  )
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: XSDT 0x00000000DE97D0E8 000044 (v01 VBOX   VBOXFACP 00000001      01000013)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: FACP 0x00000000DE979000 0000F4 (v04 VBOX   VBOXFACP 00000001 ASL  00000061)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: DSDT 0x00000000DE97A000 002353 (v02 VBOX   VBOXBIOS 00000002 INTL 20100528)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: FACS 0x00000000DE9FE000 000040
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: APIC 0x00000000DE978000 0000CC (v02 VBOX   VBOXAPIC 00000001 ASL  00000061)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: SSDT 0x00000000DE977000 00036C (v01 VBOX   VBOXCPUT 00000002 INTL 20100528)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: BGRT 0x00000000DE976000 000038 (v01 INTEL  EDK2     00000002      01000013)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Reserving FACP table memory at [mem 0xde979000-0xde9790f3]
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Reserving DSDT table memory at [mem 0xde97a000-0xde97c352]
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Reserving FACS table memory at [mem 0xde9fe000-0xde9fe03f]
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Reserving APIC table memory at [mem 0xde978000-0xde9780cb]
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Reserving SSDT table memory at [mem 0xde977000-0xde97736b]
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Reserving BGRT table memory at [mem 0xde976000-0xde976037]
+Apr 06 17:49:00 ubuntu-server kernel: No NUMA configuration found
+Apr 06 17:49:00 ubuntu-server kernel: Faking a node at [mem 0x0000000000000000-0x000000011fffffff]
+Apr 06 17:49:00 ubuntu-server kernel: NODE_DATA(0) allocated [mem 0x11ffd1000-0x11fffbfff]
+Apr 06 17:49:00 ubuntu-server kernel: Zone ranges:
+Apr 06 17:49:00 ubuntu-server kernel:   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+Apr 06 17:49:00 ubuntu-server kernel:   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+Apr 06 17:49:00 ubuntu-server kernel:   Normal   [mem 0x0000000100000000-0x000000011fffffff]
+Apr 06 17:49:00 ubuntu-server kernel:   Device   empty
+Apr 06 17:49:00 ubuntu-server kernel: Movable zone start for each node
+Apr 06 17:49:00 ubuntu-server kernel: Early memory node ranges
+Apr 06 17:49:00 ubuntu-server kernel:   node   0: [mem 0x0000000000001000-0x000000000009ffff]
+Apr 06 17:49:00 ubuntu-server kernel:   node   0: [mem 0x0000000000100000-0x00000000de15ffff]
+Apr 06 17:49:00 ubuntu-server kernel:   node   0: [mem 0x00000000de1a9000-0x00000000de6ecfff]
+Apr 06 17:49:00 ubuntu-server kernel:   node   0: [mem 0x00000000de9ff000-0x00000000df16dfff]
+Apr 06 17:49:00 ubuntu-server kernel:   node   0: [mem 0x0000000100000000-0x000000011fffffff]
+Apr 06 17:49:00 ubuntu-server kernel: Initmem setup node 0 [mem 0x0000000000001000-0x000000011fffffff]
+Apr 06 17:49:00 ubuntu-server kernel: On node 0, zone DMA: 1 pages in unavailable ranges
+Apr 06 17:49:00 ubuntu-server kernel: On node 0, zone DMA: 96 pages in unavailable ranges
+Apr 06 17:49:00 ubuntu-server kernel: On node 0, zone DMA32: 73 pages in unavailable ranges
+Apr 06 17:49:00 ubuntu-server kernel: On node 0, zone DMA32: 786 pages in unavailable ranges
+Apr 06 17:49:00 ubuntu-server kernel: On node 0, zone Normal: 3730 pages in unavailable ranges
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PM-Timer IO Port: 0x4008
+Apr 06 17:49:00 ubuntu-server kernel: IOAPIC[0]: apic_id 16, version 32, address 0xfec00000, GSI 0-23
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 low level)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Using ACPI (MADT) for SMP configuration information
+Apr 06 17:49:00 ubuntu-server kernel: e820: update [mem 0xdd09c000-0xdd0bcfff] usable ==> reserved
+Apr 06 17:49:00 ubuntu-server kernel: CPU topo: Max. logical packages:   1
+Apr 06 17:49:00 ubuntu-server kernel: CPU topo: Max. logical dies:       1
+Apr 06 17:49:00 ubuntu-server kernel: CPU topo: Max. dies per package:   1
+Apr 06 17:49:00 ubuntu-server kernel: CPU topo: Max. threads per core:   1
+Apr 06 17:49:00 ubuntu-server kernel: CPU topo: Num. cores per package:    16
+Apr 06 17:49:00 ubuntu-server kernel: CPU topo: Num. threads per package:  16
+Apr 06 17:49:00 ubuntu-server kernel: CPU topo: Allowing 16 present CPUs plus 0 hotplug CPUs
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0x000a0000-0x000fffff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0xdd09c000-0xdd0bcfff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0xde160000-0xde1a8fff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0xde6ed000-0xde96cfff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0xde96d000-0xde97efff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0xde97f000-0xde9fefff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0xdf16e000-0xdffeffff]
+Apr 06 17:49:00 ubuntu-server kernel: PM: hibernation: Registered nosave memory: [mem 0xdfff0000-0xffffffff]
+Apr 06 17:49:00 ubuntu-server kernel: [mem 0xdfff0000-0xffffffff] available for PCI devices
+Apr 06 17:49:00 ubuntu-server kernel: Booting paravirtualized kernel on KVM
+Apr 06 17:49:00 ubuntu-server kernel: clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+Apr 06 17:49:00 ubuntu-server kernel: setup_percpu: NR_CPUS:8192 nr_cpumask_bits:16 nr_cpu_ids:16 nr_node_ids:1
+Apr 06 17:49:00 ubuntu-server kernel: percpu: Embedded 88 pages/cpu s237568 r8192 d114688 u524288
+Apr 06 17:49:00 ubuntu-server kernel: pcpu-alloc: s237568 r8192 d114688 u524288 alloc=1*2097152
+Apr 06 17:49:00 ubuntu-server kernel: pcpu-alloc: [0] 00 01 02 03 [0] 04 05 06 07 
+Apr 06 17:49:00 ubuntu-server kernel: pcpu-alloc: [0] 08 09 10 11 [0] 12 13 14 15 
+Apr 06 17:49:00 ubuntu-server kernel: kvm-guest: PV spinlocks enabled
+Apr 06 17:49:00 ubuntu-server kernel: PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: Kernel command line: BOOT_IMAGE=/vmlinuz-6.11.0-21-generic root=/dev/mapper/vg-root ro nomodeset
+Apr 06 17:49:00 ubuntu-server kernel: Booted with the nomodeset parameter. Only the system framebuffer will be available
+Apr 06 17:49:00 ubuntu-server kernel: Unknown kernel command line parameters "BOOT_IMAGE=/vmlinuz-6.11.0-21-generic", will be passed to user space.
+Apr 06 17:49:00 ubuntu-server kernel: Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: Fallback order for Node 0: 0 
+Apr 06 17:49:00 ubuntu-server kernel: Built 1 zonelists, mobility grouping on.  Total pages: 1043890
+Apr 06 17:49:00 ubuntu-server kernel: Policy zone: Normal
+Apr 06 17:49:00 ubuntu-server kernel: mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+Apr 06 17:49:00 ubuntu-server kernel: software IO TLB: area num 16.
+Apr 06 17:49:00 ubuntu-server kernel: SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=16, Nodes=1
+Apr 06 17:49:00 ubuntu-server kernel: ftrace: allocating 59372 entries in 232 pages
+Apr 06 17:49:00 ubuntu-server kernel: ftrace: allocated 232 pages with 4 groups
+Apr 06 17:49:00 ubuntu-server kernel: Dynamic Preempt: voluntary
+Apr 06 17:49:00 ubuntu-server kernel: rcu: Preemptible hierarchical RCU implementation.
+Apr 06 17:49:00 ubuntu-server kernel: rcu:         RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=16.
+Apr 06 17:49:00 ubuntu-server kernel:         Trampoline variant of Tasks RCU enabled.
+Apr 06 17:49:00 ubuntu-server kernel:         Rude variant of Tasks RCU enabled.
+Apr 06 17:49:00 ubuntu-server kernel:         Tracing variant of Tasks RCU enabled.
+Apr 06 17:49:00 ubuntu-server kernel: rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+Apr 06 17:49:00 ubuntu-server kernel: rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=16
+Apr 06 17:49:00 ubuntu-server kernel: RCU Tasks: Setting shift to 4 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=16.
+Apr 06 17:49:00 ubuntu-server kernel: RCU Tasks Rude: Setting shift to 4 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=16.
+Apr 06 17:49:00 ubuntu-server kernel: RCU Tasks Trace: Setting shift to 4 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=16.
+Apr 06 17:49:00 ubuntu-server kernel: NR_IRQS: 524544, nr_irqs: 552, preallocated irqs: 16
+Apr 06 17:49:00 ubuntu-server kernel: rcu: srcu_init: Setting srcu_struct sizes based on contention.
+Apr 06 17:49:00 ubuntu-server kernel: Console: colour dummy device 80x25
+Apr 06 17:49:00 ubuntu-server kernel: printk: legacy console [tty0] enabled
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Core revision 20240322
+Apr 06 17:49:00 ubuntu-server kernel: APIC: Switch to symmetric I/O mode setup
+Apr 06 17:49:00 ubuntu-server kernel: ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+Apr 06 17:49:00 ubuntu-server kernel: clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x2f79ffc6707, max_idle_ns: 440795308993 ns
+Apr 06 17:49:00 ubuntu-server kernel: Calibrating delay loop (skipped) preset value.. 6587.37 BogoMIPS (lpj=3293686)
+Apr 06 17:49:00 ubuntu-server kernel: Last level iTLB entries: 4KB 512, 2MB 512, 4MB 256
+Apr 06 17:49:00 ubuntu-server kernel: Last level dTLB entries: 4KB 2048, 2MB 2048, 4MB 1024, 1GB 0
+Apr 06 17:49:00 ubuntu-server kernel: Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+Apr 06 17:49:00 ubuntu-server kernel: Spectre V2 : Mitigation: Retpolines
+Apr 06 17:49:00 ubuntu-server kernel: Spectre V2 : Spectre v2 / SpectreRSB mitigation: Filling RSB on context switch
+Apr 06 17:49:00 ubuntu-server kernel: Spectre V2 : Spectre v2 / SpectreRSB : Filling RSB on VMEXIT
+Apr 06 17:49:00 ubuntu-server kernel: Speculative Return Stack Overflow: IBPB-extending microcode not applied!
+Apr 06 17:49:00 ubuntu-server kernel: Speculative Return Stack Overflow: WARNING: See https://kernel.org/doc/html/latest/admin-guide/hw-vuln/srso.html for mitigation options.
+Apr 06 17:49:00 ubuntu-server kernel: Speculative Return Stack Overflow: Vulnerable: Safe RET, no microcode
+Apr 06 17:49:00 ubuntu-server kernel: x86/fpu: x87 FPU will use FXSAVE
+Apr 06 17:49:00 ubuntu-server kernel: Freeing SMP alternatives memory: 48K
+Apr 06 17:49:00 ubuntu-server kernel: pid_max: default: 32768 minimum: 301
+Apr 06 17:49:00 ubuntu-server kernel: LSM: initializing lsm=lockdown,capability,landlock,yama,apparmor,ima,evm
+Apr 06 17:49:00 ubuntu-server kernel: landlock: Up and running.
+Apr 06 17:49:00 ubuntu-server kernel: Yama: becoming mindful.
+Apr 06 17:49:00 ubuntu-server kernel: AppArmor: AppArmor initialized
+Apr 06 17:49:00 ubuntu-server kernel: Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: APIC calibration not consistent with PM-Timer: 128ms instead of 100ms
+Apr 06 17:49:00 ubuntu-server kernel: APIC delta adjusted to PM-Timer: 6270986 (8083394)
+Apr 06 17:49:00 ubuntu-server kernel: smpboot: CPU0: AMD Ryzen 9 5900HS with Radeon Graphics (family: 0x19, model: 0x50, stepping: 0x0)
+Apr 06 17:49:00 ubuntu-server kernel: Performance Events: PMU not available due to virtualization, using software events only.
+Apr 06 17:49:00 ubuntu-server kernel: signal: max sigframe size: 1440
+Apr 06 17:49:00 ubuntu-server kernel: rcu: Hierarchical SRCU implementation.
+Apr 06 17:49:00 ubuntu-server kernel: rcu:         Max phase no-delay instances is 400.
+Apr 06 17:49:00 ubuntu-server kernel: Timer migration: 2 hierarchy levels; 8 children per group; 2 crossnode level
+Apr 06 17:49:00 ubuntu-server kernel: NMI watchdog: Perf NMI watchdog permanently disabled
+Apr 06 17:49:00 ubuntu-server kernel: smp: Bringing up secondary CPUs ...
+Apr 06 17:49:00 ubuntu-server kernel: smpboot: x86: Booting SMP configuration:
+Apr 06 17:49:00 ubuntu-server kernel: .... node  #0, CPUs:        #1  #2  #3  #4  #5  #6  #7  #8  #9 #10 #11 #12 #13 #14 #15
+Apr 06 17:49:00 ubuntu-server kernel: TSC synchronization [CPU#0 -> CPU#1]:
+Apr 06 17:49:00 ubuntu-server kernel: Measured 192951 cycles TSC warp between CPUs, turning off TSC clock.
+Apr 06 17:49:00 ubuntu-server kernel: tsc: Marking TSC unstable due to check_tsc_sync_source failed
+Apr 06 17:49:00 ubuntu-server kernel: smp: Brought up 1 node, 16 CPUs
+Apr 06 17:49:00 ubuntu-server kernel: smpboot: Total of 16 processors activated (105397.95 BogoMIPS)
+Apr 06 17:49:00 ubuntu-server kernel: Memory: 3901640K/4175560K available (22528K kernel code, 4525K rwdata, 14984K rodata, 4964K init, 4656K bss, 261736K reserved, 0K cma-reserved)
+Apr 06 17:49:00 ubuntu-server kernel: devtmpfs: initialized
+Apr 06 17:49:00 ubuntu-server kernel: x86/mm: Memory block size: 128MB
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PM: Registering ACPI NVS region [mem 0xde97f000-0xde9fefff] (524288 bytes)
+Apr 06 17:49:00 ubuntu-server kernel: clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+Apr 06 17:49:00 ubuntu-server kernel: futex hash table entries: 4096 (order: 6, 262144 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: pinctrl core: initialized pinctrl subsystem
+Apr 06 17:49:00 ubuntu-server kernel: PM: RTC time: 15:48:43, date: 2025-04-06
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_NETLINK/PF_ROUTE protocol family
+Apr 06 17:49:00 ubuntu-server kernel: DMA: preallocated 512 KiB GFP_KERNEL pool for atomic allocations
+Apr 06 17:49:00 ubuntu-server kernel: DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+Apr 06 17:49:00 ubuntu-server kernel: DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+Apr 06 17:49:00 ubuntu-server kernel: audit: initializing netlink subsys (disabled)
+Apr 06 17:49:00 ubuntu-server kernel: audit: type=2000 audit(1743955616.192:1): state=initialized audit_enabled=0 res=1
+Apr 06 17:49:00 ubuntu-server kernel: thermal_sys: Registered thermal governor 'fair_share'
+Apr 06 17:49:00 ubuntu-server kernel: thermal_sys: Registered thermal governor 'bang_bang'
+Apr 06 17:49:00 ubuntu-server kernel: thermal_sys: Registered thermal governor 'step_wise'
+Apr 06 17:49:00 ubuntu-server kernel: thermal_sys: Registered thermal governor 'user_space'
+Apr 06 17:49:00 ubuntu-server kernel: thermal_sys: Registered thermal governor 'power_allocator'
+Apr 06 17:49:00 ubuntu-server kernel: EISA bus registered
+Apr 06 17:49:00 ubuntu-server kernel: cpuidle: using governor ladder
+Apr 06 17:49:00 ubuntu-server kernel: cpuidle: using governor menu
+Apr 06 17:49:00 ubuntu-server kernel: acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+Apr 06 17:49:00 ubuntu-server kernel: PCI: Using configuration type 1 for base access
+Apr 06 17:49:00 ubuntu-server kernel: PCI: Using configuration type 1 for extended access
+Apr 06 17:49:00 ubuntu-server kernel: kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+Apr 06 17:49:00 ubuntu-server kernel: HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+Apr 06 17:49:00 ubuntu-server kernel: HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+Apr 06 17:49:00 ubuntu-server kernel: fbcon: Taking over console
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Added _OSI(Module Device)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Added _OSI(Processor Device)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Added _OSI(3.0 _SCP Extensions)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Added _OSI(Processor Aggregator Device)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: 2 ACPI AML tables successfully acquired and loaded
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Interpreter enabled
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PM: (supports S0 S5)
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Using IOAPIC for interrupt routing
+Apr 06 17:49:00 ubuntu-server kernel: PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+Apr 06 17:49:00 ubuntu-server kernel: PCI: Using E820 reservations for host bridge windows
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: Enabled 2 GPEs in block 00 to 07
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+Apr 06 17:49:00 ubuntu-server kernel: acpi PNP0A03:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI EDR HPX-Type3]
+Apr 06 17:49:00 ubuntu-server kernel: acpi PNP0A03:00: _OSC: platform does not support [PCIeCapability LTR DPC]
+Apr 06 17:49:00 ubuntu-server kernel: acpi PNP0A03:00: _OSC: not requesting control; platform does not support [PCIeCapability]
+Apr 06 17:49:00 ubuntu-server kernel: acpi PNP0A03:00: _OSC: OS requested [PCIeHotplug SHPCHotplug PME AER PCIeCapability LTR DPC]
+Apr 06 17:49:00 ubuntu-server kernel: acpi PNP0A03:00: _OSC: platform willing to grant [PCIeHotplug SHPCHotplug PME AER]
+Apr 06 17:49:00 ubuntu-server kernel: acpi PNP0A03:00: _OSC: platform retains control of PCIe features (AE_SUPPORT)
+Apr 06 17:49:00 ubuntu-server kernel: PCI host bridge to bus 0000:00
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: root bus resource [mem 0xe0000000-0xfdffffff window]
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: root bus resource [bus 00-ff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:01.1: [8086:7111] type 00 class 0x01018a conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:01.1: BAR 4 [io  0xc180-0xc18f]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: [15ad:0405] type 00 class 0x030000 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: BAR 0 [io  0xc170-0xc17f]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: BAR 1 [mem 0xe0000000-0xefffffff pref]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: BAR 2 [mem 0xf0400000-0xf05fffff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:03.0: [8086:100e] type 00 class 0x020000 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:03.0: BAR 0 [mem 0xf0620000-0xf063ffff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:03.0: BAR 2 [io  0xc1a8-0xc1af]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:04.0: [80ee:cafe] type 00 class 0x088000 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:04.0: BAR 0 [io  0xc140-0xc15f]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:04.0: BAR 1 [mem 0xf0000000-0xf03fffff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:04.0: BAR 2 [mem 0xf0640000-0xf0643fff pref]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:05.0: [8086:2415] type 00 class 0x040100 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:05.0: BAR 0 [io  0xc000-0xc0ff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:05.0: BAR 1 [io  0xc100-0xc13f]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:06.0: [106b:003f] type 00 class 0x0c0310 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:06.0: BAR 0 [mem 0xf0647000-0xf0647fff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:07.0: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:07.0: quirk: [io  0x4000-0x403f] claimed by PIIX4 ACPI
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:07.0: quirk: [io  0x4100-0x410f] claimed by PIIX4 SMB
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:08.0: [8086:100e] type 00 class 0x020000 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:08.0: BAR 0 [mem 0xf0600000-0xf061ffff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:08.0: BAR 2 [io  0xc1a0-0xc1a7]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0b.0: [8086:265c] type 00 class 0x0c0320 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0b.0: BAR 0 [mem 0xf0646000-0xf0646fff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0d.0: [8086:2829] type 00 class 0x010601 conventional PCI endpoint
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0d.0: BAR 0 [io  0xc198-0xc19f]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0d.0: BAR 1 [io  0xc1b4-0xc1b7]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0d.0: BAR 2 [io  0xc190-0xc197]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0d.0: BAR 3 [io  0xc1b0-0xc1b3]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0d.0: BAR 4 [io  0xc160-0xc16f]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:0d.0: BAR 5 [mem 0xf0644000-0xf0645fff]
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+Apr 06 17:49:00 ubuntu-server kernel: iommu: Default domain type: Translated
+Apr 06 17:49:00 ubuntu-server kernel: iommu: DMA domain TLB invalidation policy: lazy mode
+Apr 06 17:49:00 ubuntu-server kernel: SCSI subsystem initialized
+Apr 06 17:49:00 ubuntu-server kernel: libata version 3.00 loaded.
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: bus type USB registered
+Apr 06 17:49:00 ubuntu-server kernel: usbcore: registered new interface driver usbfs
+Apr 06 17:49:00 ubuntu-server kernel: usbcore: registered new interface driver hub
+Apr 06 17:49:00 ubuntu-server kernel: usbcore: registered new device driver usb
+Apr 06 17:49:00 ubuntu-server kernel: pps_core: LinuxPPS API ver. 1 registered
+Apr 06 17:49:00 ubuntu-server kernel: pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+Apr 06 17:49:00 ubuntu-server kernel: PTP clock support registered
+Apr 06 17:49:00 ubuntu-server kernel: EDAC MC: Ver: 3.0.0
+Apr 06 17:49:00 ubuntu-server kernel: efivars: Registered efivars operations
+Apr 06 17:49:00 ubuntu-server kernel: NetLabel: Initializing
+Apr 06 17:49:00 ubuntu-server kernel: NetLabel:  domain hash size = 128
+Apr 06 17:49:00 ubuntu-server kernel: NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+Apr 06 17:49:00 ubuntu-server kernel: NetLabel:  unlabeled traffic allowed by default
+Apr 06 17:49:00 ubuntu-server kernel: mctp: management component transport protocol core
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_MCTP protocol family
+Apr 06 17:49:00 ubuntu-server kernel: PCI: Using ACPI for IRQ routing
+Apr 06 17:49:00 ubuntu-server kernel: PCI: pci_cache_line_size set to 64 bytes
+Apr 06 17:49:00 ubuntu-server kernel: e820: reserve RAM buffer [mem 0xdd09c000-0xdfffffff]
+Apr 06 17:49:00 ubuntu-server kernel: e820: reserve RAM buffer [mem 0xde160000-0xdfffffff]
+Apr 06 17:49:00 ubuntu-server kernel: e820: reserve RAM buffer [mem 0xde6ed000-0xdfffffff]
+Apr 06 17:49:00 ubuntu-server kernel: e820: reserve RAM buffer [mem 0xdf16e000-0xdfffffff]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: vgaarb: setting as boot VGA device
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: vgaarb: bridge control possible
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+Apr 06 17:49:00 ubuntu-server kernel: vgaarb: loaded
+Apr 06 17:49:00 ubuntu-server kernel: clocksource: Switched to clocksource kvm-clock
+Apr 06 17:49:00 ubuntu-server kernel: VFS: Disk quotas dquot_6.6.0
+Apr 06 17:49:00 ubuntu-server kernel: VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+Apr 06 17:49:00 ubuntu-server kernel: AppArmor: AppArmor Filesystem Enabled
+Apr 06 17:49:00 ubuntu-server kernel: pnp: PnP ACPI init
+Apr 06 17:49:00 ubuntu-server kernel: pnp: PnP ACPI: found 2 devices
+Apr 06 17:49:00 ubuntu-server kernel: clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_INET protocol family
+Apr 06 17:49:00 ubuntu-server kernel: IP idents hash table entries: 65536 (order: 7, 524288 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: tcp_listen_portaddr_hash hash table entries: 2048 (order: 3, 32768 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: TCP established hash table entries: 32768 (order: 6, 262144 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: TCP bind hash table entries: 32768 (order: 8, 1048576 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: TCP: Hash tables configured (established 32768 bind 32768)
+Apr 06 17:49:00 ubuntu-server kernel: MPTCP token hash table entries: 4096 (order: 4, 98304 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: UDP hash table entries: 2048 (order: 4, 65536 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: UDP-Lite hash table entries: 2048 (order: 4, 65536 bytes, linear)
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_UNIX/PF_LOCAL protocol family
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_XDP protocol family
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+Apr 06 17:49:00 ubuntu-server kernel: pci_bus 0000:00: resource 7 [mem 0xe0000000-0xfdffffff window]
+Apr 06 17:49:00 ubuntu-server kernel: pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+Apr 06 17:49:00 ubuntu-server kernel: PCI: CLS 0 bytes, default 64
+Apr 06 17:49:00 ubuntu-server kernel: PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+Apr 06 17:49:00 ubuntu-server kernel: software IO TLB: mapped [mem 0x00000000cff6e000-0x00000000d3f6e000] (64MB)
+Apr 06 17:49:00 ubuntu-server kernel: Trying to unpack rootfs image as initramfs...
+Apr 06 17:49:00 ubuntu-server kernel: platform rtc_cmos: registered platform RTC device (no PNP device found)
+Apr 06 17:49:00 ubuntu-server kernel: Initialise system trusted keyrings
+Apr 06 17:49:00 ubuntu-server kernel: Key type blacklist registered
+Apr 06 17:49:00 ubuntu-server kernel: workingset: timestamp_bits=36 max_order=20 bucket_order=0
+Apr 06 17:49:00 ubuntu-server kernel: zbud: loaded
+Apr 06 17:49:00 ubuntu-server kernel: squashfs: version 4.0 (2009/01/31) Phillip Lougher
+Apr 06 17:49:00 ubuntu-server kernel: fuse: init (API version 7.40)
+Apr 06 17:49:00 ubuntu-server kernel: integrity: Platform Keyring initialized
+Apr 06 17:49:00 ubuntu-server kernel: integrity: Machine keyring initialized
+Apr 06 17:49:00 ubuntu-server kernel: Key type asymmetric registered
+Apr 06 17:49:00 ubuntu-server kernel: Asymmetric key parser 'x509' registered
+Apr 06 17:49:00 ubuntu-server kernel: Block layer SCSI generic (bsg) driver version 0.4 loaded (major 243)
+Apr 06 17:49:00 ubuntu-server kernel: io scheduler mq-deadline registered
+Apr 06 17:49:00 ubuntu-server kernel: shpchp: Standard Hot Plug PCI Controller Driver version: 0.4
+Apr 06 17:49:00 ubuntu-server kernel: Driver imsttfb not loading because of nomodeset parameter
+Apr 06 17:49:00 ubuntu-server kernel: Driver asiliantfb not loading because of nomodeset parameter
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: AC: AC Adapter [AC] (on-line)
+Apr 06 17:49:00 ubuntu-server kernel: input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: button: Power Button [PWRF]
+Apr 06 17:49:00 ubuntu-server kernel: input: Sleep Button as /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: button: Sleep Button [SLPF]
+Apr 06 17:49:00 ubuntu-server kernel: Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: battery: Slot [BAT0] (battery present)
+Apr 06 17:49:00 ubuntu-server kernel: Linux agpgart interface v0.103
+Apr 06 17:49:00 ubuntu-server kernel: loop: module loaded
+Apr 06 17:49:00 ubuntu-server kernel: ata_piix 0000:00:01.1: version 2.13
+Apr 06 17:49:00 ubuntu-server kernel: scsi host0: ata_piix
+Apr 06 17:49:00 ubuntu-server kernel: scsi host1: ata_piix
+Apr 06 17:49:00 ubuntu-server kernel: ata1: PATA max UDMA/33 cmd 0x1f0 ctl 0x3f6 bmdma 0xc180 irq 14 lpm-pol 0
+Apr 06 17:49:00 ubuntu-server kernel: ata2: PATA max UDMA/33 cmd 0x170 ctl 0x376 bmdma 0xc188 irq 15 lpm-pol 0
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: bus type drm_connector registered
+Apr 06 17:49:00 ubuntu-server kernel: tun: Universal TUN/TAP device driver, 1.6
+Apr 06 17:49:00 ubuntu-server kernel: PPP generic driver version 2.4.2
+Apr 06 17:49:00 ubuntu-server kernel: ohci-pci 0000:00:06.0: OHCI PCI host controller
+Apr 06 17:49:00 ubuntu-server kernel: ohci-pci 0000:00:06.0: new USB bus registered, assigned bus number 1
+Apr 06 17:49:00 ubuntu-server kernel: ohci-pci 0000:00:06.0: irq 22, io mem 0xf0647000
+Apr 06 17:49:00 ubuntu-server kernel: Freeing initrd memory: 63704K
+Apr 06 17:49:00 ubuntu-server kernel: usb usb1: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 6.11
+Apr 06 17:49:00 ubuntu-server kernel: usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+Apr 06 17:49:00 ubuntu-server kernel: usb usb1: Product: OHCI PCI host controller
+Apr 06 17:49:00 ubuntu-server kernel: usb usb1: Manufacturer: Linux 6.11.0-21-generic ohci_hcd
+Apr 06 17:49:00 ubuntu-server kernel: usb usb1: SerialNumber: 0000:00:06.0
+Apr 06 17:49:00 ubuntu-server kernel: hub 1-0:1.0: USB hub found
+Apr 06 17:49:00 ubuntu-server kernel: hub 1-0:1.0: 12 ports detected
+Apr 06 17:49:00 ubuntu-server kernel: ehci-pci 0000:00:0b.0: EHCI Host Controller
+Apr 06 17:49:00 ubuntu-server kernel: ehci-pci 0000:00:0b.0: new USB bus registered, assigned bus number 2
+Apr 06 17:49:00 ubuntu-server kernel: i8042: PNP: PS/2 Controller [PNP0303:PS2K,PNP0f03:PS2M] at 0x60,0x64 irq 1,12
+Apr 06 17:49:00 ubuntu-server kernel: ehci-pci 0000:00:0b.0: irq 19, io mem 0xf0646000
+Apr 06 17:49:00 ubuntu-server kernel: serio: i8042 KBD port at 0x60,0x64 irq 1
+Apr 06 17:49:00 ubuntu-server kernel: serio: i8042 AUX port at 0x60,0x64 irq 12
+Apr 06 17:49:00 ubuntu-server kernel: mousedev: PS/2 mouse device common for all mice
+Apr 06 17:49:00 ubuntu-server kernel: rtc_cmos rtc_cmos: registered as rtc0
+Apr 06 17:49:00 ubuntu-server kernel: rtc_cmos rtc_cmos: setting system clock to 2025-04-06T15:48:44 UTC (1743954524)
+Apr 06 17:49:00 ubuntu-server kernel: rtc_cmos rtc_cmos: alarms up to one day, 114 bytes nvram
+Apr 06 17:49:00 ubuntu-server kernel: i2c_dev: i2c /dev entries driver
+Apr 06 17:49:00 ubuntu-server kernel: device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+Apr 06 17:49:00 ubuntu-server kernel: device-mapper: uevent: version 1.0.3
+Apr 06 17:49:00 ubuntu-server kernel: device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@lists.linux.dev
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Probing EISA bus 0
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: EISA: Cannot allocate resource for mainboard
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 1
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 2
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 3
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 4
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 5
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 6
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 7
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: Cannot allocate resource for EISA slot 8
+Apr 06 17:49:00 ubuntu-server kernel: platform eisa.0: EISA: Detected 0 cards
+Apr 06 17:49:00 ubuntu-server kernel: amd_pstate: The CPPC feature is supported but currently disabled by the BIOS.
+                                      Please enable it if your BIOS has the CPPC option.
+Apr 06 17:49:00 ubuntu-server kernel: amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled
+Apr 06 17:49:00 ubuntu-server kernel: input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input2
+Apr 06 17:49:00 ubuntu-server kernel: ehci-pci 0000:00:0b.0: USB 2.0 started, EHCI 1.00
+Apr 06 17:49:00 ubuntu-server kernel: usb usb2: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 6.11
+Apr 06 17:49:00 ubuntu-server kernel: usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+Apr 06 17:49:00 ubuntu-server kernel: usb usb2: Product: EHCI Host Controller
+Apr 06 17:49:00 ubuntu-server kernel: usb usb2: Manufacturer: Linux 6.11.0-21-generic ehci_hcd
+Apr 06 17:49:00 ubuntu-server kernel: usb usb2: SerialNumber: 0000:00:0b.0
+Apr 06 17:49:00 ubuntu-server kernel: hub 2-0:1.0: USB hub found
+Apr 06 17:49:00 ubuntu-server kernel: hub 2-0:1.0: 12 ports detected
+Apr 06 17:49:00 ubuntu-server kernel: ata2.00: ATAPI: VBOX CD-ROM, 1.0, max UDMA/133
+Apr 06 17:49:00 ubuntu-server kernel: ledtrig-cpu: registered to indicate activity on CPUs
+Apr 06 17:49:00 ubuntu-server kernel: [drm] Initialized simpledrm 1.0.0 for simple-framebuffer.0 on minor 0
+Apr 06 17:49:00 ubuntu-server kernel: scsi 1:0:0:0: CD-ROM            VBOX     CD-ROM           1.0  PQ: 0 ANSI: 5
+Apr 06 17:49:00 ubuntu-server kernel: Console: switching to colour frame buffer device 128x48
+Apr 06 17:49:00 ubuntu-server kernel: simple-framebuffer simple-framebuffer.0: [drm] fb0: simpledrmdrmfb frame buffer device
+Apr 06 17:49:00 ubuntu-server kernel: drop_monitor: Initializing network drop monitor service
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_INET6 protocol family
+Apr 06 17:49:00 ubuntu-server kernel: sr 1:0:0:0: [sr0] scsi3-mmc drive: 32x/32x xa/form2 tray
+Apr 06 17:49:00 ubuntu-server kernel: cdrom: Uniform CD-ROM driver Revision: 3.20
+Apr 06 17:49:00 ubuntu-server kernel: Segment Routing with IPv6
+Apr 06 17:49:00 ubuntu-server kernel: In-situ OAM (IOAM) with IPv6
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_PACKET protocol family
+Apr 06 17:49:00 ubuntu-server kernel: Key type dns_resolver registered
+Apr 06 17:49:00 ubuntu-server kernel: IPI shorthand broadcast: enabled
+Apr 06 17:49:00 ubuntu-server kernel: sched_clock: Marking stable (1097071292, 5502038)->(1220601533, -118028203)
+Apr 06 17:49:00 ubuntu-server kernel: registered taskstats version 1
+Apr 06 17:49:00 ubuntu-server kernel: sr 1:0:0:0: Attached scsi CD-ROM sr0
+Apr 06 17:49:00 ubuntu-server kernel: sr 1:0:0:0: Attached scsi generic sg0 type 5
+Apr 06 17:49:00 ubuntu-server kernel: Loading compiled-in X.509 certificates
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Build time autogenerated kernel key: 7ad797583f637a25618fd02920e1e2bef399554f'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Live Patch Signing: 14df34d1a87cf37625abec039ef2bf521249b969'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing: 88f752e560a1e0737e31163a466ad7b70a850c19'
+Apr 06 17:49:00 ubuntu-server kernel: blacklist: Loading compiled-in revocation X.509 certificates
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing: 61482aa2830d0ab2ad5af10b7250da9033ddcef0'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2017): 242ade75ac4a15e50d50c84b0d45ff3eae707a03'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (ESM 2018): 365188c1d374d6b07c3c8f240f8ef722433d6a8b'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2019): c0746fd6c5da3ae827864651ad66ae47fe24b3e8'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v1): a8d54bbb3825cfb94fa13c9f8a594a195c107b8d'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v2): 4cf046892d6fd3c9a5b03f98d845f90851dc6a8c'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v3): 100437bb6de6e469b581e61cd66bce3ef4ed53af'
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (Ubuntu Core 2019): c1d57b8f6b743f23ee41f4f7ee292f06eecadfb9'
+Apr 06 17:49:00 ubuntu-server kernel: Demotion targets for Node 0: null
+Apr 06 17:49:00 ubuntu-server kernel: Key type .fscrypt registered
+Apr 06 17:49:00 ubuntu-server kernel: Key type fscrypt-provisioning registered
+Apr 06 17:49:00 ubuntu-server kernel: cryptd: max_cpu_qlen set to 1000
+Apr 06 17:49:00 ubuntu-server kernel: Key type encrypted registered
+Apr 06 17:49:00 ubuntu-server kernel: AppArmor: AppArmor sha256 policy hashing enabled
+Apr 06 17:49:00 ubuntu-server kernel: ima: No TPM chip found, activating TPM-bypass!
+Apr 06 17:49:00 ubuntu-server kernel: Loading compiled-in module X.509 certificates
+Apr 06 17:49:00 ubuntu-server kernel: Loaded X.509 cert 'Build time autogenerated kernel key: 7ad797583f637a25618fd02920e1e2bef399554f'
+Apr 06 17:49:00 ubuntu-server kernel: ima: Allocated hash algorithm: sha256
+Apr 06 17:49:00 ubuntu-server kernel: ima: No architecture policies found
+Apr 06 17:49:00 ubuntu-server kernel: evm: Initialising EVM extended attributes:
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.selinux
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.SMACK64
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.SMACK64EXEC
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.SMACK64TRANSMUTE
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.SMACK64MMAP
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.apparmor
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.ima
+Apr 06 17:49:00 ubuntu-server kernel: evm: security.capability
+Apr 06 17:49:00 ubuntu-server kernel: evm: HMAC attrs: 0x1
+Apr 06 17:49:00 ubuntu-server kernel: PM:   Magic number: 5:815:840
+Apr 06 17:49:00 ubuntu-server kernel: RAS: Correctable Errors collector initialized.
+Apr 06 17:49:00 ubuntu-server kernel: clk: Disabling unused clocks
+Apr 06 17:49:00 ubuntu-server kernel: PM: genpd: Disabling unused power domains
+Apr 06 17:49:00 ubuntu-server kernel: Freeing unused decrypted memory: 2028K
+Apr 06 17:49:00 ubuntu-server kernel: Freeing unused kernel image (initmem) memory: 4964K
+Apr 06 17:49:00 ubuntu-server kernel: Write protecting the kernel read-only data: 38912k
+Apr 06 17:49:00 ubuntu-server kernel: Freeing unused kernel image (rodata/data gap) memory: 1400K
+Apr 06 17:49:00 ubuntu-server kernel: x86/mm: Checked W+X mappings: passed, no W+X pages found.
+Apr 06 17:49:00 ubuntu-server kernel: Run /init as init process
+Apr 06 17:49:00 ubuntu-server kernel:   with arguments:
+Apr 06 17:49:00 ubuntu-server kernel:     /init
+Apr 06 17:49:00 ubuntu-server kernel:   with environment:
+Apr 06 17:49:00 ubuntu-server kernel:     HOME=/
+Apr 06 17:49:00 ubuntu-server kernel:     TERM=linux
+Apr 06 17:49:00 ubuntu-server kernel:     BOOT_IMAGE=/vmlinuz-6.11.0-21-generic
+Apr 06 17:49:00 ubuntu-server kernel: ACPI: video: Video Device [GFX0] (multi-head: yes  rom: no  post: no)
+Apr 06 17:49:00 ubuntu-server kernel: input: Video Bus as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A03:00/LNXVIDEO:00/input/input4
+Apr 06 17:49:00 ubuntu-server kernel: e1000: Intel(R) PRO/1000 Network Driver
+Apr 06 17:49:00 ubuntu-server kernel: ahci 0000:00:0d.0: version 3.0
+Apr 06 17:49:00 ubuntu-server kernel: e1000: Copyright (c) 1999-2006 Intel Corporation.
+Apr 06 17:49:00 ubuntu-server kernel: ahci 0000:00:0d.0: SSS flag set, parallel bus scan disabled
+Apr 06 17:49:00 ubuntu-server kernel: ahci 0000:00:0d.0: AHCI vers 0001.0100, 32 command slots, 3 Gbps, SATA mode
+Apr 06 17:49:00 ubuntu-server kernel: ahci 0000:00:0d.0: 2/2 ports implemented (port mask 0x3)
+Apr 06 17:49:00 ubuntu-server kernel: ahci 0000:00:0d.0: flags: 64bit ncq stag only ccc 
+Apr 06 17:49:00 ubuntu-server kernel: workqueue: do_free_init hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:00 ubuntu-server kernel: scsi host2: ahci
+Apr 06 17:49:00 ubuntu-server kernel: workqueue: do_free_init hogged CPU for >10000us 5 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:00 ubuntu-server kernel: scsi host3: ahci
+Apr 06 17:49:00 ubuntu-server kernel: ata3: SATA max UDMA/133 abar m8192@0xf0644000 port 0xf0644100 irq 21 lpm-pol 0
+Apr 06 17:49:00 ubuntu-server kernel: ata4: SATA max UDMA/133 abar m8192@0xf0644000 port 0xf0644180 irq 21 lpm-pol 0
+Apr 06 17:49:00 ubuntu-server kernel: ata3: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+Apr 06 17:49:00 ubuntu-server kernel: ata3.00: ATA-6: VBOX HARDDISK, 1.0, max UDMA/133
+Apr 06 17:49:00 ubuntu-server kernel: ata3.00: 62914560 sectors, multi 128: LBA48 NCQ (depth 32)
+Apr 06 17:49:00 ubuntu-server kernel: ata3.00: configured for UDMA/133
+Apr 06 17:49:00 ubuntu-server kernel: scsi 2:0:0:0: Direct-Access     ATA      VBOX HARDDISK    1.0  PQ: 0 ANSI: 5
+Apr 06 17:49:00 ubuntu-server kernel: sd 2:0:0:0: [sda] 62914560 512-byte logical blocks: (32.2 GB/30.0 GiB)
+Apr 06 17:49:00 ubuntu-server kernel: sd 2:0:0:0: Attached scsi generic sg1 type 0
+Apr 06 17:49:00 ubuntu-server kernel: sd 2:0:0:0: [sda] Write Protect is off
+Apr 06 17:49:00 ubuntu-server kernel: sd 2:0:0:0: [sda] Mode Sense: 00 3a 00 00
+Apr 06 17:49:00 ubuntu-server kernel: sd 2:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+Apr 06 17:49:00 ubuntu-server kernel: sd 2:0:0:0: [sda] Preferred minimum I/O size 512 bytes
+Apr 06 17:49:00 ubuntu-server kernel: input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input5
+Apr 06 17:49:00 ubuntu-server kernel:  sda: sda1 sda2 sda3 sda5
+Apr 06 17:49:00 ubuntu-server kernel: sd 2:0:0:0: [sda] Attached SCSI disk
+Apr 06 17:49:00 ubuntu-server kernel: e1000 0000:00:03.0 eth0: (PCI:33MHz:32-bit) 08:00:27:73:8f:56
+Apr 06 17:49:00 ubuntu-server kernel: e1000 0000:00:03.0 eth0: Intel(R) PRO/1000 Network Connection
+Apr 06 17:49:00 ubuntu-server kernel: ata4: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+Apr 06 17:49:00 ubuntu-server kernel: ata4.00: ATA-8: VBOX HARDDISK, 1.0, max UDMA/133
+Apr 06 17:49:00 ubuntu-server kernel: ata4.00: 2097152 sectors, multi 128: LBA48 NCQ (depth 32)
+Apr 06 17:49:00 ubuntu-server kernel: ata4.00: Read log 0x00 page 0x00 failed, Emask 0x1
+Apr 06 17:49:00 ubuntu-server kernel: ata4.00: Security Log not supported
+Apr 06 17:49:00 ubuntu-server kernel: ata4.00: Security Log not supported
+Apr 06 17:49:00 ubuntu-server kernel: ata4.00: configured for UDMA/133
+Apr 06 17:49:00 ubuntu-server kernel: scsi 3:0:0:0: Direct-Access     ATA      VBOX HARDDISK    1.0  PQ: 0 ANSI: 5
+Apr 06 17:49:00 ubuntu-server kernel: sd 3:0:0:0: Attached scsi generic sg2 type 0
+Apr 06 17:49:00 ubuntu-server kernel: sd 3:0:0:0: [sdb] 2097152 512-byte logical blocks: (1.07 GB/1.00 GiB)
+Apr 06 17:49:00 ubuntu-server kernel: sd 3:0:0:0: [sdb] Write Protect is off
+Apr 06 17:49:00 ubuntu-server kernel: sd 3:0:0:0: [sdb] Mode Sense: 00 3a 00 00
+Apr 06 17:49:00 ubuntu-server kernel: sd 3:0:0:0: [sdb] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+Apr 06 17:49:00 ubuntu-server kernel: sd 3:0:0:0: [sdb] Preferred minimum I/O size 512 bytes
+Apr 06 17:49:00 ubuntu-server kernel:  sdb: sdb1
+Apr 06 17:49:00 ubuntu-server kernel: sd 3:0:0:0: [sdb] Attached SCSI disk
+Apr 06 17:49:00 ubuntu-server kernel: workqueue: do_free_init hogged CPU for >10000us 7 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:00 ubuntu-server kernel: e1000 0000:00:08.0 eth1: (PCI:33MHz:32-bit) 08:00:27:64:e1:6e
+Apr 06 17:49:00 ubuntu-server kernel: e1000 0000:00:08.0 eth1: Intel(R) PRO/1000 Network Connection
+Apr 06 17:49:00 ubuntu-server kernel: e1000 0000:00:03.0 enp0s3: renamed from eth0
+Apr 06 17:49:00 ubuntu-server kernel: e1000 0000:00:08.0 enp0s8: renamed from eth1
+Apr 06 17:49:00 ubuntu-server kernel: EXT4-fs (dm-2): orphan cleanup on readonly fs
+Apr 06 17:49:00 ubuntu-server kernel: EXT4-fs (dm-2): mounted filesystem cc85f338-cfa8-46e8-8009-26abfa90b0bd ro with ordered data mode. Quota mode: none.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Inserted module 'autofs4'
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd 256.5-2ubuntu3.1 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT +LIBARCHIVE)
+Apr 06 17:49:00 ubuntu-server systemd[1]: Detected virtualization oracle.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Detected architecture x86-64.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Invalid DMI field header.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Hostname set to <ubuntu-server>.
+Apr 06 17:49:00 ubuntu-server systemd[1]: bpf-restrict-fs: BPF LSM hook not enabled in the kernel, BPF LSM not supported.
+Apr 06 17:49:00 ubuntu-server kernel: Guest personality initialized and is inactive
+Apr 06 17:49:00 ubuntu-server kernel: VMCI host device registered (name=vmci, major=10, minor=122)
+Apr 06 17:49:00 ubuntu-server kernel: Initialized host personality
+Apr 06 17:49:00 ubuntu-server kernel: NET: Registered PF_VSOCK protocol family
+Apr 06 17:49:00 ubuntu-server systemd[1]: Configuration file /run/systemd/system/netplan-ovs-cleanup.service is marked world-inaccessible. This has no effect as configuration data is accessible via APIs without restrictions. Proceeding anyway.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Queued start job for default target graphical.target.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Created slice system-systemd\x2dfsck.slice - Slice /system/systemd-fsck.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Created slice user.slice - User and Session Slice.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Set up automount proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Expecting device dev-disk-by\x2duuid-2b67627f\x2dfa0e\x2d486d\x2db0ef\x2d4baa020fce6f.device - /dev/disk/by-uuid/2b67627f-fa0e-486d-b0ef-4baa020fce6f...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Expecting device dev-disk-by\x2duuid-9f8780c6\x2d3d2b\x2d497b\x2d9226\x2d5240bc217084.device - /dev/disk/by-uuid/9f8780c6-3d2b-497b-9226-5240bc217084...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Expecting device dev-disk-by\x2duuid-ECAB\x2d12B3.device - /dev/disk/by-uuid/ECAB-12B3...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Expecting device dev-disk-by\x2duuid-e604554b\x2da7e9\x2d4aaa\x2da2b3\x2de5f5f79d662c.device - /dev/disk/by-uuid/e604554b-a7e9-4aaa-a2b3-e5f5f79d662c...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Reached target nss-user-lookup.target - User and Group Name Lookups.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Reached target remote-fs.target - Remote File Systems.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Reached target slices.target - Slice Units.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Reached target time-set.target - System Time Set.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on dm-event.socket - Device-mapper event daemon FIFOs.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on lvm2-lvmpolld.socket - LVM2 poll daemon socket.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on syslog.socket - Syslog Socket.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-creds.socket - Credential Encryption/Decryption.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-fsckd.socket - fsck to fsckd communication Socket.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-journald.socket - Journal Sockets.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-networkd.socket - Network Service Netlink Socket.
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-pcrextend.socket - TPM PCR Measurements was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-pcrlock.socket - Make TPM PCR Policy was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+Apr 06 17:49:00 ubuntu-server systemd[1]: run-lock.mount: Directory /run/lock to mount over is not empty, mounting anyway.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounting run-lock.mount - Legacy Locks Directory /run/lock...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounting sys-kernel-debug.mount - Kernel Debug File System...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-journald.service - Journal Service...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting blk-availability.service - Availability of block devices...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting keyboard-setup.service - Set the console keyboard layout...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting kmod-static-nodes.service - Create List of Static Device Nodes...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting lvm2-monitor.service - Monitoring of LVM2 mirrors, snapshots etc. using dmeventd or progress polling...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+Apr 06 17:49:00 ubuntu-server systemd-journald[982]: Collecting audit messages is disabled.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+Apr 06 17:49:00 ubuntu-server systemd[1]: netplan-ovs-cleanup.service - OpenVSwitch configuration for cleanup was skipped because of an unmet condition check (ConditionFileIsExecutable=/usr/bin/ovs-vsctl).
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-fsck-root.service - File System Check on Root Device was skipped because of an unmet condition check (ConditionPathExists=!/run/initramfs/fsck-root).
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-hibernate-clear.service - Clear Stale Hibernate Storage Info was skipped because of an unmet condition check (ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67).
+Apr 06 17:49:00 ubuntu-server systemd-journald[982]: Journal started
+Apr 06 17:49:00 ubuntu-server systemd-journald[982]: Runtime Journal (/run/log/journal/e45de3e6c379498da9270e23afb049e3) is 4.8M, max 38.9M, 34M free.
+Apr 06 17:49:00 ubuntu-server kernel: pstore: Using crash dump compression: deflate
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-network-generator.service - Generate network units from Kernel command line...
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-pcrmachine.service - TPM PCR Machine ID Measurement was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+Apr 06 17:49:00 ubuntu-server kernel: pstore: Registered efi_pstore as persistent store backend
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-tpm2-setup-early.service - Early TPM SRK Setup was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-udev-load-credentials.service - Load udev Rules from Credentials...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounted dev-hugepages.mount - Huge Pages File System.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Started systemd-journald.service - Journal Service.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounted run-lock.mount - Legacy Locks Directory /run/lock.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounted sys-kernel-debug.mount - Kernel Debug File System.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounted sys-kernel-tracing.mount - Kernel Trace File System.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished blk-availability.service - Availability of block devices.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished keyboard-setup.service - Set the console keyboard layout.
+Apr 06 17:49:00 ubuntu-server kernel: EXT4-fs (dm-2): re-mounted cc85f338-cfa8-46e8-8009-26abfa90b0bd r/w. Quota mode: none.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished kmod-static-nodes.service - Create List of Static Device Nodes.
+Apr 06 17:49:00 ubuntu-server systemd[1]: modprobe@configfs.service: Deactivated successfully.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
+Apr 06 17:49:00 ubuntu-server systemd[1]: modprobe@drm.service: Deactivated successfully.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+Apr 06 17:49:00 ubuntu-server systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
+Apr 06 17:49:00 ubuntu-server systemd[1]: modprobe@fuse.service: Deactivated successfully.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-network-generator.service - Generate network units from Kernel command line.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-remount-fs.service - Remount Root and Kernel File Systems.
+Apr 06 17:49:00 ubuntu-server lvm[988]:   3 logical volume(s) in volume group "vg" monitored
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-udev-load-credentials.service - Load udev Rules from Credentials.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounting sys-fs-fuse-connections.mount - FUSE Control File System...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounting sys-kernel-config.mount - Kernel Configuration File System...
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-hwdb-update.service - Rebuild Hardware Database was skipped because no trigger condition checks were met.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-journal-flush.service - Flush Journal to Persistent Storage...
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-pstore.service - Platform Persistent Storage Archival was skipped because of an unmet condition check (ConditionDirectoryNotEmpty=/sys/fs/pstore).
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-random-seed.service - Load/Save OS Random Seed...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+Apr 06 17:49:00 ubuntu-server systemd-journald[982]: Time spent on flushing to /var/log/journal/e45de3e6c379498da9270e23afb049e3 is 3.800ms for 642 entries.
+Apr 06 17:49:00 ubuntu-server systemd-journald[982]: System Journal (/var/log/journal/e45de3e6c379498da9270e23afb049e3) is 8M, max 1.9G, 1.9G free.
+Apr 06 17:49:00 ubuntu-server systemd-journald[982]: Received client request to flush runtime journal.
+Apr 06 17:49:00 ubuntu-server kernel: hrtimer: interrupt took 4875851 ns
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully...
+Apr 06 17:49:00 ubuntu-server systemd[1]: systemd-tpm2-setup.service - TPM SRK Setup was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished lvm2-monitor.service - Monitoring of LVM2 mirrors, snapshots etc. using dmeventd or progress polling.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounted sys-fs-fuse-connections.mount - FUSE Control File System.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Mounted sys-kernel-config.mount - Kernel Configuration File System.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-random-seed.service - Load/Save OS Random Seed.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-journal-flush.service - Flush Journal to Persistent Storage.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-sysctl.service - Apply Kernel Variables.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-udev-trigger.service - Coldplug All udev Devices.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-sysusers.service - Create System Users...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-sysusers.service - Create System Users.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev...
+Apr 06 17:49:00 ubuntu-server systemd[1]: Finished systemd-tmpfiles-setup-dev.service - Create Static Device Nodes in /dev.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Reached target local-fs-pre.target - Preparation for Local File Systems.
+Apr 06 17:49:00 ubuntu-server systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+Apr 06 17:49:01 ubuntu-server systemd-udevd[1051]: Using default interface naming scheme 'v255'.
+Apr 06 17:49:01 ubuntu-server systemd[1]: Started systemd-udevd.service - Rule-based Manager for Device Events and Files.
+Apr 06 17:49:01 ubuntu-server lvm[1065]: PV /dev/dm-0 online, VG vg is complete.
+Apr 06 17:49:01 ubuntu-server lvm[1065]: VG vg finished
+Apr 06 17:49:02 ubuntu-server systemd[1]: Found device dev-disk-by\x2duuid-e604554b\x2da7e9\x2d4aaa\x2da2b3\x2de5f5f79d662c.device - /dev/disk/by-uuid/e604554b-a7e9-4aaa-a2b3-e5f5f79d662c.
+Apr 06 17:49:02 ubuntu-server systemd[1]: Starting systemd-fsck@dev-disk-by\x2duuid-e604554b\x2da7e9\x2d4aaa\x2da2b3\x2de5f5f79d662c.service - File System Check on /dev/disk/by-uuid/e604554b-a7e9-4aaa-a2b3-e5f5f79d662c...
+Apr 06 17:49:02 ubuntu-server systemd[1]: Found device dev-disk-by\x2duuid-9f8780c6\x2d3d2b\x2d497b\x2d9226\x2d5240bc217084.device - /dev/disk/by-uuid/9f8780c6-3d2b-497b-9226-5240bc217084.
+Apr 06 17:49:02 ubuntu-server systemd[1]: Activating swap dev-disk-by\x2duuid-9f8780c6\x2d3d2b\x2d497b\x2d9226\x2d5240bc217084.swap - /dev/disk/by-uuid/9f8780c6-3d2b-497b-9226-5240bc217084...
+Apr 06 17:49:02 ubuntu-server systemd[1]: Started systemd-fsckd.service - File System Check Daemon to report status.
+Apr 06 17:49:02 ubuntu-server systemd[1]: Found device dev-disk-by\x2duuid-2b67627f\x2dfa0e\x2d486d\x2db0ef\x2d4baa020fce6f.device - /dev/disk/by-uuid/2b67627f-fa0e-486d-b0ef-4baa020fce6f.
+Apr 06 17:49:02 ubuntu-server systemd[1]: Starting systemd-fsck@dev-disk-by\x2duuid-2b67627f\x2dfa0e\x2d486d\x2db0ef\x2d4baa020fce6f.service - File System Check on /dev/disk/by-uuid/2b67627f-fa0e-486d-b0ef-4baa020fce6f...
+Apr 06 17:49:02 ubuntu-server kernel: Adding 6291452k swap on /dev/mapper/vg-swap.  Priority:-2 extents:1 across:6291452k 
+Apr 06 17:49:02 ubuntu-server systemd[1]: Activated swap dev-disk-by\x2duuid-9f8780c6\x2d3d2b\x2d497b\x2d9226\x2d5240bc217084.swap - /dev/disk/by-uuid/9f8780c6-3d2b-497b-9226-5240bc217084.
+Apr 06 17:49:02 ubuntu-server systemd[1]: Reached target swap.target - Swaps.
+Apr 06 17:49:02 ubuntu-server systemd[1]: tmp.mount: Directory /tmp to mount over is not empty, mounting anyway.
+Apr 06 17:49:02 ubuntu-server systemd[1]: Mounting tmp.mount - Temporary Directory /tmp...
+Apr 06 17:49:02 ubuntu-server kernel: workqueue: do_free_init hogged CPU for >10000us 11 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:02 ubuntu-server systemd[1]: Mounted tmp.mount - Temporary Directory /tmp.
+Apr 06 17:49:03 ubuntu-server kernel: piix4_smbus 0000:00:07.0: SMBus Host Controller at 0x4100, revision 0
+Apr 06 17:49:03 ubuntu-server systemd[1]: Listening on systemd-rfkill.socket - Load/Save RF Kill Switch Status /dev/rfkill Watch.
+Apr 06 17:49:03 ubuntu-server systemd[1]: Found device dev-disk-by\x2duuid-ECAB\x2d12B3.device - VBOX_HARDDISK EFI-SP.
+Apr 06 17:49:03 ubuntu-server kernel: vboxguest: host-version: 7.1.6r167084 0x8000000f
+Apr 06 17:49:03 ubuntu-server kernel: vbg_heartbeat_init: Setting up heartbeat to trigger every 2000 milliseconds
+Apr 06 17:49:03 ubuntu-server kernel: input: VirtualBox mouse integration as /devices/pci0000:00/0000:00:04.0/input/input6
+Apr 06 17:49:03 ubuntu-server systemd-fsck[1119]: data: sauber, 12/178816 Dateien, 29884/714752 Blöcke
+Apr 06 17:49:03 ubuntu-server systemd-fsck[1114]: boot: sauber, 310/65408 Dateien, 33149/261632 Blöcke
+Apr 06 17:49:03 ubuntu-server systemd[1]: Finished systemd-fsck@dev-disk-by\x2duuid-e604554b\x2da7e9\x2d4aaa\x2da2b3\x2de5f5f79d662c.service - File System Check on /dev/disk/by-uuid/e604554b-a7e9-4aaa-a2b3-e5f5f79d662c.
+Apr 06 17:49:03 ubuntu-server systemd[1]: Finished systemd-fsck@dev-disk-by\x2duuid-2b67627f\x2dfa0e\x2d486d\x2db0ef\x2d4baa020fce6f.service - File System Check on /dev/disk/by-uuid/2b67627f-fa0e-486d-b0ef-4baa020fce6f.
+Apr 06 17:49:03 ubuntu-server systemd[1]: Mounting boot.mount - /boot...
+Apr 06 17:49:04 ubuntu-server systemd[1]: Mounting media-data.mount - /media/data...
+Apr 06 17:49:04 ubuntu-server kernel: intel_rapl_common: Found RAPL domain package
+Apr 06 17:49:04 ubuntu-server kernel: intel_rapl_common: Found RAPL domain core
+Apr 06 17:49:04 ubuntu-server kernel: EXT4-fs (dm-4): mounted filesystem e604554b-a7e9-4aaa-a2b3-e5f5f79d662c r/w with ordered data mode. Quota mode: none.
+Apr 06 17:49:04 ubuntu-server kernel: workqueue: do_free_init hogged CPU for >10000us 19 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:04 ubuntu-server systemd[1]: Mounted boot.mount - /boot.
+Apr 06 17:49:04 ubuntu-server systemd[1]: Mounting boot-efi.mount - /boot/efi...
+Apr 06 17:49:04 ubuntu-server systemd[1]: Mounted boot-efi.mount - /boot/efi.
+Apr 06 17:49:04 ubuntu-server kernel: EXT4-fs (dm-3): mounted filesystem 2b67627f-fa0e-486d-b0ef-4baa020fce6f r/w with ordered data mode. Quota mode: none.
+Apr 06 17:49:04 ubuntu-server systemd[1]: Mounted media-data.mount - /media/data.
+Apr 06 17:49:04 ubuntu-server systemd[1]: Reached target local-fs.target - Local File Systems.
+Apr 06 17:49:04 ubuntu-server systemd[1]: Listening on systemd-sysext.socket - System Extension Image Management.
+Apr 06 17:49:04 ubuntu-server systemd[1]: Starting console-setup.service - Set console font and keymap...
+Apr 06 17:49:04 ubuntu-server systemd[1]: Starting ldconfig.service - Rebuild Dynamic Linker Cache...
+Apr 06 17:49:04 ubuntu-server systemd[1]: Starting systemd-binfmt.service - Set Up Additional Binary Formats...
+Apr 06 17:49:04 ubuntu-server systemd[1]: Starting systemd-tmpfiles-setup.service - Create System Files and Directories...
+Apr 06 17:49:04 ubuntu-server systemd[1]: Starting ufw.service - Uncomplicated firewall...
+Apr 06 17:49:04 ubuntu-server systemd[1]: proc-sys-fs-binfmt_misc.automount: Got automount request for /proc/sys/fs/binfmt_misc, triggered by 1154 (systemd-binfmt)
+Apr 06 17:49:04 ubuntu-server systemd-tmpfiles[1155]: /usr/lib/tmpfiles.d/legacy.conf:13: Duplicate line for path "/run/lock", ignoring.
+Apr 06 17:49:04 ubuntu-server systemd[1]: Mounting proc-sys-fs-binfmt_misc.mount - Arbitrary Executable File Formats File System...
+Apr 06 17:49:05 ubuntu-server systemd[1]: Mounted proc-sys-fs-binfmt_misc.mount - Arbitrary Executable File Formats File System.
+Apr 06 17:49:05 ubuntu-server systemd[1]: Finished systemd-binfmt.service - Set Up Additional Binary Formats.
+Apr 06 17:49:05 ubuntu-server kernel: snd_intel8x0 0000:00:05.0: allow list rate for 1028:0177 is 48000
+Apr 06 17:49:05 ubuntu-server systemd[1]: Finished systemd-tmpfiles-setup.service - Create System Files and Directories.
+Apr 06 17:49:05 ubuntu-server systemd[1]: Reached target sound.target - Sound Card.
+Apr 06 17:49:05 ubuntu-server systemd[1]: systemd-firstboot.service - First Boot Wizard was skipped because of an unmet condition check (ConditionFirstBoot=yes).
+Apr 06 17:49:05 ubuntu-server systemd[1]: first-boot-complete.target - First Boot Complete was skipped because of an unmet condition check (ConditionFirstBoot=yes).
+Apr 06 17:49:05 ubuntu-server systemd[1]: Starting systemd-journal-catalog-update.service - Rebuild Journal Catalog...
+Apr 06 17:49:05 ubuntu-server systemd[1]: systemd-machine-id-commit.service - Save Transient machine-id to Disk was skipped because of an unmet condition check (ConditionPathIsMountPoint=/etc/machine-id).
+Apr 06 17:49:05 ubuntu-server systemd[1]: Starting systemd-resolved.service - Network Name Resolution...
+Apr 06 17:49:05 ubuntu-server systemd[1]: Starting systemd-update-utmp.service - Record System Boot/Shutdown in UTMP...
+Apr 06 17:49:05 ubuntu-server systemd[1]: Finished systemd-update-utmp.service - Record System Boot/Shutdown in UTMP.
+Apr 06 17:49:05 ubuntu-server systemd[1]: Finished systemd-journal-catalog-update.service - Rebuild Journal Catalog.
+Apr 06 17:49:05 ubuntu-server systemd-resolved[1186]: Positive Trust Anchors:
+Apr 06 17:49:05 ubuntu-server systemd-resolved[1186]: . IN DS 20326 8 2 e06d44b80b8f1d39a95c0b0d7c65d08458e880409bbc683457104237c7f8ec8d
+Apr 06 17:49:05 ubuntu-server systemd-resolved[1186]: Negative trust anchors: home.arpa 10.in-addr.arpa 16.172.in-addr.arpa 17.172.in-addr.arpa 18.172.in-addr.arpa 19.172.in-addr.arpa 20.172.in-addr.arpa 21.172.in-addr.arpa 22.172.in-addr.arpa 23.172.in-addr.arpa 24.172.in-addr.arpa 25.172.in-addr.arpa 26.172.in-addr.arpa 27.172.in-addr.arpa 28.172.in-addr.arpa 29.172.in-addr.arpa 30.172.in-addr.arpa 31.172.in-addr.arpa 170.0.0.192.in-addr.arpa 171.0.0.192.in-addr.arpa 168.192.in-addr.arpa d.f.ip6.arpa ipv4only.arpa resolver.arpa corp home internal intranet lan local private test
+Apr 06 17:49:05 ubuntu-server systemd-resolved[1186]: Using system hostname 'ubuntu-server'.
+Apr 06 17:49:05 ubuntu-server systemd[1]: Started systemd-resolved.service - Network Name Resolution.
+Apr 06 17:49:05 ubuntu-server systemd[1]: Reached target nss-lookup.target - Host and Network Name Lookups.
+Apr 06 17:49:06 ubuntu-server console-setup.sh[1189]: WARNING: Unknown X keysym "dead_belowmacron"
+Apr 06 17:49:06 ubuntu-server console-setup.sh[1189]: WARNING: Unknown X keysym "dead_belowmacron"
+Apr 06 17:49:06 ubuntu-server console-setup.sh[1189]: WARNING: Unknown X keysym "dead_belowmacron"
+Apr 06 17:49:06 ubuntu-server console-setup.sh[1189]: WARNING: Unknown X keysym "dead_belowmacron"
+Apr 06 17:49:07 ubuntu-server systemd[1]: Finished ufw.service - Uncomplicated firewall.
+Apr 06 17:49:07 ubuntu-server systemd[1]: Reached target network-pre.target - Preparation for Network.
+Apr 06 17:49:07 ubuntu-server systemd[1]: Starting systemd-networkd.service - Network Configuration...
+Apr 06 17:49:07 ubuntu-server systemd[1]: Finished console-setup.service - Set console font and keymap.
+Apr 06 17:49:08 ubuntu-server kernel: cfg80211: Loading compiled-in X.509 certificates for regulatory database
+Apr 06 17:49:08 ubuntu-server kernel: Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+Apr 06 17:49:08 ubuntu-server kernel: Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: lo: Link UP
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: lo: Gained carrier
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: Enumeration completed
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started systemd-networkd.service - Network Configuration.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting systemd-networkd-persistent-storage.service - Enable Persistent Storage in systemd-networkd...
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s3: Configuring with /etc/systemd/network/99-dhcp.network.
+Apr 06 17:49:08 ubuntu-server kernel: e1000: enp0s3 NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s8: Configuring with /etc/systemd/network/99-dhcp.network.
+Apr 06 17:49:08 ubuntu-server kernel: e1000: enp0s8 NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s3: Link UP
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s3: Gained carrier
+Apr 06 17:49:08 ubuntu-server systemd[1]: Finished systemd-networkd-persistent-storage.service - Enable Persistent Storage in systemd-networkd.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Finished ldconfig.service - Rebuild Dynamic Linker Cache.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting systemd-update-done.service - Update is Completed...
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s8: Link UP
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s8: Gained carrier
+Apr 06 17:49:08 ubuntu-server systemd[1]: Finished systemd-update-done.service - Update is Completed.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target sysinit.target - System Initialization.
+Apr 06 17:49:08 ubuntu-server systemd[1]: tpm-udev.path - Handle dynamically added tpm devices was skipped because of an unmet condition check (ConditionVirtualization=container).
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started apt-daily.timer - Daily apt download activities.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started apt-daily-upgrade.timer - Daily apt upgrade and clean activities.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started dpkg-db-backup.timer - Daily dpkg database backup timer.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started e2scrub_all.timer - Periodic ext4 Online Metadata Check for All Filesystems.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started fstrim.timer - Discard unused filesystem blocks once a week.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started logrotate.timer - Daily rotation of log files.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started motd-news.timer - Message of the Day.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started systemd-tmpfiles-clean.timer - Daily Cleanup of Temporary Directories.
+Apr 06 17:49:08 ubuntu-server systemd[1]: ua-timer.timer - Ubuntu Pro Timer for running repeated jobs was skipped because of an unmet condition check (ConditionPathExists=/var/lib/ubuntu-advantage/private/machine-token.json).
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target boot-complete.target - Boot Completion Check.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target paths.target - Path Units.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target timers.target - Timer Units.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Listening on dbus.socket - D-Bus System Message Bus Socket.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Listening on ssh.socket - OpenBSD Secure Shell server socket.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Listening on sshd-unix-local.socket - OpenSSH Server Socket (systemd-ssh-generator, AF_UNIX Local).
+Apr 06 17:49:08 ubuntu-server systemd[1]: Listening on sshd-vsock.socket - OpenSSH Server Socket (systemd-ssh-generator, AF_VSOCK).
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target ssh-access.target - SSH Access Available.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Listening on systemd-hostnamed.socket - Hostname Service Socket.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target sockets.target - Socket Units.
+Apr 06 17:49:08 ubuntu-server systemd[1]: systemd-pcrphase-sysinit.service - TPM PCR Barrier (Initialization) was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target basic.target - Basic System.
+Apr 06 17:49:08 ubuntu-server systemd[1]: System is tainted: unmerged-bin
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting accounts-daemon.service - Accounts Service...
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started cron.service - Regular background program processing daemon.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting dbus.service - D-Bus System Message Bus...
+Apr 06 17:49:08 ubuntu-server systemd[1]: Started dmesg.service - Save initial kernel messages after boot.
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s3: DHCPv4 address 10.0.2.15/24, gateway 10.0.2.2 acquired from 10.0.2.2
+Apr 06 17:49:08 ubuntu-server (cron)[1449]: cron.service: Referenced but unset environment variable evaluates to an empty string: EXTRA_OPTS
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting e2scrub_reap.service - Remove Stale Online ext4 Metadata Check Snapshots...
+Apr 06 17:49:08 ubuntu-server cron[1449]: (CRON) INFO (pidfile fd = 3)
+Apr 06 17:49:08 ubuntu-server systemd[1]: getty-static.service - getty on tty2-tty6 if dbus and logind are not available was skipped because of an unmet condition check (ConditionPathExists=!/usr/bin/dbus-daemon).
+Apr 06 17:49:08 ubuntu-server systemd[1]: Reached target getty.target - Login Prompts.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting gnome-remote-desktop-configuration.service - Configure GNOME Remote Desktop...
+Apr 06 17:49:08 ubuntu-server cron[1449]: (CRON) INFO (Running @reboot jobs)
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting gnome-remote-desktop.service - GNOME Remote Desktop...
+Apr 06 17:49:08 ubuntu-server systemd-networkd[1408]: enp0s8: DHCPv4 address 192.168.56.189/24 acquired from 192.168.56.100
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting grub-common.service - Record successful boot for GRUB...
+Apr 06 17:49:08 ubuntu-server dbus-daemon[1450]: dbus[1450]: Unknown username "whoopsie" in message bus configuration file
+Apr 06 17:49:08 ubuntu-server systemd[1]: networkd-dispatcher.service - Dispatcher daemon for systemd-networkd was skipped because no trigger condition checks were met.
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting rsyslog.service - System Logging Service...
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting systemd-logind.service - User Login Management...
+Apr 06 17:49:08 ubuntu-server systemd[1]: systemd-pcrphase.service - TPM PCR Barrier (User) was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Apr 06 17:49:08 ubuntu-server systemd[1]: ua-reboot-cmds.service - Ubuntu Pro reboot cmds was skipped because of an unmet condition check (ConditionPathExists=/var/lib/ubuntu-advantage/private/machine-token.json).
+Apr 06 17:49:08 ubuntu-server dbus-daemon[1450]: [system] AppArmor D-Bus mediation is enabled
+Apr 06 17:49:08 ubuntu-server dbus-daemon[1450]: [system] Activating systemd to hand-off: service name='org.freedesktop.hostname1' unit='dbus-org.freedesktop.hostname1.service' requested by ':1.1' (uid=998 pid=1408 comm="/usr/lib/systemd/systemd-networkd" label="unconfined")
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting udisks2.service - Disk Manager...
+Apr 06 17:49:08 ubuntu-server systemd[1]: Starting virtualbox-guest-utils.service - Virtualbox guest utils...
+Apr 06 17:49:09 ubuntu-server systemd[1]: Starting zramswap.service - Linux zramswap setup...
+Apr 06 17:49:09 ubuntu-server systemd[1]: Started dbus.service - D-Bus System Message Bus.
+Apr 06 17:49:09 ubuntu-server udisksd[1459]: udisks daemon version 2.10.1 starting
+Apr 06 17:49:09 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.systemd1'
+Apr 06 17:49:09 ubuntu-server systemd[1]: Starting NetworkManager.service - Network Manager...
+Apr 06 17:49:09 ubuntu-server systemd[1]: Starting systemd-hostnamed.service - Hostname Service...
+Apr 06 17:49:09 ubuntu-server systemd-logind[1458]: New seat seat0.
+Apr 06 17:49:09 ubuntu-server kernel: workqueue: blk_mq_run_work_fn hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:09 ubuntu-server systemd-logind[1458]: Watching system buttons on /dev/input/event0 (Power Button)
+Apr 06 17:49:09 ubuntu-server systemd-logind[1458]: Watching system buttons on /dev/input/event1 (Sleep Button)
+Apr 06 17:49:09 ubuntu-server systemd-logind[1458]: Watching system buttons on /dev/input/event2 (AT Translated Set 2 keyboard)
+Apr 06 17:49:09 ubuntu-server dbus-daemon[1450]: [system] Activating via systemd: service name='org.freedesktop.PolicyKit1' unit='polkit.service' requested by ':1.3' (uid=0 pid=1459 comm="/usr/libexec/udisks2/udisksd" label="unconfined")
+Apr 06 17:49:09 ubuntu-server systemd[1]: Started systemd-logind.service - User Login Management.
+Apr 06 17:49:09 ubuntu-server systemd[1]: Starting polkit.service - Authorization Manager...
+Apr 06 17:49:09 ubuntu-server systemd[1]: grub-common.service: Deactivated successfully.
+Apr 06 17:49:09 ubuntu-server systemd[1]: Finished grub-common.service - Record successful boot for GRUB.
+Apr 06 17:49:09 ubuntu-server root[1485]: Starting Zram
+Apr 06 17:49:09 ubuntu-server zramswap[1485]: <13>Apr  6 17:49:09 root: Starting Zram
+Apr 06 17:49:09 ubuntu-server systemd[1]: Starting grub-initrd-fallback.service - GRUB failed boot detection...
+Apr 06 17:49:09 ubuntu-server rsyslogd[1468]: imuxsock: Acquired UNIX socket '/run/systemd/journal/syslog' (fd 3) from systemd.  [v8.2406.0]
+Apr 06 17:49:09 ubuntu-server systemd[1]: Started rsyslog.service - System Logging Service.
+Apr 06 17:49:09 ubuntu-server rsyslogd[1468]: rsyslogd's groupid changed to 102
+Apr 06 17:49:09 ubuntu-server rsyslogd[1468]: rsyslogd's userid changed to 102
+Apr 06 17:49:09 ubuntu-server rsyslogd[1468]: [origin software="rsyslogd" swVersion="8.2406.0" x-pid="1468" x-info="https://www.rsyslog.com"] start
+Apr 06 17:49:09 ubuntu-server systemd[1]: e2scrub_reap.service: Deactivated successfully.
+Apr 06 17:49:09 ubuntu-server systemd[1]: Finished e2scrub_reap.service - Remove Stale Online ext4 Metadata Check Snapshots.
+Apr 06 17:49:09 ubuntu-server gnome-remote-de[1453]: Init TPM credentials failed because No TPM device found, using GKeyFile as fallback
+Apr 06 17:49:09 ubuntu-server gnome-remote-de[1454]: Init TPM credentials failed because No TPM device found, using GKeyFile as fallback
+Apr 06 17:49:09 ubuntu-server kernel: workqueue: blk_mq_run_work_fn hogged CPU for >10000us 5 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:09 ubuntu-server systemd[1]: Started gnome-remote-desktop.service - GNOME Remote Desktop.
+Apr 06 17:49:09 ubuntu-server virtualbox-guest-utils[1460]:  * Starting VirtualBox Additions
+Apr 06 17:49:09 ubuntu-server virtualbox-guest-utils[1514]: libkmod: ERROR ../libkmod/libkmod-module.c:2039 kmod_module_get_holders: could not open '/sys/module/zram/holders': No such file or directory
+Apr 06 17:49:09 ubuntu-server systemd-networkd[1408]: enp0s3: Gained IPv6LL
+Apr 06 17:49:09 ubuntu-server virtualbox-guest-utils[1516]: libkmod: ERROR ../libkmod/libkmod-module.c:2039 kmod_module_get_holders: could not open '/sys/module/zram/holders': No such file or directory
+Apr 06 17:49:09 ubuntu-server systemd[1]: grub-initrd-fallback.service: Deactivated successfully.
+Apr 06 17:49:09 ubuntu-server systemd[1]: Finished grub-initrd-fallback.service - GRUB failed boot detection.
+Apr 06 17:49:10 ubuntu-server systemd[1]: Started gnome-remote-desktop-configuration.service - Configure GNOME Remote Desktop.
+Apr 06 17:49:10 ubuntu-server systemd[1]: Started systemd-hostnamed.service - Hostname Service.
+Apr 06 17:49:10 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.hostname1'
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.1202] NetworkManager (version 1.48.8) is starting... (boot:1e1e314b-7cfe-449c-bfc7-fa31aa154ec1)
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.1222] Read config: /etc/NetworkManager/NetworkManager.conf (lib: 10-dns-resolved.conf, 10-globally-managed-devices.conf) (etc: default-wifi-powersave-on.conf)
+Apr 06 17:49:10 ubuntu-server kernel: zram: Added device: zram0
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.2317] manager[0x558b0d0ed590]: monitoring kernel firmware directory '/lib/firmware'.
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.2332] monitoring ifupdown state file '/run/network/ifstate'.
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.2569] hostname: hostname: using hostnamed
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.2592] hostname: static hostname changed from (none) to "ubuntu-server"
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.2742] dns-mgr: init: dns=systemd-resolved rc-manager=unmanaged (auto), plugin=systemd-resolved
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.2744] manager[0x558b0d0ed590]: rfkill: Wi-Fi hardware radio set enabled
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.2745] manager[0x558b0d0ed590]: rfkill: WWAN hardware radio set enabled
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.326988 main     VBoxClient 7.0.20_Ubuntu r163906 (verbosity: 0) linux.amd64 (Jul 16 2024 15:48:29) release log
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.326989 main     Log opened 2025-04-06T15:49:10.326984000Z
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.326988 main     VBoxClient 7.0.20_Ubuntu r163906 (verbosity: 0) linux.amd64 (Jul 16 2024 15:48:29) release log
+                                      15:49:1
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.331861 main     OS Product: Linux
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.335122 main     OS Release: 6.11.0-21-generic
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.331861 main     OS Product: Linux
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.335122 main     OS Release: 6.11.0-21-generic
+Apr 06 17:49:10 ubuntu-server polkitd[1486]: Started polkitd version 124
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.3537] Loaded device plugin: NMTeamFactory (/usr/lib/x86_64-linux-gnu/NetworkManager/1.48.8/libnm-device-plugin-team.so)
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.335524 main     OS Version: #21-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 19 16:50:40 UTC 2025
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.335524 main     OS Version: #21-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 19 16:50:40 UTC 2025
+Apr 06 17:49:10 ubuntu-server kernel: zram0: detected capacity change from 0 to 15943680
+Apr 06 17:49:10 ubuntu-server polkitd[1486]: Loading rules from directory /etc/polkit-1/rules.d
+Apr 06 17:49:10 ubuntu-server systemd-networkd[1408]: enp0s8: Gained IPv6LL
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.376128 main     Executable: /usr/bin/VBoxClient
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.376130 main     Process ID: 1526
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.376130 main     Package type: LINUX_64BITS_GENERIC (OSE)
+Apr 06 17:49:10 ubuntu-server polkitd[1486]: Loading rules from directory /usr/share/polkit-1/rules.d
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.376128 main     Executable: /usr/bin/VBoxClient
+                                      15:49:10.376130 main     Process ID: 1526
+                                      15:49:10.376130 main     Pac
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.448208 main      VBoxClient 7.0.20_Ubuntu r163906 started. Verbose level = 0. Wayland environment detected: no
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.4815] Loaded device plugin: NMBluezManager (/usr/lib/x86_64-linux-gnu/NetworkManager/1.48.8/libnm-device-plugin-bluetooth.so)
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.448208 main      VBoxClient 7.0.20_Ubuntu r163906 started. Verbose level = 0. Wayland environment detected: no
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.471910 main      Service: SVGA X11 display
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1526]: 15:49:10.471910 main      Service: SVGA X11 display
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.4972] Loaded device plugin: NMWwanFactory (/usr/lib/x86_64-linux-gnu/NetworkManager/1.48.8/libnm-device-plugin-wwan.so)
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.5245] Loaded device plugin: NMAtmManager (/usr/lib/x86_64-linux-gnu/NetworkManager/1.48.8/libnm-device-plugin-adsl.so)
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.524646 main      Initializing service ...
+Apr 06 17:49:10 ubuntu-server zramswap[1534]: Auslagerungsbereich Version 1 wird angelegt, Größe = 7,6 GiB (8163160064 Bytes)
+Apr 06 17:49:10 ubuntu-server zramswap[1534]: keine Bezeichnung, UUID=ac9b78bf-7f80-4fb2-964c-4da7ee9d6150
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.543884 main      Service is not availabe, skipping
+Apr 06 17:49:10 ubuntu-server kernel: Adding 7971836k swap on /dev/zram0.  Priority:100 extents:1 across:7971836k SS
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.5589] Loaded device plugin: NMWifiFactory (/usr/lib/x86_64-linux-gnu/NetworkManager/1.48.8/libnm-device-plugin-wifi.so)
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.5730] manager: rfkill: Wi-Fi enabled by radio killswitch; enabled by state file
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.5730] manager: rfkill: WWAN enabled by radio killswitch; enabled by state file
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.5730] manager: Networking is enabled by state file
+Apr 06 17:49:10 ubuntu-server systemd[1]: Finished zramswap.service - Linux zramswap setup.
+Apr 06 17:49:10 ubuntu-server polkitd[1486]: Finished loading, compiling and executing 7 rules
+Apr 06 17:49:10 ubuntu-server dbus-daemon[1450]: [system] Activating via systemd: service name='org.freedesktop.nm_dispatcher' unit='dbus-org.freedesktop.nm-dispatcher.service' requested by ':1.9' (uid=0 pid=1474 comm="/usr/sbin/NetworkManager --no-daemon" label="unconfined")
+Apr 06 17:49:10 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.PolicyKit1'
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.6140] settings: Loaded settings plugin: ifupdown ("/usr/lib/x86_64-linux-gnu/NetworkManager/1.48.8/libnm-settings-plugin-ifupdown.so")
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.6141] settings: Loaded settings plugin: keyfile (internal)
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.6141] ifupdown: management mode: unmanaged
+Apr 06 17:49:10 ubuntu-server NetworkManager[1474]: <info>  [1743954550.6141] ifupdown: interfaces file /etc/network/interfaces doesn't exist
+Apr 06 17:49:10 ubuntu-server systemd[1]: Started polkit.service - Authorization Manager.
+Apr 06 17:49:10 ubuntu-server polkitd[1486]: Acquired the name org.freedesktop.PolicyKit1 on the system bus
+Apr 06 17:49:10 ubuntu-server systemd[1]: Starting NetworkManager-dispatcher.service - Network Manager Script Dispatcher Service...
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.646309 main     VBoxService 7.0.20_Ubuntu r163906 (verbosity: 0) linux.amd64 (Jul 16 2024 15:48:29) release log
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.646311 main     Log opened 2025-04-06T15:49:10.646305000Z
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.655142 main     OS Product: Linux
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.655494 main     OS Release: 6.11.0-21-generic
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.646309 main     VBoxService 7.0.20_Ubuntu r163906 (verbosity: 0) linux.amd64 (Jul 16 2024 15:48:29) release log
+                                      15:49:
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.655142 main     OS Product: Linux
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.655494 main     OS Release: 6.11.0-21-generic
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.655913 main     OS Version: #21-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 19 16:50:40 UTC 2025
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.655913 main     OS Version: #21-Ubuntu SMP PREEMPT_DYNAMIC Wed Feb 19 16:50:40 UTC 2025
+Apr 06 17:49:10 ubuntu-server kernel: workqueue: blk_mq_run_work_fn hogged CPU for >10000us 7 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.668078 main     Executable: /usr/sbin/VBoxService
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.668080 main     Process ID: 1541
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.668081 main     Package type: LINUX_64BITS_GENERIC (OSE)
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.668078 main     Executable: /usr/sbin/VBoxService
+                                      15:49:10.668080 main     Process ID: 1541
+                                      15:49:10.668081 main     P
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.778179 main     VMSVGA DRM resizing client not started, rc=VERR_FILE_NOT_FOUND
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.778179 main     VMSVGA DRM resizing client not started, rc=VERR_FILE_NOT_FOUND
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.789302 main     7.0.20_Ubuntu r163906 started. Verbose level = 0
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1541]: 15:49:10.789302 main     7.0.20_Ubuntu r163906 started. Verbose level = 0
+Apr 06 17:49:10 ubuntu-server virtualbox-guest-utils[1460]:    ...done.
+Apr 06 17:49:10 ubuntu-server kernel: workqueue: blk_mq_run_work_fn hogged CPU for >10000us 11 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:10 ubuntu-server systemd[1]: Started virtualbox-guest-utils.service - Virtualbox guest utils.
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.806753 main     vbglR3GuestCtrlDetectPeekGetCancelSupport: Supported (#1)
+Apr 06 17:49:10 ubuntu-server kernel: vboxsf: Unknown parameter 'tag'
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.950355 automount vbsvcAutomounterMountIt: Running outdated vboxsf module without support for the 'tag' option?
+Apr 06 17:49:10 ubuntu-server kernel: 15:49:10.956304 automount vbsvcAutomounterMountIt: Successfully mounted 'Downloads' on '/media/sf_Downloads'
+Apr 06 17:49:10 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.nm_dispatcher'
+Apr 06 17:49:10 ubuntu-server systemd[1]: Started NetworkManager-dispatcher.service - Network Manager Script Dispatcher Service.
+Apr 06 17:49:11 ubuntu-server accounts-daemon[1448]: started daemon version 23.13.9
+Apr 06 17:49:11 ubuntu-server systemd[1]: Started accounts-daemon.service - Accounts Service.
+Apr 06 17:49:11 ubuntu-server systemd[1]: Started udisks2.service - Disk Manager.
+Apr 06 17:49:11 ubuntu-server udisksd[1459]: Acquired the name org.freedesktop.UDisks2 on the system message bus
+Apr 06 17:49:11 ubuntu-server systemd[1]: Reload requested from client PID 1575 ('systemctl') (unit NetworkManager.service)...
+Apr 06 17:49:11 ubuntu-server systemd[1]: Reloading...
+Apr 06 17:49:11 ubuntu-server systemd[1]: Configuration file /run/systemd/system/netplan-ovs-cleanup.service is marked world-inaccessible. This has no effect as configuration data is accessible via APIs without restrictions. Proceeding anyway.
+Apr 06 17:49:11 ubuntu-server systemd[1]: Reloading finished in 219 ms.
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7421] dhcp: init: Using DHCP client 'internal'
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7423] manager: (lo): new Loopback device (/org/freedesktop/NetworkManager/Devices/1)
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7430] device (enp0s3): carrier: link connected
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7434] manager: (enp0s3): new Ethernet device (/org/freedesktop/NetworkManager/Devices/2)
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7440] device (enp0s8): carrier: link connected
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7443] manager: (enp0s8): new Ethernet device (/org/freedesktop/NetworkManager/Devices/3)
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7459] failed to open /run/network/ifstate
+Apr 06 17:49:11 ubuntu-server systemd[1]: Started NetworkManager.service - Network Manager.
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7468] bus-manager: acquired D-Bus service "org.freedesktop.NetworkManager"
+Apr 06 17:49:11 ubuntu-server systemd[1]: Reached target network.target - Network.
+Apr 06 17:49:11 ubuntu-server systemd[1]: Starting systemd-user-sessions.service - Permit User Sessions...
+Apr 06 17:49:11 ubuntu-server systemd[1]: ubuntu-advantage.service - Ubuntu Pro Background Auto Attach was skipped because no trigger condition checks were met.
+Apr 06 17:49:11 ubuntu-server NetworkManager[1474]: <info>  [1743954551.7504] manager: startup complete
+Apr 06 17:49:11 ubuntu-server systemd[1]: Finished systemd-user-sessions.service - Permit User Sessions.
+Apr 06 17:49:11 ubuntu-server systemd[1]: Reached target multi-user.target - Multi-User System.
+Apr 06 17:49:11 ubuntu-server systemd[1]: Starting gdm.service - GNOME Display Manager...
+Apr 06 17:49:11 ubuntu-server systemd[1]: Starting setvtrgb.service - Set console scheme...
+Apr 06 17:49:11 ubuntu-server systemd[1]: Finished setvtrgb.service - Set console scheme.
+Apr 06 17:49:11 ubuntu-server systemd[1]: Created slice system-getty.slice - Slice /system/getty.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Started gdm.service - GNOME Display Manager.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Reached target graphical.target - Graphical Interface.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Starting systemd-update-utmp-runlevel.service - Record Runlevel Change in UTMP...
+Apr 06 17:49:12 ubuntu-server systemd[1]: systemd-update-utmp-runlevel.service: Deactivated successfully.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Finished systemd-update-utmp-runlevel.service - Record Runlevel Change in UTMP.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Startup finished in 14.522s (kernel) + 14.109s (userspace) = 28.631s.
+Apr 06 17:49:12 ubuntu-server gdm-launch-environment][1622]: pam_unix(gdm-launch-environment:session): session opened for user gdm(uid=107) by (uid=0)
+Apr 06 17:49:12 ubuntu-server systemd[1]: dmesg.service: Deactivated successfully.
+Apr 06 17:49:12 ubuntu-server gdm-launch-environment][1622]: pam_systemd(gdm-launch-environment:session): New sd-bus connection (system-bus-pam-systemd-1622) opened.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Created slice user-107.slice - User Slice of UID 107.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Starting user-runtime-dir@107.service - User Runtime Directory /run/user/107...
+Apr 06 17:49:12 ubuntu-server systemd-logind[1458]: New session c1 of user gdm.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Finished user-runtime-dir@107.service - User Runtime Directory /run/user/107.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Starting user@107.service - User Manager for UID 107...
+Apr 06 17:49:12 ubuntu-server (systemd)[1636]: pam_unix(systemd-user:session): session opened for user gdm(uid=107) by gdm(uid=0)
+Apr 06 17:49:12 ubuntu-server systemd-logind[1458]: New session 1 of user gdm.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Queued start job for default target default.target.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Created slice app.slice - User Application Slice.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Created slice session.slice - User Core Session Slice.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Reached target paths.target - Paths.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Reached target timers.target - Timers.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Starting dbus.socket - D-Bus User Message Bus Socket...
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on dirmngr.socket - GnuPG network certificate management daemon.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on gpg-agent-browser.socket - GnuPG cryptographic agent and passphrase cache (access for web browsers).
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on gpg-agent-extra.socket - GnuPG cryptographic agent and passphrase cache (restricted).
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Starting gpg-agent-ssh.socket - GnuPG cryptographic agent (ssh-agent emulation)...
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on gpg-agent.socket - GnuPG cryptographic agent and passphrase cache.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on keyboxd.socket - GnuPG public key management service.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on pipewire-pulse.socket - PipeWire PulseAudio.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on pipewire.socket - PipeWire Multimedia System Sockets.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on dbus.socket - D-Bus User Message Bus Socket.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Listening on gpg-agent-ssh.socket - GnuPG cryptographic agent (ssh-agent emulation).
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Reached target sockets.target - Sockets.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Reached target basic.target - Basic System.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Started user@107.service - User Manager for UID 107.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Started pipewire.service - PipeWire Multimedia Service.
+Apr 06 17:49:12 ubuntu-server systemd[1]: Started session-c1.scope - Session c1 of User gdm.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Started filter-chain.service - PipeWire filter chain daemon.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Started wireplumber.service - Multimedia Service Session Manager.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Started pipewire-pulse.service - PipeWire PulseAudio.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Reached target default.target - Main User Target.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Startup finished in 364ms.
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Starting dbus.service - D-Bus User Message Bus...
+Apr 06 17:49:12 ubuntu-server dbus-daemon[1656]: [session uid=107 pid=1656] AppArmor D-Bus mediation is enabled
+Apr 06 17:49:12 ubuntu-server systemd[1636]: Started dbus.service - D-Bus User Message Bus.
+Apr 06 17:49:12 ubuntu-server wireplumber[1651]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server wireplumber[1651]: mod.rt: RTKit does not give us MaxRealtimePriority, using 1
+Apr 06 17:49:12 ubuntu-server pipewire-pulse[1652]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server pipewire-pulse[1652]: mod.rt: RTKit does not give us MaxRealtimePriority, using 1
+Apr 06 17:49:12 ubuntu-server pipewire-pulse[1652]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server pipewire-pulse[1652]: mod.rt: RTKit does not give us MinNiceLevel, using 0
+Apr 06 17:49:12 ubuntu-server wireplumber[1651]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server wireplumber[1651]: mod.rt: RTKit does not give us MinNiceLevel, using 0
+Apr 06 17:49:12 ubuntu-server pipewire-pulse[1652]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server pipewire-pulse[1652]: mod.rt: RTKit does not give us RTTimeUSecMax, using -1
+Apr 06 17:49:12 ubuntu-server wireplumber[1651]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server wireplumber[1651]: mod.rt: RTKit does not give us RTTimeUSecMax, using -1
+Apr 06 17:49:12 ubuntu-server kernel: workqueue: e1000_watchdog [e1000] hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:12 ubuntu-server pipewire[1649]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server pipewire[1649]: mod.rt: RTKit does not give us MaxRealtimePriority, using 1
+Apr 06 17:49:12 ubuntu-server pipewire[1649]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server pipewire[1649]: mod.rt: RTKit does not give us MinNiceLevel, using 0
+Apr 06 17:49:12 ubuntu-server pipewire[1649]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:12 ubuntu-server pipewire[1649]: mod.rt: RTKit does not give us RTTimeUSecMax, using -1
+Apr 06 17:49:12 ubuntu-server wireplumber[1651]: wp-internal-comp-loader: Loading profile 'main'
+Apr 06 17:49:12 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.freedesktop.systemd1' requested by ':1.2' (uid=107 pid=1665 comm="/usr/libexec/gnome-session-binary --autostart /usr" label="unconfined")
+Apr 06 17:49:12 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+Apr 06 17:49:12 ubuntu-server gnome-session[1665]: gnome-session-binary[1665]: WARNING: Could not check if unit gnome-session-wayland@gnome-login.target is active: Fehler beim Aufruf von StartServiceByName für org.freedesktop.systemd1: Process org.freedesktop.systemd1 exited with status 1
+Apr 06 17:49:12 ubuntu-server gnome-session-binary[1665]: WARNING: Could not check if unit gnome-session-wayland@gnome-login.target is active: Fehler beim Aufruf von StartServiceByName für org.freedesktop.systemd1: Process org.freedesktop.systemd1 exited with status 1
+Apr 06 17:49:12 ubuntu-server gnome-session[1665]: gnome-session-binary[1665]: WARNING: Error while executing session-migration: Kindprozess »session-migration« konnte nicht ausgeführt werden (Datei oder Verzeichnis nicht gefunden)
+Apr 06 17:49:12 ubuntu-server gnome-session-binary[1665]: WARNING: Error while executing session-migration: Kindprozess »session-migration« konnte nicht ausgeführt werden (Datei oder Verzeichnis nicht gefunden)
+Apr 06 17:49:12 ubuntu-server gnome-session[1665]: gnome-session-binary[1665]: WARNING: Desktop file /usr/share/gdm/greeter/autostart/orca-autostart.desktop for application orca-autostart.desktop could not be parsed or references a missing TryExec binary
+Apr 06 17:49:12 ubuntu-server gnome-session-binary[1665]: WARNING: Desktop file /usr/share/gdm/greeter/autostart/orca-autostart.desktop for application orca-autostart.desktop could not be parsed or references a missing TryExec binary
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: default: Failed to get percentage from UPower: org.freedesktop.DBus.Error.NameHasNoOwner
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: spa.bluez5: BlueZ system service is not available
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: wp-device: SPA handle 'api.libcamera.enum.manager' could not be loaded; is it installed?
+Apr 06 17:49:13 ubuntu-server wireplumber[1651]: s-monitors-libcamera: PipeWire's libcamera SPA plugin is missing or broken. Some camera types may not be supported.
+Apr 06 17:49:13 ubuntu-server gnome-shell[1680]: Running GNOME Shell (using mutter 47.0) as a Wayland display server
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: Thread 'KMS thread' will be using real time scheduling
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: Added device '/dev/dri/card0' (simpledrm) using atomic mode setting.
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: Failed to initialize accelerated iGPU/dGPU framebuffer sharing: Not hardware accelerated
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: Created gbm renderer for '/dev/dri/card0'
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: Integrated GPU /dev/dri/card0 selected as primary
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: Using public X11 display :1024, (using :1025 for managed services)
+Apr 06 17:49:14 ubuntu-server gnome-shell[1680]: Using Wayland display name 'wayland-0'
+Apr 06 17:49:14 ubuntu-server dbus-daemon[1450]: [system] Activating via systemd: service name='org.freedesktop.ColorManager' unit='colord.service' requested by ':1.26' (uid=107 pid=1680 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:14 ubuntu-server org.gnome.Shell.desktop[1739]: Xwayland glamor: GBM Wayland interfaces not available
+Apr 06 17:49:14 ubuntu-server org.gnome.Shell.desktop[1739]: Failed to initialize glamor, falling back to sw
+Apr 06 17:49:14 ubuntu-server systemd[1]: Starting colord.service - Manage, Install and Generate Color Profiles...
+Apr 06 17:49:14 ubuntu-server colord[1740]: failed to get edid data: EDID length is too small
+Apr 06 17:49:14 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.ColorManager'
+Apr 06 17:49:14 ubuntu-server systemd[1]: Started colord.service - Manage, Install and Generate Color Profiles.
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Unset XDG_SESSION_ID, getCurrentSessionProxy() called outside a user session. Asking logind directly.
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Will monitor session c1
+Apr 06 17:49:15 ubuntu-server dbus-daemon[1450]: [system] Activating via systemd: service name='org.freedesktop.locale1' unit='dbus-org.freedesktop.locale1.service' requested by ':1.26' (uid=107 pid=1680 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:15 ubuntu-server systemd[1]: Starting systemd-localed.service - Locale Service...
+Apr 06 17:49:15 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.gnome.Shell.Screencast' requested by ':1.3' (uid=107 pid=1680 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:15 ubuntu-server systemd[1]: Started systemd-localed.service - Locale Service.
+Apr 06 17:49:15 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.locale1'
+Apr 06 17:49:15 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.3' (uid=107 pid=1680 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:15 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+Apr 06 17:49:15 ubuntu-server dbus-daemon[1450]: [system] Activating via systemd: service name='org.freedesktop.UPower' unit='upower.service' requested by ':1.26' (uid=107 pid=1680 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:15 ubuntu-server systemd[1]: Starting upower.service - Daemon for power management...
+Apr 06 17:49:15 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.gnome.Shell.Notifications' requested by ':1.3' (uid=107 pid=1680 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension apps-menu@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/apps-menu@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/apps-menu@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension places-menu@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/places-menu@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/places-menu@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension launch-new-instance@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/launch-new-instance@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/launch-new-instance@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension window-list@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/window-list@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/window-list@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension auto-move-windows@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/auto-move-windows@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/auto-move-windows@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension drive-menu@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/drive-menu@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/drive-menu@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension light-style@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/light-style@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/light-style@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension native-window-placement@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/native-window-placement@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/native-window-placement@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension system-monitor@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/system-monitor@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/system-monitor@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension user-theme@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension windowsNavigator@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/windowsNavigator@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/windowsNavigator@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Extension workspace-indicator@gnome-shell-extensions.gcampax.github.com already installed in /usr/share/gnome-shell/extensions/workspace-indicator@gnome-shell-extensions.gcampax.github.com. /usr/share/gnome-shell/extensions/workspace-indicator@gnome-shell-extensions.gcampax.github.com will not be loaded
+Apr 06 17:49:15 ubuntu-server org.gnome.Shell.desktop[1680]: Window manager warning: Failed to parse saved session file: Datei »/var/lib/gdm3/.config/mutter/sessions/10ff25e701388e45cd174395455296544700000016650000.ms« konnte nicht geöffnet werden: Datei oder Verzeichnis nicht gefunden
+Apr 06 17:49:15 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.gnome.Shell.Notifications'
+Apr 06 17:49:15 ubuntu-server gnome-shell[1680]: Failed to launch ibus-daemon: Kindprozess »ibus-daemon« konnte nicht ausgeführt werden (Datei oder Verzeichnis nicht gefunden)
+Apr 06 17:49:15 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.UPower'
+Apr 06 17:49:15 ubuntu-server systemd[1]: Started upower.service - Daemon for power management.
+Apr 06 17:49:15 ubuntu-server polkitd[1486]: Registered Authentication Agent for unix-session:c1 (system bus name :1.26 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale de_DE.UTF-8)
+Apr 06 17:49:16 ubuntu-server gnome-shell[1680]: Error looking up permission: GDBus.Error:org.freedesktop.portal.Error.NotFound: No entry for geolocation
+Apr 06 17:49:16 ubuntu-server kernel: rfkill: input handler disabled
+Apr 06 17:49:16 ubuntu-server NetworkManager[1474]: <info>  [1743954556.1954] agent-manager: agent[8fdc73319a378eb1,:1.26/org.gnome.Shell.NetworkAgent/107]: agent registered
+Apr 06 17:49:16 ubuntu-server kernel: workqueue: once_deferred hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:16 ubuntu-server kernel: workqueue: once_deferred hogged CPU for >10000us 5 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:16 ubuntu-server kernel: workqueue: once_deferred hogged CPU for >10000us 7 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:16 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.freedesktop.systemd1' requested by ':1.19' (uid=107 pid=1878 comm="/usr/libexec/gsd-sharing" label="unconfined")
+Apr 06 17:49:16 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+Apr 06 17:49:16 ubuntu-server gsd-sharing[1878]: Failed to StopUnit service: GDBus.Error:org.freedesktop.DBus.Error.Spawn.ChildExited: Process org.freedesktop.systemd1 exited with status 1
+Apr 06 17:49:16 ubuntu-server gsd-sharing[1878]: Failed to StopUnit service: GDBus.Error:org.freedesktop.DBus.Error.Spawn.ChildExited: Process org.freedesktop.systemd1 exited with status 1
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: The XKEYBOARD keymap compiler (xkbcomp) reports:
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86CameraAccessEnable
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86CameraAccessDisable
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86CameraAccessToggle
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86NextElement
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86PreviousElement
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86MarkWaypoint
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86Sos
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86NavChart
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86FishingChart
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86SingleRangeRadar
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86DualRangeRadar
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86RadarOverlay
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86TraditionalSonar
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86ClearvuSonar
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86SidevuSonar
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: > Warning:          Could not resolve keysym XF86NavInfo
+Apr 06 17:49:16 ubuntu-server org.gnome.Shell.desktop[1938]: Errors from xkbcomp are not fatal to the X server
+Apr 06 17:49:16 ubuntu-server kernel: workqueue: e1000_watchdog [e1000] hogged CPU for >10000us 5 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:17 ubuntu-server gnome-shell[1680]: Registering session with GDM
+Apr 06 17:49:17 ubuntu-server dbus-daemon[1450]: [system] Activating via systemd: service name='org.freedesktop.GeoClue2' unit='geoclue.service' requested by ':1.26' (uid=107 pid=1680 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:17 ubuntu-server systemd[1]: Starting geoclue.service - Location Lookup Service...
+Apr 06 17:49:17 ubuntu-server gnome-shell[1680]: Failed to get PolKit permission: Polkit.Error: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:17 ubuntu-server gsd-power[1811]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:17 ubuntu-server gsd-wacom[1834]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:17 ubuntu-server gsd-keyboard[1829]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:17 ubuntu-server gsd-color[1795]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:17 ubuntu-server gsd-media-keys[1818]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:17 ubuntu-server gnome-session-binary[1665]: Entering running state
+Apr 06 17:49:17 ubuntu-server geoclue[1977]: Failed to connect to avahi service: Dienst läuft nicht
+Apr 06 17:49:17 ubuntu-server dbus-daemon[1450]: [system] Successfully activated service 'org.freedesktop.GeoClue2'
+Apr 06 17:49:17 ubuntu-server systemd[1]: Started geoclue.service - Location Lookup Service.
+Apr 06 17:49:18 ubuntu-server gnome-shell[1680]: Failed to make thread 'KMS thread' realtime scheduled: GDBus.Error:org.freedesktop.DBus.Error.NameHasNoOwner: Name "org.freedesktop.RealtimeKit1" does not exist
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.gnome.ScreenSaver' requested by ':1.13' (uid=107 pid=1811 comm="/usr/libexec/gsd-power" label="unconfined")
+Apr 06 17:49:18 ubuntu-server gnome-shell[1680]: Failed to launch ibus-daemon: Kindprozess »ibus-daemon« konnte nicht ausgeführt werden (Datei oder Verzeichnis nicht gefunden)
+Apr 06 17:49:18 ubuntu-server gsd-media-keys[1818]: Failed to grab accelerator for keybinding settings:playback-repeat
+Apr 06 17:49:18 ubuntu-server gsd-media-keys[1818]: Failed to grab accelerator for keybinding settings:hibernate
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: The XKEYBOARD keymap compiler (xkbcomp) reports:
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Unsupported maximum keycode 708, clipping.
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: >                   X11 cannot support keycodes above 255.
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86CameraAccessEnable
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86CameraAccessDisable
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86CameraAccessToggle
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86NextElement
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86PreviousElement
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86MarkWaypoint
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86Sos
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86NavChart
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86FishingChart
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86SingleRangeRadar
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86DualRangeRadar
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86RadarOverlay
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86TraditionalSonar
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86ClearvuSonar
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86SidevuSonar
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: > Warning:          Could not resolve keysym XF86NavInfo
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2017]: Errors from xkbcomp are not fatal to the X server
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.gnome.ScreenSaver'
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2001]: libEGL warning: DRI3: Screen seems not DRI3 capable
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2001]: libEGL warning: DRI3: Screen seems not DRI3 capable
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2001]: MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
+Apr 06 17:49:18 ubuntu-server org.gnome.Shell.desktop[2001]: libEGL warning: egl: failed to create dri2 screen
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.gnome.Shell.Screencast'
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.30' (uid=107 pid=2001 comm="/usr/libexec/mutter-x11-frames" label="unconfined")
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.freedesktop.portal.Documents' requested by ':1.31' (uid=107 pid=2058 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.freedesktop.portal.Documents'
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[2064]: Ignoring invalid max threads value 4294967295 > max (100000).
+Apr 06 17:49:18 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.freedesktop.impl.portal.desktop.gnome' requested by ':1.31' (uid=107 pid=2058 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+Apr 06 17:49:19 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.freedesktop.impl.portal.desktop.gnome'
+Apr 06 17:49:19 ubuntu-server xdg-desktop-por[2058]: Failed to load RealtimeKit property: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.RealtimeKit1 was not provided by any .service files
+Apr 06 17:49:19 ubuntu-server xdg-desktop-por[2058]: Failed to load RealtimeKit property: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.RealtimeKit1 was not provided by any .service files
+Apr 06 17:49:19 ubuntu-server xdg-desktop-por[2058]: Failed to load RealtimeKit property: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.RealtimeKit1 was not provided by any .service files
+Apr 06 17:49:19 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.31' (uid=107 pid=2058 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+Apr 06 17:49:19 ubuntu-server xdg-desktop-por[2087]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:19 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.freedesktop.impl.portal.desktop.gtk'
+Apr 06 17:49:19 ubuntu-server /usr/libexec/gdm-wayland-session[1663]: dbus-daemon[1663]: [session uid=107 pid=1663] Successfully activated service 'org.freedesktop.portal.Desktop'
+Apr 06 17:49:19 ubuntu-server mutter-x11-fram[2001]: Using GtkSettings:gtk-application-prefer-dark-theme with libadwaita is unsupported. Please use AdwStyleManager:color-scheme instead.
+Apr 06 17:49:20 ubuntu-server gdm-password][2095]: PAM unable to dlopen(pam_gnome_keyring.so): /usr/lib/security/pam_gnome_keyring.so: Kann die Shared-Object-Datei nicht öffnen: Datei oder Verzeichnis nicht gefunden
+Apr 06 17:49:20 ubuntu-server gdm-password][2095]: PAM adding faulty module: pam_gnome_keyring.so
+Apr 06 17:49:20 ubuntu-server systemd[1]: gnome-remote-desktop-configuration.service: Deactivated successfully.
+Apr 06 17:49:21 ubuntu-server systemd[1]: NetworkManager-dispatcher.service: Deactivated successfully.
+Apr 06 17:49:21 ubuntu-server gdm-password][2095]: pam_unix(gdm-password:session): session opened for user admin(uid=1000) by admin(uid=0)
+Apr 06 17:49:21 ubuntu-server gdm-password][2095]: pam_systemd(gdm-password:session): New sd-bus connection (system-bus-pam-systemd-2095) opened.
+Apr 06 17:49:21 ubuntu-server systemd[1]: Created slice user-1000.slice - User Slice of UID 1000.
+Apr 06 17:49:21 ubuntu-server systemd[1]: Starting user-runtime-dir@1000.service - User Runtime Directory /run/user/1000...
+Apr 06 17:49:21 ubuntu-server systemd-logind[1458]: New session 2 of user admin.
+Apr 06 17:49:21 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server systemd[1]: Finished user-runtime-dir@1000.service - User Runtime Directory /run/user/1000.
+Apr 06 17:49:22 ubuntu-server systemd[1]: Starting user@1000.service - User Manager for UID 1000...
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server (systemd)[2110]: pam_unix(systemd-user:session): session opened for user admin(uid=1000) by admin(uid=0)
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server systemd-logind[1458]: New session 3 of user admin.
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Queued start job for default target default.target.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Created slice app.slice - User Application Slice.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Created slice session.slice - User Core Session Slice.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Reached target paths.target - Paths.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Reached target timers.target - Timers.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Starting dbus.socket - D-Bus User Message Bus Socket...
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on dirmngr.socket - GnuPG network certificate management daemon.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on gpg-agent-browser.socket - GnuPG cryptographic agent and passphrase cache (access for web browsers).
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on gpg-agent-extra.socket - GnuPG cryptographic agent and passphrase cache (restricted).
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Starting gpg-agent-ssh.socket - GnuPG cryptographic agent (ssh-agent emulation)...
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on gpg-agent.socket - GnuPG cryptographic agent and passphrase cache.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on keyboxd.socket - GnuPG public key management service.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on pipewire-pulse.socket - PipeWire PulseAudio.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on pipewire.socket - PipeWire Multimedia System Sockets.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on dbus.socket - D-Bus User Message Bus Socket.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Listening on gpg-agent-ssh.socket - GnuPG cryptographic agent (ssh-agent emulation).
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Reached target sockets.target - Sockets.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Reached target basic.target - Basic System.
+Apr 06 17:49:22 ubuntu-server systemd[1]: Started user@1000.service - User Manager for UID 1000.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Started pipewire.service - PipeWire Multimedia Service.
+Apr 06 17:49:22 ubuntu-server systemd[1]: Started session-2.scope - Session 2 of User admin.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Started filter-chain.service - PipeWire filter chain daemon.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Started wireplumber.service - Multimedia Service Session Manager.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Started pipewire-pulse.service - PipeWire PulseAudio.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Reached target default.target - Main User Target.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Startup finished in 510ms.
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Starting dbus.service - D-Bus User Message Bus...
+Apr 06 17:49:22 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] AppArmor D-Bus mediation is enabled
+Apr 06 17:49:22 ubuntu-server systemd[2110]: Started dbus.service - D-Bus User Message Bus.
+Apr 06 17:49:22 ubuntu-server pipewire[2127]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server pipewire[2127]: mod.rt: RTKit does not give us MaxRealtimePriority, using 1
+Apr 06 17:49:22 ubuntu-server pipewire[2127]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server pipewire[2127]: mod.rt: RTKit does not give us MinNiceLevel, using 0
+Apr 06 17:49:22 ubuntu-server pipewire[2127]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server pipewire[2127]: mod.rt: RTKit does not give us RTTimeUSecMax, using -1
+Apr 06 17:49:22 ubuntu-server pipewire-pulse[2130]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server pipewire-pulse[2130]: mod.rt: RTKit does not give us MaxRealtimePriority, using 1
+Apr 06 17:49:22 ubuntu-server pipewire-pulse[2130]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server pipewire-pulse[2130]: mod.rt: RTKit does not give us MinNiceLevel, using 0
+Apr 06 17:49:22 ubuntu-server wireplumber[2129]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server wireplumber[2129]: mod.rt: RTKit does not give us MaxRealtimePriority, using 1
+Apr 06 17:49:22 ubuntu-server pipewire-pulse[2130]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server pipewire-pulse[2130]: mod.rt: RTKit does not give us RTTimeUSecMax, using -1
+Apr 06 17:49:22 ubuntu-server wireplumber[2129]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server wireplumber[2129]: mod.rt: RTKit does not give us MinNiceLevel, using 0
+Apr 06 17:49:22 ubuntu-server wireplumber[2129]: mod.rt: RTKit error: org.freedesktop.DBus.Error.ServiceUnknown
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:22 ubuntu-server wireplumber[2129]: mod.rt: RTKit does not give us RTTimeUSecMax, using -1
+Apr 06 17:49:22 ubuntu-server wireplumber[2129]: wp-internal-comp-loader: Loading profile 'main'
+Apr 06 17:49:22 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server kernel: rfkill: input handler enabled
+Apr 06 17:49:23 ubuntu-server gsd-media-keys[1818]: Unable to get default source
+Apr 06 17:49:23 ubuntu-server gsd-media-keys[1818]: Unable to get default sink
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'Center' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.alsa: The decibel volume range for element 'LFE' (-4650 dB - -2400 dB) has negative maximum. Disabling the decibel range.
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: spa.bluez5: BlueZ system service is not available
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: wp-device: SPA handle 'api.libcamera.enum.manager' could not be loaded; is it installed?
+Apr 06 17:49:23 ubuntu-server wireplumber[2129]: s-monitors-libcamera: PipeWire's libcamera SPA plugin is missing or broken. Some camera types may not be supported.
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Created slice app-gnome\x2dsession\x2dmanager.slice - Slice /app/gnome-session-manager.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Created slice background.slice - User Background Tasks Slice.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Reached target gnome-session-wayland.target - GNOME Wayland Session.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Reached target org.gnome.Shell.target - GNOME Shell.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Starting gnome-session-monitor.service - Monitor Session leader for GNOME Session...
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Started ssh-agent.service - OpenSSH Agent.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Starting user-session-migration.service - User Session Migration...
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Starting xdg-desktop-portal-rewrite-launchers.service - Rewrite dynamic launcher portal entries...
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Started gnome-session-monitor.service - Monitor Session leader for GNOME Session.
+Apr 06 17:49:23 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.gtk.vfs.Daemon' unit='gvfs-daemon.service' requested by ':1.15' (uid=1000 pid=2190 comm="/usr/libexec/xdg-desktop-portal-rewrite-launchers" label="unconfined")
+Apr 06 17:49:23 ubuntu-server user-session-migration[2189]: Exited with an error
+Apr 06 17:49:23 ubuntu-server user-session-migration[2189]: stdout:
+Apr 06 17:49:23 ubuntu-server user-session-migration[2189]: stderr: rm: das Entfernen von '.config/autostart/ignore-lid-switch-tweak.desktop' ist nicht möglich: Datei oder Verzeichnis nicht gefunden
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Starting gvfs-daemon.service - Virtual filesystem service...
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Finished user-session-migration.service - User Session Migration.
+Apr 06 17:49:23 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.gtk.vfs.Daemon'
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Started gvfs-daemon.service - Virtual filesystem service.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Finished xdg-desktop-portal-rewrite-launchers.service - Rewrite dynamic launcher portal entries.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Reached target graphical-session-pre.target - Session services which should run early before the graphical session is brought up.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Reached target gnome-session-pre.target - Tasks to be run before GNOME Session starts.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Starting gnome-session-manager@gnome.service - GNOME Session Manager (session: gnome)...
+Apr 06 17:49:23 ubuntu-server gnome-session[2211]: gnome-session-binary[2211]: WARNING: Error while executing session-migration: Kindprozess »session-migration« konnte nicht ausgeführt werden (Datei oder Verzeichnis nicht gefunden)
+Apr 06 17:49:23 ubuntu-server gnome-session-binary[2211]: WARNING: Error while executing session-migration: Kindprozess »session-migration« konnte nicht ausgeführt werden (Datei oder Verzeichnis nicht gefunden)
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Started gnome-session-manager@gnome.service - GNOME Session Manager (session: gnome).
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Reached target gnome-session-manager.target - GNOME Session Manager is ready.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Starting org.gnome.Shell@wayland.service - GNOME Shell on Wayland...
+Apr 06 17:49:23 ubuntu-server systemd[2110]: org.gnome.Shell@x11.service - GNOME Shell on X11 was skipped because of an unmet condition check (ConditionEnvironment=XDG_SESSION_TYPE=x11).
+Apr 06 17:49:23 ubuntu-server systemd[2110]: app-gnome-xdg\x2duser\x2ddirs-2220.scope: PID 2220 vanished before we could move it to target cgroup '/user.slice/user-1000.slice/user@1000.service/app.slice/app-gnome-xdg\x2duser\x2ddirs-2220.scope', skipping: No such process
+Apr 06 17:49:23 ubuntu-server systemd[2110]: app-gnome-xdg\x2duser\x2ddirs-2220.scope: No PIDs left to attach to the scope's control group, refusing.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: app-gnome-xdg\x2duser\x2ddirs-2220.scope: Failed with result 'resources'.
+Apr 06 17:49:23 ubuntu-server systemd[2110]: Failed to start app-gnome-xdg\x2duser\x2ddirs-2220.scope - Application launched by gnome-session-binary.
+Apr 06 17:49:23 ubuntu-server gnome-shell[2221]: Running GNOME Shell (using mutter 47.0) as a Wayland display server
+Apr 06 17:49:23 ubuntu-server gnome-shell[2221]: Thread 'KMS thread' will be using real time scheduling
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:23 ubuntu-server gnome-shell[2221]: Added device '/dev/dri/card0' (simpledrm) using atomic mode setting.
+Apr 06 17:49:23 ubuntu-server gnome-shell[2221]: Failed to initialize accelerated iGPU/dGPU framebuffer sharing: Not hardware accelerated
+Apr 06 17:49:23 ubuntu-server gnome-shell[2221]: Created gbm renderer for '/dev/dri/card0'
+Apr 06 17:49:23 ubuntu-server gnome-shell[2221]: Integrated GPU /dev/dri/card0 selected as primary
+Apr 06 17:49:23 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:24 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:24 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:24 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:24 ubuntu-server gnome-shell[1680]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: Using public X11 display :0, (using :1 for managed services)
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: Using Wayland display name 'wayland-0'
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: Unset XDG_SESSION_ID, getCurrentSessionProxy() called outside a user session. Asking logind directly.
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: Will monitor session 2
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating service name='org.gnome.Shell.Screencast' requested by ':1.24' (uid=1000 pid=2221 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.freedesktop.impl.portal.PermissionStore' unit='xdg-permission-store.service' requested by ':1.24' (uid=1000 pid=2221 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating service name='org.gnome.Shell.CalendarServer' requested by ':1.24' (uid=1000 pid=2221 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting xdg-permission-store.service - sandboxed app permission store...
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Started xdg-permission-store.service - sandboxed app permission store.
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.gnome.evolution.dataserver.Sources5' unit='evolution-source-registry.service' requested by ':1.28' (uid=1000 pid=2301 comm="/usr/libexec/gnome-shell-calendar-server" label="unconfined")
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activation via systemd failed for unit 'evolution-source-registry.service': Unit evolution-source-registry.service not found.
+Apr 06 17:49:24 ubuntu-server gnome-shell-cal[2301]: Failed to start evolution-source-registry: Error calling StartServiceByName for org.gnome.evolution.dataserver.Sources5: Unit evolution-source-registry.service not found.
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activated service 'org.gnome.Shell.CalendarServer' failed: Process org.gnome.Shell.CalendarServer exited with status 1
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='ca.desrt.dconf' unit='dconf.service' requested by ':1.24' (uid=1000 pid=2221 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting dconf.service - User preferences database...
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating service name='org.gnome.Shell.Notifications' requested by ':1.24' (uid=1000 pid=2221 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: Could not issue 'GetUnit' systemd call
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Started org.gnome.Shell@wayland.service - GNOME Shell on Wayland.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Reached target gnome-session-initialized.target - GNOME Session is initialized.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: gnome-session-x11-services.target - GNOME session X11 services is inactive.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Dependency failed for org.gnome.SettingsDaemon.XSettings.service - GNOME XSettings service.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: org.gnome.SettingsDaemon.XSettings.service: Job org.gnome.SettingsDaemon.XSettings.service/start failed with result 'dependency'.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: gnome-session-x11-services-ready.target: Job gnome-session-x11-services-ready.target/verify-active failed with result 'dependency'.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Reached target gnome-session@gnome.target - GNOME Session (session: gnome).
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.XSettings.target - GNOME XSettings target.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting gnome-session-signal-init.service - Signal initialization done to GNOME Session Manager...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.A11ySettings.service - GNOME accessibility service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Color.service - GNOME color management service...
+Apr 06 17:49:24 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'ca.desrt.dconf'
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: Error loading calendars: Fehler beim Aufruf von StartServiceByName für org.gnome.Shell.CalendarServer: Process org.gnome.Shell.CalendarServer exited with status 1
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Datetime.service - GNOME date & time service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Housekeeping.service - GNOME maintenance of expirable data service...
+Apr 06 17:49:24 ubuntu-server gnome-shell[2221]: Failed to launch ibus-daemon: Kindprozess »ibus-daemon« konnte nicht ausgeführt werden (Datei oder Verzeichnis nicht gefunden)
+Apr 06 17:49:24 ubuntu-server gnome-session-binary[2211]: Entering running state
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Keyboard.service - GNOME keyboard configuration service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.MediaKeys.service - GNOME keyboard shortcuts service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Power.service - GNOME power management service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.PrintNotifications.service - GNOME printer notifications service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Rfkill.service - GNOME RFKill support service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.ScreensaverProxy.service - GNOME FreeDesktop screensaver service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Sharing.service - GNOME file sharing service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Smartcard.service - GNOME smartcard service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Sound.service - GNOME sound sample caching service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.UsbProtection.service - GNOME USB protection service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Starting org.gnome.SettingsDaemon.Wacom.service - GNOME Wacom tablet support service...
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Finished gnome-session-signal-init.service - Signal initialization done to GNOME Session Manager.
+Apr 06 17:49:24 ubuntu-server systemd[2110]: Started dconf.service - User preferences database.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.A11ySettings.service - GNOME accessibility service.
+Apr 06 17:49:25 ubuntu-server kernel: workqueue: e1000_watchdog [e1000] hogged CPU for >10000us 7 times, consider switching to WQ_UNBOUND
+Apr 06 17:49:25 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.gnome.Shell.Notifications'
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started app-gnome-org.gnome.SettingsDaemon.DiskUtilityNotify-2353.scope - Application launched by gnome-session-binary.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.A11ySettings.target - GNOME accessibility target.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Housekeeping.service - GNOME maintenance of expirable data service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Housekeeping.target - GNOME maintenance of expirable data target.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.PrintNotifications.service - GNOME printer notifications service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.PrintNotifications.target - GNOME printer notifications target.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Datetime.service - GNOME date & time service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Datetime.target - GNOME date & time target.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.ScreensaverProxy.service - GNOME FreeDesktop screensaver service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.ScreensaverProxy.target - GNOME FreeDesktop screensaver target.
+Apr 06 17:49:25 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.gtk.vfs.UDisks2VolumeMonitor' unit='gvfs-udisks2-volume-monitor.service' requested by ':1.24' (uid=1000 pid=2221 comm="/usr/bin/gnome-shell" label="unconfined")
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Smartcard.service - GNOME smartcard service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.UsbProtection.service - GNOME USB protection service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Smartcard.target - GNOME smartcard target.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.UsbProtection.target - GNOME USB protection target.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Starting gvfs-udisks2-volume-monitor.service - Virtual filesystem service - disk device monitor...
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Sharing.service - GNOME file sharing service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Sharing.target - GNOME file sharing target.
+Apr 06 17:49:25 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating service name='org.gnome.ScreenSaver' requested by ':1.47' (uid=1000 pid=2402 comm="/usr/libexec/gsd-usb-protection" label="unconfined")
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Sound.service - GNOME sound sample caching service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Sound.target - GNOME sound sample caching target.
+Apr 06 17:49:25 ubuntu-server kernel: rfkill: input handler disabled
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Rfkill.service - GNOME RFKill support service.
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Rfkill.target - GNOME RFKill support target.
+Apr 06 17:49:25 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.gtk.vfs.UDisks2VolumeMonitor'
+Apr 06 17:49:25 ubuntu-server systemd[2110]: Started gvfs-udisks2-volume-monitor.service - Virtual filesystem service - disk device monitor.
+Apr 06 17:49:25 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.gnome.ScreenSaver'
+Apr 06 17:49:25 ubuntu-server gnome-shell[2221]: Error looking up permission: GDBus.Error:org.freedesktop.portal.Error.NotFound: No entry for geolocation
+Apr 06 17:49:25 ubuntu-server gsd-usb-protect[2402]: Failed to fetch USBGuard parameters: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.usbguard1 was not provided by any .service files
+Apr 06 17:49:25 ubuntu-server polkitd[1486]: Registered Authentication Agent for unix-session:2 (system bus name :1.62 [/usr/bin/gnome-shell], object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale de_DE.UTF-8)
+Apr 06 17:49:25 ubuntu-server gsd-color[2335]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:26 ubuntu-server NetworkManager[1474]: <info>  [1743954566.0166] agent-manager: agent[b25157a4528834c1,:1.62/org.gnome.Shell.NetworkAgent/1000]: agent registered
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Color.service - GNOME color management service.
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Color.target - GNOME color management target.
+Apr 06 17:49:26 ubuntu-server gsd-keyboard[2355]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:26 ubuntu-server gsd-media-keys[2359]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:26 ubuntu-server gsd-power[2362]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:26 ubuntu-server gsd-wacom[2405]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Keyboard.service - GNOME keyboard configuration service.
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Keyboard.target - GNOME keyboard configuration target.
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Wacom.service - GNOME Wacom tablet support service.
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Wacom.target - GNOME Wacom tablet support target.
+Apr 06 17:49:26 ubuntu-server gnome-shell[2221]: Failed to get PolKit permission: Polkit.Error: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.MediaKeys.service - GNOME keyboard shortcuts service.
+Apr 06 17:49:26 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.MediaKeys.target - GNOME keyboard shortcuts target.
+Apr 06 17:49:26 ubuntu-server gnome-shell[2221]: Failed to make thread 'KMS thread' realtime scheduled: GDBus.Error:org.freedesktop.DBus.Error.NameHasNoOwner: Name "org.freedesktop.RealtimeKit1" does not exist
+Apr 06 17:49:26 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.gnome.Shell.Screencast'
+Apr 06 17:49:27 ubuntu-server systemd[2110]: Started org.gnome.SettingsDaemon.Power.service - GNOME power management service.
+Apr 06 17:49:27 ubuntu-server systemd[2110]: Reached target org.gnome.SettingsDaemon.Power.target - GNOME power management target.
+Apr 06 17:49:27 ubuntu-server systemd[2110]: Reached target gnome-session.target - GNOME Session.
+Apr 06 17:49:27 ubuntu-server systemd[2110]: Reached target gnome-session-wayland@gnome.target - GNOME Wayland Session (session: gnome).
+Apr 06 17:49:27 ubuntu-server systemd[2110]: Reached target graphical-session.target - Current graphical user session.
+Apr 06 17:49:27 ubuntu-server systemd[2110]: Starting tracker-miner-fs-3.service - Tracker file system data miner...
+Apr 06 17:49:27 ubuntu-server gsd-media-keys[2359]: Failed to grab accelerator for keybinding settings:playback-repeat
+Apr 06 17:49:27 ubuntu-server gsd-media-keys[2359]: Failed to grab accelerator for keybinding settings:hibernate
+Apr 06 17:49:27 ubuntu-server systemd[2110]: Started tracker-miner-fs-3.service - Tracker file system data miner.
+Apr 06 17:49:27 ubuntu-server gnome-shell[2221]: GNOME Shell started at Sun Apr 06 2025 17:49:24 GMT+0200 (Mitteleuropäische Sommerzeit)
+Apr 06 17:49:27 ubuntu-server gnome-shell[2221]: Registering session with GDM
+Apr 06 17:49:27 ubuntu-server gnome-shell[1680]: Connection to xwayland lost
+Apr 06 17:49:27 ubuntu-server gnome-shell[1680]: Xwayland terminated, exiting since it was mandatory
+Apr 06 17:49:27 ubuntu-server gnome-shell[1680]: JS ERROR: Gio.IOErrorEnum: Xwayland exited unexpectedly
+                                                 @resource:///org/gnome/shell/ui/init.js:21:20
+Apr 06 17:49:27 ubuntu-server gnome-shell[1680]: Execution of main.js threw exception: Module resource:///org/gnome/shell/ui/init.js threw an exception
+Apr 06 17:49:27 ubuntu-server gdm-launch-environment][1622]: pam_unix(gdm-launch-environment:session): session closed for user gdm
+Apr 06 17:49:27 ubuntu-server gdm-launch-environment][1622]: pam_systemd(gdm-launch-environment:session): New sd-bus connection (system-bus-pam-systemd-1622) opened.
+Apr 06 17:49:27 ubuntu-server systemd[1]: run-user-107-doc.mount: Deactivated successfully.
+Apr 06 17:49:27 ubuntu-server systemd-logind[1458]: Session c1 logged out. Waiting for processes to exit.
+Apr 06 17:49:27 ubuntu-server polkitd[1486]: Unregistered Authentication Agent for unix-session:c1 (system bus name :1.26, object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale de_DE.UTF-8) (disconnected from bus)
+Apr 06 17:49:27 ubuntu-server systemd[1]: session-c1.scope: Deactivated successfully.
+Apr 06 17:49:27 ubuntu-server systemd[1]: session-c1.scope: Consumed 17.818s CPU time, 428.6M memory peak.
+Apr 06 17:49:27 ubuntu-server systemd-logind[1458]: Removed session c1.
+Apr 06 17:49:27 ubuntu-server gdm3[1615]: Gdm: Child process -1653 was already dead.
+Apr 06 17:49:27 ubuntu-server gnome-shell[2221]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:27 ubuntu-server gnome-shell[2221]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:27 ubuntu-server gnome-shell[2221]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:27 ubuntu-server gnome-shell[2221]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:28 ubuntu-server gnome-shell[2221]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:28 ubuntu-server gnome-shell[2221]: Error checking authorization for action id org.freedesktop.bolt.enroll: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: Action org.freedesktop.bolt.enroll is not registered
+Apr 06 17:49:28 ubuntu-server gsd-media-keys[2359]: Failed to call GetEnvironment on keyring daemon: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.gnome.keyring was not provided by any .service files
+Apr 06 17:49:28 ubuntu-server systemd[2110]: Started app-gnome-x\x2dterminal\x2demulator-2590.scope - Application launched by gsd-media-keys.
+Apr 06 17:49:29 ubuntu-server x-terminal-emulator[2592]: # AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.gnome.Terminal' unit='gnome-terminal-server.service' requested by ':1.58' (uid=1000 pid=2592 comm="/usr/bin/gnome-terminal.real --wait" label="unconfined")
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Created slice app-org.gnome.Terminal.slice - Slice /app/org.gnome.Terminal.
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Starting gnome-terminal-server.service - GNOME Terminal Server...
+Apr 06 17:49:29 ubuntu-server gnome-terminal-[2598]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.freedesktop.portal.Desktop' unit='xdg-desktop-portal.service' requested by ':1.60' (uid=1000 pid=2598 comm="/usr/libexec/gnome-terminal-server" label="unconfined")
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Starting xdg-desktop-portal.service - Portal service...
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.freedesktop.portal.Documents' unit='xdg-document-portal.service' requested by ':1.62' (uid=1000 pid=2604 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Starting xdg-document-portal.service - flatpak document portal service...
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.freedesktop.portal.Documents'
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Started xdg-document-portal.service - flatpak document portal service.
+Apr 06 17:49:29 ubuntu-server xdg-document-portal[2609]: Ignoring invalid max threads value 4294967295 > max (100000).
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.freedesktop.impl.portal.desktop.gnome' unit='xdg-desktop-portal-gnome.service' requested by ':1.62' (uid=1000 pid=2604 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Starting xdg-desktop-portal-gnome.service - Portal service (GNOME implementation)...
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.freedesktop.impl.portal.desktop.gnome'
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Started xdg-desktop-portal-gnome.service - Portal service (GNOME implementation).
+Apr 06 17:49:29 ubuntu-server xdg-desktop-por[2604]: Failed to load RealtimeKit property: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.RealtimeKit1 was not provided by any .service files
+Apr 06 17:49:29 ubuntu-server xdg-desktop-por[2604]: Failed to load RealtimeKit property: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.RealtimeKit1 was not provided by any .service files
+Apr 06 17:49:29 ubuntu-server xdg-desktop-por[2604]: Failed to load RealtimeKit property: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.RealtimeKit1 was not provided by any .service files
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Activating via systemd: service name='org.freedesktop.impl.portal.desktop.gtk' unit='xdg-desktop-portal-gtk.service' requested by ':1.62' (uid=1000 pid=2604 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Starting xdg-desktop-portal-gtk.service - Portal service (GTK/GNOME implementation)...
+Apr 06 17:49:29 ubuntu-server xdg-desktop-por[2630]: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.freedesktop.impl.portal.desktop.gtk'
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Started xdg-desktop-portal-gtk.service - Portal service (GTK/GNOME implementation).
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.freedesktop.portal.Desktop'
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Started xdg-desktop-portal.service - Portal service.
+Apr 06 17:49:29 ubuntu-server dbus-daemon[2131]: [session uid=1000 pid=2131] Successfully activated service 'org.gnome.Terminal'
+Apr 06 17:49:29 ubuntu-server systemd[2110]: Started gnome-terminal-server.service - GNOME Terminal Server.
+Apr 06 17:49:30 ubuntu-server systemd[2110]: Started vte-spawn-4a4a6c20-c19e-4a9e-812e-ebc8f77163b2.scope - VTE child process 2638 launched by org.gnome.Terminal process 2598.
+Apr 06 17:49:33 ubuntu-server systemd[1]: systemd-fsckd.service: Deactivated successfully.
+Apr 06 17:49:37 ubuntu-server systemd[1]: Stopping user@107.service - User Manager for UID 107...
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Activating special unit exit.target...
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped target default.target - Main User Target.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopping dbus.service - D-Bus User Message Bus...
+Apr 06 17:49:37 ubuntu-server wireplumber[1651]: m-dbus-connection: <WpDBusConnection:0x62e5bf9601a0> DBus connection closed: Underlying GIOStream returned 0 bytes on an async read
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopping filter-chain.service - PipeWire filter chain daemon...
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopping pipewire-pulse.service - PipeWire PulseAudio...
+Apr 06 17:49:37 ubuntu-server wireplumber[1651]: m-dbus-connection: <WpDBusConnection:0x62e5bf9601a0> Trying to reconnect after core sync
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped filter-chain.service - PipeWire filter chain daemon.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped dbus.service - D-Bus User Message Bus.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped pipewire-pulse.service - PipeWire PulseAudio.
+Apr 06 17:49:37 ubuntu-server wireplumber[1651]: wireplumber: stopped by signal: Beendet
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopping wireplumber.service - Multimedia Service Session Manager...
+Apr 06 17:49:37 ubuntu-server wireplumber[1651]: wireplumber: disconnected from pipewire
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped wireplumber.service - Multimedia Service Session Manager.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopping pipewire.service - PipeWire Multimedia Service...
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped pipewire.service - PipeWire Multimedia Service.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Removed slice session.slice - User Core Session Slice.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: session.slice: Consumed 1.181s CPU time, 22.4M memory peak.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped target basic.target - Basic System.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped target paths.target - Paths.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped target sockets.target - Sockets.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopped target timers.target - Timers.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed dbus.socket - D-Bus User Message Bus Socket.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed dirmngr.socket - GnuPG network certificate management daemon.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed gpg-agent-browser.socket - GnuPG cryptographic agent and passphrase cache (access for web browsers).
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed gpg-agent-extra.socket - GnuPG cryptographic agent and passphrase cache (restricted).
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Stopping gpg-agent-ssh.socket - GnuPG cryptographic agent (ssh-agent emulation)...
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed gpg-agent.socket - GnuPG cryptographic agent and passphrase cache.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed keyboxd.socket - GnuPG public key management service.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed pipewire-pulse.socket - PipeWire PulseAudio.
+Apr 06 17:49:37 ubuntu-server systemd[1636]: Closed pipewire.socket - PipeWire Multimedia System Sockets.
+Apr 06 17:49:38 ubuntu-server systemd[1636]: Closed gpg-agent-ssh.socket - GnuPG cryptographic agent (ssh-agent emulation).
+Apr 06 17:49:38 ubuntu-server systemd[1636]: Removed slice app.slice - User Application Slice.
+Apr 06 17:49:38 ubuntu-server systemd[1636]: Reached target shutdown.target - Shutdown.
+Apr 06 17:49:38 ubuntu-server systemd[1636]: Finished systemd-exit.service - Exit the Session.
+Apr 06 17:49:38 ubuntu-server systemd[1636]: Reached target exit.target - Exit the Session.
+Apr 06 17:49:38 ubuntu-server (sd-pam)[1638]: pam_unix(systemd-user:session): session closed for user gdm
+Apr 06 17:49:38 ubuntu-server systemd[1]: user@107.service: Deactivated successfully.
+Apr 06 17:49:38 ubuntu-server systemd[1]: Stopped user@107.service - User Manager for UID 107.
+Apr 06 17:49:38 ubuntu-server systemd[1]: user@107.service: Consumed 1.534s CPU time, 27.9M memory peak.
+Apr 06 17:49:38 ubuntu-server systemd[1]: Stopping user-runtime-dir@107.service - User Runtime Directory /run/user/107...
+Apr 06 17:49:38 ubuntu-server systemd[1]: run-user-107.mount: Deactivated successfully.
+Apr 06 17:49:38 ubuntu-server systemd[1]: user-runtime-dir@107.service: Deactivated successfully.
+Apr 06 17:49:38 ubuntu-server systemd[1]: Stopped user-runtime-dir@107.service - User Runtime Directory /run/user/107.
+Apr 06 17:49:38 ubuntu-server systemd[1]: Removed slice user-107.slice - User Slice of UID 107.
+Apr 06 17:49:38 ubuntu-server systemd[1]: user-107.slice: Consumed 19.385s CPU time, 455.7M memory peak.
+Apr 06 17:49:38 ubuntu-server systemd-logind[1458]: Removed session 1.
+Apr 06 17:49:56 ubuntu-server systemd[1]: systemd-localed.service: Deactivated successfully.
+Apr 06 17:49:56 ubuntu-server systemd[1]: systemd-hostnamed.service: Deactivated successfully.
+Apr 06 17:49:59 ubuntu-server sudo[2682]:    admin : TTY=pts/0 ; PWD=/home/admin ; USER=root ; COMMAND=/usr/bin/journalctl -b
+Apr 06 17:49:59 ubuntu-server sudo[2682]: pam_unix(sudo:session): session opened for user root(uid=0) by admin(uid=1000)
