@@ -134,8 +134,7 @@ pkg_autoremove() {
 }
 
 ###################
-# Systemcheck     #
-###################
+#   Systemcheck   #
 check_root() {
     if [ "$(id -u)" -ne 0 ]; then
         log_error "Dieses Skript muss als Root ausgeführt werden."
@@ -161,6 +160,18 @@ check_dependencies() {
         pkg_install "${missing_deps[@]}"
     fi
 }
+
+check_system() {
+    if [ -f /etc/os-release ]; then
+        source /etc/os-release
+        log_info "Erkanntes System: $PRETTY_NAME"
+    else
+        log_warn "Konnte Betriebssystem nicht erkennen"
+    fi
+}
+#   Systemcheck   #
+###################
+
 
 find_fastest_mirrors() {
     log_info "Suche nach schnellsten Paketquellen..."
@@ -217,15 +228,6 @@ copy_nala_config() {
             mkdir -p /mnt/ubuntu/etc/nala/
             cp /etc/nala/nala.list /mnt/ubuntu/etc/nala/
         fi
-    fi
-}
-
-check_system() {
-    if [ -f /etc/os-release ]; then
-        source /etc/os-release
-        log_info "Erkanntes System: $PRETTY_NAME"
-    else
-        log_warn "Konnte Betriebssystem nicht erkennen"
     fi
 }
 
@@ -309,6 +311,7 @@ EOF
     exit 0
 }
 
+
 # Netzwerk konfigurieren
 #check_network_connectivity() {
 #    log_info "Prüfe Netzwerkverbindung..."
@@ -385,38 +388,38 @@ EOF
 #         done
 #    fi
 #}
+#
+#configure_static_ip() {
+#    # Netzwerkinterface ermitteln
+#    echo -e "\n${CYAN}Verfügbare Netzwerkinterfaces:${NC}"
+#    ip -o link show | grep -v "lo" | awk -F': ' '{print $2}'
+#    
+#    read -p "Netzwerkinterface (z.B. eth0, enp0s3): " NET_INTERFACE
+#    read -p "IP-Adresse (z.B. 192.168.1.100): " NET_IP
+#    read -p "Netzmaske (z.B. 24 für /24): " NET_MASK
+#    read -p "Gateway (z.B. 192.168.1.1): " NET_GATEWAY
+#    read -p "DNS-Server (z.B. 8.8.8.8): " NET_DNS
+#    
+#    log_info "Konfiguriere statische IP-Adresse..."
+#    ip addr add ${NET_IP}/${NET_MASK} dev ${NET_INTERFACE} || true
+#    ip link set ${NET_INTERFACE} up || true
+#    ip route add default via ${NET_GATEWAY} || true
+#    echo "nameserver ${NET_DNS}" > /etc/resolv.conf
+#    
+#    if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
+#        log_info "Netzwerkverbindung OK."
+#        NETWORK_CONFIG="static"
+#        STATIC_IP_CONFIG="interface=${NET_INTERFACE},address=${NET_IP}/${NET_MASK},gateway=${NET_GATEWAY},dns=${NET_DNS}"
+#        return 0
+#    else
+#        log_warn "Netzwerkverbindung konnte nicht hergestellt werden. Überprüfe deine Einstellungen."
+#        return 1
+#    fi
+#}
 
-configure_static_ip() {
-    # Netzwerkinterface ermitteln
-    echo -e "\n${CYAN}Verfügbare Netzwerkinterfaces:${NC}"
-    ip -o link show | grep -v "lo" | awk -F': ' '{print $2}'
-    
-    read -p "Netzwerkinterface (z.B. eth0, enp0s3): " NET_INTERFACE
-    read -p "IP-Adresse (z.B. 192.168.1.100): " NET_IP
-    read -p "Netzmaske (z.B. 24 für /24): " NET_MASK
-    read -p "Gateway (z.B. 192.168.1.1): " NET_GATEWAY
-    read -p "DNS-Server (z.B. 8.8.8.8): " NET_DNS
-    
-    log_info "Konfiguriere statische IP-Adresse..."
-    ip addr add ${NET_IP}/${NET_MASK} dev ${NET_INTERFACE} || true
-    ip link set ${NET_INTERFACE} up || true
-    ip route add default via ${NET_GATEWAY} || true
-    echo "nameserver ${NET_DNS}" > /etc/resolv.conf
-    
-    if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
-        log_info "Netzwerkverbindung OK."
-        NETWORK_CONFIG="static"
-        STATIC_IP_CONFIG="interface=${NET_INTERFACE},address=${NET_IP}/${NET_MASK},gateway=${NET_GATEWAY},dns=${NET_DNS}"
-        return 0
-    else
-        log_warn "Netzwerkverbindung konnte nicht hergestellt werden. Überprüfe deine Einstellungen."
-        return 1
-    fi
-}
 
 ###################
-# Konfiguration   #
-###################
+#  Konfiguration  #
 load_config() {
     local config_path=$1
     
@@ -867,10 +870,12 @@ gather_user_input() {
         read -p "Gib zusätzliche Pakete an (durch Leerzeichen getrennt): " ADDITIONAL_PACKAGES
     fi
 }
+#  Konfiguration  #
+###################
+
 
 ###################
 # Partitionierung #
-###################
 prepare_disk() {
     log_progress "Beginne mit der Partitionierung..."
     show_progress 10
@@ -967,10 +972,12 @@ setup_lvm() {
     
     show_progress 40
 }
+# Partitionierung #
+###################
+
 
 ###################
-# Basissystem     #
-###################
+#   Basissystem   #
 mount_filesystems() {
     log_progress "Hänge Dateisysteme ein..."
     
@@ -1125,17 +1132,9 @@ UUID=${DATA_UUID} /media/data     ext4    defaults        0       2
 # Swap-Partition
 UUID=${SWAP_UUID} none            swap    sw              0       0
 EOF
+#   Basissystem   #
+###################
 
-# crypttab erstellen
-cat > /mnt/ubuntu/etc/crypttab <<EOF
-${LUKS_BOOT_NAME} UUID=${LUKS_BOOT_UUID} /etc/luks/boot_os.keyfile luks,discard
-${LUKS_ROOT_NAME} UUID=${LUKS_ROOT_UUID} /etc/luks/boot_os.keyfile luks,discard
-EOF
-
-## crypttab.initramfs erstellen
-#cat > /mnt/ubuntu/etc/crypttab.initramfs <<EOF
-#${LUKS_BOOT_NAME} UUID=${LUKS_BOOT_UUID} /etc/luks/boot_os.keyfile luks,discard
-#EOF
 
 # System-Setup in chroot
 log_progress "Konfiguriere System in chroot-Umgebung..."
