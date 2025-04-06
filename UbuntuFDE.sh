@@ -168,7 +168,7 @@ find_fastest_mirrors() {
     # Sicherstellen, dass nala installiert ist
     if ! command -v nala &> /dev/null; then
         log_warn "Nala nicht gefunden, überspringe Mirror-Optimierung."
-        MIRROR_URL="http://archive.ubuntu.com/ubuntu"
+        MIRRORS_OPTIMIZED="false"
         return
     fi
     
@@ -193,12 +193,23 @@ find_fastest_mirrors() {
     # Führe nala fetch mit dem erkannten Land aus
     nala fetch --auto --fetches 3 --country "$COUNTRY_CODE"
     
-    # Extrahiere den schnellsten Mirror
+    # Prüfe, ob die Optimierung erfolgreich war
     if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-        MIRROR_URL=$(grep -m 1 "deb http" /etc/apt/sources.list.d/nala-sources.list | awk '{print $2}')
-        log_info "Schnellster Mirror gefunden: $MIRROR_URL"
-        
-        # Kopiere die Konfiguration ins chroot-System
+        log_info "Mirror-Optimierung erfolgreich."
+        MIRRORS_OPTIMIZED="true"
+    else
+        log_warn "Keine optimierten Mirrors gefunden."
+        MIRRORS_OPTIMIZED="false"
+    fi
+    
+    # Exportiere die Variablen
+    export COUNTRY_CODE
+    export MIRRORS_OPTIMIZED
+}
+
+copy_nala_config() {
+    if [ "${MIRRORS_OPTIMIZED}" = "true" ] && [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
+        log_info "Kopiere optimierte nala-Konfiguration in die chroot-Umgebung..."
         mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
         cp /etc/apt/sources.list.d/nala-sources.list /mnt/ubuntu/etc/apt/sources.list.d/
         
@@ -206,12 +217,7 @@ find_fastest_mirrors() {
             mkdir -p /mnt/ubuntu/etc/nala/
             cp /etc/nala/nala.list /mnt/ubuntu/etc/nala/
         fi
-    else
-        log_warn "Keine optimierten Mirrors gefunden, verwende Standard-Mirror."
-        MIRROR_URL="http://archive.ubuntu.com/ubuntu"
     fi
-    
-    export MIRROR_URL
 }
 
 check_system() {
@@ -304,87 +310,81 @@ EOF
 }
 
 # Netzwerk konfigurieren
-check_network_connectivity() {
-    log_info "Prüfe Netzwerkverbindung..."
-    
-    # Erst prüfen, ob wir bereits eine Verbindung haben
-    if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
-        log_info "Bestehende Netzwerkverbindung erkannt. Fahre fort..."
-        NETWORK_CONFIG="dhcp"  # Annahme: Wenn es funktioniert, ist es wahrscheinlich DHCP
-        return 0
-        
-        # Wenn Netplan-Konfiguration existiert, behalten
-        if [ -d /etc/netplan ] && [ "$(find /etc/netplan -name "*.yaml" | wc -l)" -gt 0 ]; then
-            log_info "Bestehende Netplan-Konfiguration gefunden, wird beibehalten."
-        fi
-    fi
-    
-    # Falls Installer noch läuft, versuche diesen zu beenden
-    if pgrep subiquity > /dev/null; then
-        log_info "Beende laufenden Ubuntu-Installer..."
-        pkill -9 subiquity || true
-    fi
-    
-#    # Netplan-Konfigurationen entfernen, falls vorhanden
-#    if [ -d /etc/netplan ]; then
-#        log_info "Lösche bestehende Netplan-Konfigurationen..."
-#        rm -f /etc/netplan/*.yaml
+#check_network_connectivity() {
+#    log_info "Prüfe Netzwerkverbindung..."
+#    
+#    # Erst prüfen, ob wir bereits eine Verbindung haben
+#    if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
+#        log_info "Bestehende Netzwerkverbindung erkannt. Fahre fort..."
+#        NETWORK_CONFIG="dhcp"  # Annahme: Wenn es funktioniert, ist es wahrscheinlich DHCP
+#        return 0
+#        
+#        # Wenn Netplan-Konfiguration existiert, behalten
+#        if [ -d /etc/netplan ] && [ "$(find /etc/netplan -name "*.yaml" | wc -l)" -gt 0 ]; then
+#            log_info "Bestehende Netplan-Konfiguration gefunden, wird beibehalten."
+#        fi
 #    fi
-    
-    # Versuche DHCP
-    log_info "Versuche Netzwerkverbindung über DHCP herzustellen..."
-    if command -v dhclient &> /dev/null; then
-        dhclient -v || true
-    elif command -v dhcpclient &> /dev/null; then
-        dhcpclient -v || true
-    fi
-    
-    # Prüfe erneut nach Verbindung
-    if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
-        log_info "Netzwerkverbindung über DHCP hergestellt."
-        NETWORK_CONFIG="dhcp"
-        return 0
-    else
-        log_warn "Keine Netzwerkverbindung über DHCP gefunden."
-        
-        # # Netzwerkoptionen anbieten
-        # while true; do
-        #     echo -e "\n${CYAN}Netzwerkkonfiguration:${NC}"
-        #     echo "1) Erneut mit DHCP versuchen"
-        #     echo "2) Statische IP-Adresse konfigurieren"
-        #     echo "3) Ohne Netzwerk fortfahren (nicht empfohlen)"
-        #     read -p "Wähle eine Option [2]: " NETWORK_CHOICE
-        #     NETWORK_CHOICE=${NETWORK_CHOICE:-2}
-        #     
-        #     if [ "$NETWORK_CHOICE" = "1" ]; then
-        #         log_info "Versuche DHCP erneut..."
-        #         if command -v dhclient &> /dev/null; then
-        #             dhclient -v || true
-        #         elif command -v dhcpclient &> /dev/null; then
-        #             dhcpclient -v || true
-        #         fi
-        #         
-        #         if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
-        #             log_info "Netzwerkverbindung OK."
-        #             NETWORK_CONFIG="dhcp"
-        #             return 0
-        #         else
-        #             log_warn "DHCP fehlgeschlagen."
-        #             # Erneut zur Auswahl zurückkehren
-        #         fi
-        #     elif [ "$NETWORK_CHOICE" = "2" ]; then
-        #         if configure_static_ip; then
-        #             return 0
-        #         fi
-        #         # Bei Fehlschlag zur Auswahl zurückkehren
-        #     else
-        #         log_warn "Installation ohne Netzwerk wird fortgesetzt. Einige Funktionen werden nicht verfügbar sein."
-        #         NETWORK_CONFIG="none"
-        #         return 1
-        #     fi
-        # done
-    fi
-}
+#    
+##    # Netplan-Konfigurationen entfernen, falls vorhanden
+##    if [ -d /etc/netplan ]; then
+##        log_info "Lösche bestehende Netplan-Konfigurationen..."
+##        rm -f /etc/netplan/*.yaml
+##    fi
+#    
+#    # Versuche DHCP
+#    log_info "Versuche Netzwerkverbindung über DHCP herzustellen..."
+#    if command -v dhclient &> /dev/null; then
+#        dhclient -v || true
+#    elif command -v dhcpclient &> /dev/null; then
+#        dhcpclient -v || true
+#    fi
+#    
+#    # Prüfe erneut nach Verbindung
+#    if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
+#        log_info "Netzwerkverbindung über DHCP hergestellt."
+#        NETWORK_CONFIG="dhcp"
+#        return 0
+#    else
+#        log_warn "Keine Netzwerkverbindung über DHCP gefunden."
+#        
+#         # Netzwerkoptionen anbieten
+#         while true; do
+#             echo -e "\n${CYAN}Netzwerkkonfiguration:${NC}"
+#             echo "1) Erneut mit DHCP versuchen"
+#             echo "2) Statische IP-Adresse konfigurieren"
+#             echo "3) Ohne Netzwerk fortfahren (nicht empfohlen)"
+#             read -p "Wähle eine Option [2]: " NETWORK_CHOICE
+#             NETWORK_CHOICE=${NETWORK_CHOICE:-2}
+#             
+#             if [ "$NETWORK_CHOICE" = "1" ]; then
+#                 log_info "Versuche DHCP erneut..."
+#                 if command -v dhclient &> /dev/null; then
+#                     dhclient -v || true
+#                 elif command -v dhcpclient &> /dev/null; then
+#                     dhcpclient -v || true
+#                 fi
+#                 
+#                 if ping -c 1 -W 2 archive.ubuntu.com &> /dev/null; then
+#                     log_info "Netzwerkverbindung OK."
+#                     NETWORK_CONFIG="dhcp"
+#                     return 0
+#                 else
+#                     log_warn "DHCP fehlgeschlagen."
+#                     # Erneut zur Auswahl zurückkehren
+#                 fi
+#             elif [ "$NETWORK_CHOICE" = "2" ]; then
+#                 if configure_static_ip; then
+#                     return 0
+#                 fi
+#                 # Bei Fehlschlag zur Auswahl zurückkehren
+#             else
+#                 log_warn "Installation ohne Netzwerk wird fortgesetzt. Einige Funktionen werden nicht verfügbar sein."
+#                 NETWORK_CONFIG="none"
+#                 return 1
+#             fi
+#         done
+#    fi
+#}
 
 configure_static_ip() {
     # Netzwerkinterface ermitteln
@@ -979,9 +979,6 @@ mount_filesystems() {
 
 install_base_system() {
     log_progress "Installiere Basissystem..."
-    
-    # Prüfe Netzwerkverbindung
-    check_network_connectivity
 
     # GPG-Schlüssel für lokalen Mirror importieren
     log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
@@ -993,7 +990,7 @@ install_base_system() {
         curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
         apt-transport-https console-setup bash-completion systemd-resolved
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
-        efibootmgr nala
+        efibootmgr nala openssh-server smbclient cifs-utils util-linux net-tools
     )
 
     # Optional auszuschließende Pakete definieren
@@ -1121,28 +1118,6 @@ ${LUKS_BOOT_NAME} UUID=${LUKS_BOOT_UUID} /etc/luks/boot_os.keyfile luks,discard
 ${LUKS_ROOT_NAME} UUID=${LUKS_ROOT_UUID} /etc/luks/boot_os.keyfile luks,discard
 EOF
 
-# Überprüfe die Konfiguration und erstelle systemd-Einheiten für boot
-mkdir -p /mnt/ubuntu/etc/systemd/system/
-cat > /mnt/ubuntu/etc/systemd/system/boot.mount <<EOF
-[Unit]
-Description=Boot Partition
-Before=local-fs.target
-After=cryptsetup.target
-
-[Mount]
-What=/dev/mapper/${LUKS_BOOT_NAME}
-Where=/boot
-Type=ext4
-Options=defaults
-
-[Install]
-WantedBy=local-fs.target
-EOF
-
-# Aktiviere die boot.mount-Einheit
-mkdir -p /mnt/ubuntu/etc/systemd/system/local-fs.target.wants/
-ln -sf /etc/systemd/system/boot.mount /mnt/ubuntu/etc/systemd/system/local-fs.target.wants/boot.mount
-
 # System-Setup in chroot
 log_progress "Konfiguriere System in chroot-Umgebung..."
 cat > /mnt/ubuntu/setup.sh <<MAINEOF
@@ -1150,6 +1125,21 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
+
+# SSH-Server deaktivieren
+systemctl disable ssh
+
+# Firewall einrichten
+ufw default deny incoming
+ufw default allow outgoing
+ufw enable
+
+# Zeitzone setzen
+if [ -n "${TIMEZONE}" ]; then
+    ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
+else
+    ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime
+fi
 
 # Wrapper-Funktionen für Paketoperationen
 pkg_install() {
@@ -1198,10 +1188,10 @@ if command -v nala &> /dev/null; then
     
     # Falls wir bereits optimierte Mirrors haben, nutze diese
     if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-        echo "Übernehme optimierte Mirror-Konfiguration..."
+        echo "Übernehme optimierte Mirror-Konfiguration, überspringe erneute Suche..."
     else
         # Ermittle Land basierend auf IP-Adresse
-        echo "Ermittle Land basierend auf IP-Adresse..."
+        echo "Keine optimierte Mirror-Konfiguration gefunden, starte Suche..."
         COUNTRY_CODE=\$(curl -s https://ipapi.co/country_code)
         
         if [ -z "\$COUNTRY_CODE" ]; then
@@ -1211,20 +1201,14 @@ if command -v nala &> /dev/null; then
         
         if [ -z "\$COUNTRY_CODE" ]; then
             # Letzter Fallback
-            COUNTRY_CODE="all"
+            COUNTRY_CODE="${COUNTRY_CODE:-all}"
+        else
+            echo "Erkanntes Land: \$COUNTRY_CODE"
         fi
         
-        echo "Erkanntes Land: \$COUNTRY_CODE"
         echo "Suche nach schnellsten Mirrors für das neue System..."
         nala fetch --auto --fetches 3 --country "\$COUNTRY_CODE"
     fi
-fi
-
-# Zeitzone setzen
-if [ -n "${TIMEZONE}" ]; then
-    ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
-else
-    ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime
 fi
 
 # GPG-Schlüssel für lokales Repository importieren
@@ -1299,7 +1283,7 @@ APT::Periodic::Unattended-Upgrade "${UPDATE_OPTION}";
 AUTOUPDATE
 
 ## Systemaktualisierung durchführen
-#echo "Aktualisiere Paketquellen und System..."
+echo "Aktualisiere Paketquellen und System..."
 pkg_update
 pkg_upgrade
 
@@ -1324,8 +1308,6 @@ pkg_install --no-install-recommends \
     bleachbit \
     stacer \
     fastfetch \
-    #firefox \
-    #thunderbird \
     gparted \
     vlc \
     deluge \
@@ -1405,6 +1387,24 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
+# Schlüsseldatei für automatische Entschlüsselung
+echo "KEYFILE_PATTERN=/etc/luks/*.keyfile" >> /etc/cryptsetup-initramfs/conf-hook
+echo "CRYPTSETUP=y" >> /etc/cryptsetup-initramfs/conf-hook
+echo "UMASK=0077" >> /etc/initramfs-tools/initramfs.conf
+
+mkdir -p /etc/luks
+dd if=/dev/urandom of=/etc/luks/boot_os.keyfile bs=4096 count=1
+chmod -R u=rx,go-rwx /etc/luks
+chmod u=r,go-rwx /etc/luks/boot_os.keyfile
+
+# Schlüsseldatei zu LUKS-Volumes hinzufügen
+echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}1 /etc/luks/boot_os.keyfile -
+echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}5 /etc/luks/boot_os.keyfile -
+
+# Crypttab aktualisieren
+echo "${LUKS_BOOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard" > /etc/crypttab
+echo "${LUKS_ROOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard" >> /etc/crypttab
+
 # GRUB Verzeichnisse vorbereiten
 mkdir -p /etc/default/
 mkdir -p /etc/default/grub.d/
@@ -1433,24 +1433,6 @@ update-initramfs -u -k all
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck
 update-grub
 
-# Schlüsseldatei für automatische Entschlüsselung
-echo "KEYFILE_PATTERN=/etc/luks/*.keyfile" >> /etc/cryptsetup-initramfs/conf-hook
-echo "CRYPTSETUP=y" >> /etc/cryptsetup-initramfs/conf-hook
-echo "UMASK=0077" >> /etc/initramfs-tools/initramfs.conf
-
-mkdir -p /etc/luks
-dd if=/dev/urandom of=/etc/luks/boot_os.keyfile bs=4096 count=1
-chmod -R u=rx,go-rwx /etc/luks
-chmod u=r,go-rwx /etc/luks/boot_os.keyfile
-
-# Schlüsseldatei zu LUKS-Volumes hinzufügen
-echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}1 /etc/luks/boot_os.keyfile -
-echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}5 /etc/luks/boot_os.keyfile -
-
-# Crypttab aktualisieren
-echo "${LUKS_BOOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard" > /etc/crypttab
-echo "${LUKS_ROOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard" >> /etc/crypttab
-
 # zram für Swap konfigurieren
 cat > /etc/default/zramswap <<EOZ
 # Konfiguration für zramswap
@@ -1461,21 +1443,6 @@ EOZ
 # Benutzer anlegen
 useradd -m -s /bin/bash -G sudo ${USERNAME}
 echo "${USERNAME}:${USER_PASSWORD}" | chpasswd
-
-# SSH-Server installieren (aber nicht aktivieren)
-pkg_install openssh-server
-# SSH-Server deaktivieren
-systemctl disable ssh
-
-# Firewall konfigurieren
-pkg_install ufw
-# GUI nur installieren wenn Desktop
-if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    pkg_install gufw
-fi
-ufw default deny incoming
-ufw default allow outgoing
-ufw enable
 
 # Desktop-Umgebung installieren
 echo "INSTALL_DESKTOP=${INSTALL_DESKTOP}, DESKTOP_ENV=${DESKTOP_ENV}, DESKTOP_SCOPE=${DESKTOP_SCOPE}" >> /var/log/install.log
@@ -1494,6 +1461,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-text-editor \
                     gnome-terminal \
                     gnome-tweaks \
+                    gufw \
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
@@ -1511,6 +1479,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-text-editor \
                     gnome-terminal \
                     gnome-tweaks \
+                    gufw \
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
@@ -1569,6 +1538,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-text-editor \
                     gnome-terminal \
                     gnome-tweaks \
+                    gufw \
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
@@ -1623,39 +1593,64 @@ LOCALE
     fi
 fi
 
+# Erstelle systemd-Einheit für boot
+mkdir -p /mnt/ubuntu/etc/systemd/system/
+cat > /etc/systemd/system/boot.mount <<EOF
+[Unit]
+Description=Boot Partition
+Before=local-fs.target
+After=cryptsetup.target
 
-# Spezifische Anpassungen für den Desktop
+[Mount]
+What=/dev/mapper/${LUKS_BOOT_NAME}
+Where=/boot
+Type=ext4
+Options=defaults
 
-# GNOME Shell Erweiterungen installieren
-if [ "${INSTALL_DESKTOP}" = "1" ]; then
+[Install]
+WantedBy=local-fs.target
+EOF
+
+# Aktiviere die boot.mount-Einheit
+mkdir -p /mnt/ubuntu/etc/systemd/system/local-fs.target.wants/
+ln -sf /etc/systemd/system/boot.mount /etc/systemd/system/local-fs.target.wants/boot.mount
+
+
+
+# Spezifische Anpassungen für das System
+
     # GNOME Shell Erweiterungen installieren
-    echo "Installiere GNOME Shell Erweiterungen..."
-    pkg_install gnome-shell-extensions chrome-gnome-shell
-fi
+    if [ "${INSTALL_DESKTOP}" = "1" ]; then
+        # GNOME Shell Erweiterungen installieren
+        echo "Installiere GNOME Shell Erweiterungen..."
+        pkg_install gnome-shell-extensions chrome-gnome-shell
+    fi
 
-# Deaktiviere unnötige systemd-Dienste
-systemctl disable --now \
-    #apt-daily.timer \
-    #apt-daily-upgrade.timer \
-    #systemd-resolved.service \
-    #systemd-networkd.service \
-    #rtkit-daemon.service \
-    apport.service \
-    apport-autoreport.service \
-    avahi-daemon.service \
-    bluetooth.service \
-    cups.service \
-    ModemManager.service \
-    upower.service
-    
-
-# Optional: Zusätzliche Bereinigung für Desktop-Systeme
-if [ "${INSTALL_DESKTOP}" = "1" ]; then
+    # Deaktiviere unnötige systemd-Dienste
     systemctl disable --now \
-        whoopsie.service \
-        kerneloops.service \
-        NetworkManager-wait-online.service
-fi
+        #apt-daily.timer \
+        #apt-daily-upgrade.timer \
+        #systemd-resolved.service \
+        #systemd-networkd.service \
+        #rtkit-daemon.service \
+        apport.service \
+        apport-autoreport.service \
+        avahi-daemon.service \
+        bluetooth.service \
+        cups.service \
+        ModemManager.service \
+        upower.service
+        
+
+    # Optional: Zusätzliche Bereinigung für Desktop-Systeme
+    if [ "${INSTALL_DESKTOP}" = "1" ]; then
+        systemctl disable --now \
+            whoopsie.service \
+            kerneloops.service \
+            NetworkManager-wait-online.service
+    fi
+
+
 
 # Aufräumen
 echo "Bereinige temporäre Dateien..."
@@ -1758,7 +1753,7 @@ main() {
         echo -e "${CYAN}   UbuntuFDE - Automatisches Installationsskript            ${NC}"
         echo -e "${CYAN}   Version: ${SCRIPT_VERSION}                               ${NC}"
         echo -e "${CYAN}============================================================${NC}"
-        echo -e "${GREEN}[INFO]${NC} Neustart der Installation via SSH."
+        echo -e "${GREEN}[INFO]${NC} Fortführung der Installation via SSH."
         
         # Lade gespeicherte Einstellungen
         if [ -f /tmp/install_config ]; then
@@ -1774,7 +1769,13 @@ main() {
         echo
         
         # Logdatei initialisieren
-        echo "Ubuntu FDE Installation - $(date)" > "$LOG_FILE"
+        echo "UbuntuFDE Installation - $(date)" > "$LOG_FILE"
+
+        # Falls Installer noch läuft, versuche diesen zu beenden
+        if pgrep subiquity > /dev/null; then
+            log_info "Beende laufenden Ubuntu-Installer..."
+            pkill -9 subiquity || true
+        fi    
         
         # Systemcheck
         check_root
@@ -1815,6 +1816,7 @@ main() {
     setup_lvm
     mount_filesystems
     install_base_system
+    copy_nala_config
     download_thorium
     prepare_chroot
     execute_chroot
