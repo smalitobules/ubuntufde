@@ -1119,6 +1119,11 @@ ${LUKS_BOOT_NAME} UUID=${LUKS_BOOT_UUID} /etc/luks/boot_os.keyfile luks,discard
 ${LUKS_ROOT_NAME} UUID=${LUKS_ROOT_UUID} /etc/luks/boot_os.keyfile luks,discard
 EOF
 
+# crypttab.initramfs erstellen
+cat > /mnt/ubuntu/etc/crypttab.initramfs <<EOF
+${LUKS_BOOT_NAME} UUID=${LUKS_BOOT_UUID} /etc/luks/boot_os.keyfile luks,discard
+EOF
+
 # System-Setup in chroot
 log_progress "Konfiguriere System in chroot-Umgebung..."
 cat > /mnt/ubuntu/setup.sh <<MAINEOF
@@ -1388,14 +1393,38 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
+# cryptsetup-boot-Dienst erstellen
+cat > /etc/systemd/system/cryptsetup-boot.service <<EOF
+[Unit]
+Description=Cryptsetup for boot partition
+DefaultDependencies=no
+Before=local-fs.target boot.mount
+Requires=systemd-fsck@dev-disk-by\\x2duuid-${LUKS_BOOT_UUID}.service
+After=systemd-fsck@dev-disk-by\\x2duuid-${LUKS_BOOT_UUID}.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/sbin/cryptsetup open UUID=${LUKS_BOOT_UUID} ${LUKS_BOOT_NAME} --key-file=/etc/luks/boot_os.keyfile
+ExecStop=/sbin/cryptsetup close ${LUKS_BOOT_NAME}
+
+[Install]
+WantedBy=local-fs.target
+EOF
+
+# cryptsetup-boot-Dienst aktivieren
+systemctl enable cryptsetup-boot.service
+
 
 # Erstelle systemd-Einheit für boot
 mkdir -p /etc/systemd/system/
 cat > /etc/systemd/system/boot.mount <<EOF
 [Unit]
 Description=Boot Partition
+DefaultDependencies=no
+Requires=dev-mapper-${LUKS_BOOT_NAME}.device cryptsetup-boot.service
+After=dev-mapper-${LUKS_BOOT_NAME}.device cryptsetup-boot.service
 Before=local-fs.target
-After=cryptsetup.target
 
 [Mount]
 What=/dev/mapper/${LUKS_BOOT_NAME}
@@ -1418,12 +1447,41 @@ ln -sf /etc/systemd/system/boot.mount /etc/systemd/system/local-fs.target.wants/
 # Schlüsseldatei für automatische Entschlüsselung
 echo "KEYFILE_PATTERN=/etc/luks/*.keyfile" >> /etc/cryptsetup-initramfs/conf-hook
 echo "CRYPTSETUP=y" >> /etc/cryptsetup-initramfs/conf-hook
+mkdir -p /etc/initramfs-tools/hooks/
 echo "UMASK=0077" >> /etc/initramfs-tools/initramfs.conf
 
 mkdir -p /etc/luks
 dd if=/dev/urandom of=/etc/luks/boot_os.keyfile bs=4096 count=1
 chmod -R u=rx,go-rwx /etc/luks
 chmod u=r,go-rwx /etc/luks/boot_os.keyfile
+
+# cryptboot-Hook erstellen
+cat > /etc/initramfs-tools/hooks/cryptboot <<EOF
+#!/bin/sh
+set -e
+
+PREREQ=""
+prereqs() {
+    echo "\$PREREQ"
+}
+
+case "\$1" in
+    prereqs)
+        prereqs
+        exit 0
+        ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+# Schlüsseldatei in initramfs kopieren
+mkdir -p \$DESTDIR/etc/luks
+cp /etc/luks/boot_os.keyfile \$DESTDIR/etc/luks/
+chmod 0400 \$DESTDIR/etc/luks/boot_os.keyfile
+EOF
+
+# cryptboot-Hook Datei-Rechte setzen
+chmod +x /etc/initramfs-tools/hooks/cryptboot
 
 # Schlüsseldatei zu LUKS-Volumes hinzufügen
 echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}1 /etc/luks/boot_os.keyfile -
