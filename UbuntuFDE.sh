@@ -1472,6 +1472,9 @@ case "\$1" in
         ;;
 esac
 
+# cryptboot-Hook Datei-Rechte setzen
+chmod +x /etc/initramfs-tools/hooks/cryptboot
+
 . /usr/share/initramfs-tools/hook-functions
 
 # Schlüsseldatei in initramfs kopieren
@@ -1479,9 +1482,6 @@ mkdir -p \$DESTDIR/etc/luks
 cp /etc/luks/boot_os.keyfile \$DESTDIR/etc/luks/
 chmod 0400 \$DESTDIR/etc/luks/boot_os.keyfile
 EOF
-
-# cryptboot-Hook Datei-Rechte setzen
-chmod +x /etc/initramfs-tools/hooks/cryptboot
 
 # Schlüsseldatei zu LUKS-Volumes hinzufügen
 echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}1 /etc/luks/boot_os.keyfile -
