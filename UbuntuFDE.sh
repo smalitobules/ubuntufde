@@ -465,9 +465,9 @@ EOF
 
 calculate_available_space() {
     local dev=$1
-    local efi_size=256  # MB
-    local boot_size=1536  # MB
-    local grub_size=2  # MB
+    local efi_size=256    # In Megabyte
+    local boot_size=1024  # In Megabyte
+    local grub_size=2     # In Megabyte
     local total_size_mb
     
     # Konvertiere Gesamtgröße in MB
@@ -543,7 +543,17 @@ gather_disk_input() {
     TOTAL_SIZE=$(lsblk -d -n -o SIZE "$DEV" | tr -d ' ')
     echo -e "\n${CYAN}Laufwerk: $DEV${NC}"
     echo -e "Gesamtspeicher: $TOTAL_SIZE"
-    echo -e "Verfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
+    
+    # Zeige Systempartitionen mit ihren Größen
+    echo -e "\n${CYAN}Übersicht der Systempartitionen:${NC}"
+    echo -e "${YELLOW}PARTITION    GRÖSSE    ZWECK${NC}"
+    echo -e "----------------------------------"
+    echo -e "EFI-SP       256 MB    EFI-System-Partition für den Bootloader"
+    echo -e "GRUB         2 MB      GRUB Bios-Boot-Partition"
+    echo -e "boot         1024 MB   Boot-Partition (enthält Kernel, initramfs)"
+    echo -e "----------------------------------"
+    echo -e "GESAMT       1282 MB   Reserviert für Systempartitionen"
+    echo -e "\nVerfügbarer Speicher für LVM (nach Abzug der Systempartitionen): ${AVAILABLE_GB} GB"
 
     # LVM-Größenkonfiguration - erst Swap, dann Root, dann Data
     echo -e "\n${CYAN}LVM-Konfiguration:${NC}"
