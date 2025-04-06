@@ -1388,6 +1388,33 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
+
+# Erstelle systemd-Einheit für boot
+mkdir -p /etc/systemd/system/
+cat > /etc/systemd/system/boot.mount <<EOF
+[Unit]
+Description=Boot Partition
+Before=local-fs.target
+After=cryptsetup.target
+
+[Mount]
+What=/dev/mapper/${LUKS_BOOT_NAME}
+Where=/boot
+Type=ext4
+Options=defaults
+
+[Install]
+WantedBy=local-fs.target
+EOF
+
+# boot.mount Datei-Rechte setzen
+chmod 644 /etc/systemd/system/boot.mount
+
+# Aktiviere die boot.mount-Einheit
+mkdir -p /etc/systemd/system/local-fs.target.wants/
+ln -sf /etc/systemd/system/boot.mount /etc/systemd/system/local-fs.target.wants/boot.mount
+
+
 # Schlüsseldatei für automatische Entschlüsselung
 echo "KEYFILE_PATTERN=/etc/luks/*.keyfile" >> /etc/cryptsetup-initramfs/conf-hook
 echo "CRYPTSETUP=y" >> /etc/cryptsetup-initramfs/conf-hook
@@ -1405,6 +1432,10 @@ echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}5 /etc/luks/boot_os.ke
 # Crypttab aktualisieren
 echo "${LUKS_BOOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard" > /etc/crypttab
 echo "${LUKS_ROOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard" >> /etc/crypttab
+
+# crypttab Datei-Rechte setzen
+chmod 600 /etc/crypttab
+
 
 # GRUB Verzeichnisse vorbereiten
 mkdir -p /etc/default/
@@ -1433,6 +1464,7 @@ sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
 update-initramfs -u -k all
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck
 update-grub
+
 
 # zram für Swap konfigurieren
 cat > /etc/default/zramswap <<EOZ
@@ -1593,28 +1625,6 @@ LOCALE
         done
     fi
 fi
-
-# Erstelle systemd-Einheit für boot
-mkdir -p /mnt/ubuntu/etc/systemd/system/
-cat > /etc/systemd/system/boot.mount <<EOF
-[Unit]
-Description=Boot Partition
-Before=local-fs.target
-After=cryptsetup.target
-
-[Mount]
-What=/dev/mapper/${LUKS_BOOT_NAME}
-Where=/boot
-Type=ext4
-Options=defaults
-
-[Install]
-WantedBy=local-fs.target
-EOF
-
-# Aktiviere die boot.mount-Einheit
-mkdir -p /etc/systemd/system/local-fs.target.wants/
-ln -sf /etc/systemd/system/boot.mount /etc/systemd/system/local-fs.target.wants/boot.mount
 
 
 
