@@ -1,13 +1,13 @@
 #!/bin/bash
 # Ubuntu Full Disk Encryption - Automatisches Installationsskript
 # Dieses Skript automatisiert die Installation von Ubuntu mit vollständiger Festplattenverschlüsselung
-# Version: 0.1
+# Version: 0.0.1
 # Datum: $(date +%Y-%m-%d)
-# Autor: Smali Tobules mit Hilfe von Claude.ai
+# Autor: Smali Tobules
+
 
 ###################
 # Konfiguration   #
-###################
 SCRIPT_VERSION="0.1"
 DEFAULT_HOSTNAME="ubuntu-server"
 DEFAULT_USERNAME="admin"
@@ -18,10 +18,12 @@ CONFIG_FILE="ubuntu-fde.conf"
 LOG_FILE="ubuntu-fde.log"
 LUKS_BOOT_NAME="BOOT"
 LUKS_ROOT_NAME="ROOT"
+# Konfiguration   #
+###################
+
 
 ###################
 # Farben und Log  #
-###################
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -29,6 +31,9 @@ BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
+# Farben und Log  #
+###################
+
 
 # Logdatei einrichten im aktuellen Verzeichnis
 LOG_FILE="$(pwd)/UbuntuFDE_$(date +%Y%m%d_%H%M%S).log"
@@ -1011,7 +1016,7 @@ install_base_system() {
         apt-transport-https console-setup bash-completion systemd-resolved
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
         efibootmgr nala openssh-server smbclient cifs-utils util-linux net-tools
-        ufw network-manager
+        ufw network-manager btop
     )
 
     # Optional auszuschließende Pakete definieren
@@ -1408,7 +1413,6 @@ systemctl enable systemd-resolved
 
 ##################
 #   CRYPTSETUP   #
-
 # Schlüsseldatei und Konfigurations-hook einrichten
 mkdir -p /etc/luks
 dd if=/dev/urandom of=/etc/luks/boot_os.keyfile bs=4096 count=1
@@ -1500,7 +1504,6 @@ EOF
 
 # Hook ausführbar machen
 chmod +x /etc/initramfs-tools/hooks/persist-boot
-
 #   CRYPTSETUP   #
 ##################
 
@@ -1561,6 +1564,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-session \
                     gnome-shell \
                     gdm3 \
+                    libpam-gnome-keyring \
                     gnome-disk-utility \
                     gnome-text-editor \
                     gnome-terminal \
@@ -1569,6 +1573,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
+                    xprintidle \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1579,6 +1584,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-session \
                     gnome-shell \
                     gdm3 \
+                    libpam-gnome-keyring \
                     gnome-disk-utility \
                     gnome-text-editor \
                     gnome-terminal \
@@ -1587,6 +1593,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
+                    xprintidle \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1638,6 +1645,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-session \
                     gnome-shell \
                     gdm3 \
+                    libpam-gnome-keyring \
                     gnome-disk-utility \
                     gnome-text-editor \
                     gnome-terminal \
@@ -1646,6 +1654,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
+                    xprintidle \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1698,12 +1707,10 @@ LOCALE
 fi
 
 
-
-# Spezifische Anpassungen für das System
-
+#########################
+#   SYSTEMANPASSUNGEN   #
     # GNOME Shell Erweiterungen installieren
-    if [ "${INSTALL_DESKTOP}" = "1" ]; then
-        # GNOME Shell Erweiterungen installieren
+    if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
         echo "Installiere GNOME Shell Erweiterungen..."
         pkg_install gnome-shell-extensions chrome-gnome-shell
     fi
@@ -1715,14 +1722,16 @@ fi
         #systemd-resolved.service \
         #systemd-networkd.service \
         #rtkit-daemon.service \
+        gnome-remote-desktop.service \
+        gnome-remote-desktop-configuration.service \
         apport.service \
         apport-autoreport.service \
         avahi-daemon.service \
         bluetooth.service \
         cups.service \
         ModemManager.service \
-        upower.service
-        
+        upower.service \
+        rsyslog.service
 
     # Optional: Zusätzliche Bereinigung für Desktop-Systeme
     if [ "${INSTALL_DESKTOP}" = "1" ]; then
@@ -1732,6 +1741,238 @@ fi
             NetworkManager-wait-online.service
     fi
 
+
+# Bei Inaktivität den Benutzerwechsel auslösen
+if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
+    echo "Erstelle Skript für Bildschirmabschaltung ohne Lockscreen..."
+    
+    mkdir -p /usr/local/bin/
+    cat > /usr/local/bin/screen-timeout-handler.sh <<'EOF'
+#!/bin/bash
+
+# Ein Skript, das den Benutzerwechsel (GDM) anstelle des Lockscreens aktiviert
+# wenn der Bildschirm durch Inaktivität ausgeschaltet wird
+
+# Funktion zum Prüfen der Inaktivität
+check_idle() {
+  # Idle-Zeit in Millisekunden abrufen
+  local idle_time=$(xprintidle)
+  local idle_threshold=$((15 * 60 * 1000))  # 15 Minuten in Millisekunden
+  
+  if [ "$idle_time" -ge "$idle_threshold" ]; then
+    # Wenn Idle-Zeit überschritten, Benutzerwechsel aktivieren
+    gdmflexiserver --startnew
+    # Kurze Pause, um wiederholtes Auslösen zu vermeiden
+    sleep 60
+  fi
+}
+
+# Hole aktuelle Energieeinstellung für Bildschirmabschaltung
+get_screen_timeout() {
+  gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout
+}
+
+# Hauptschleife
+while true; do
+  # Nur prüfen, wenn der Timeout größer als 0 ist
+  timeout=$(get_screen_timeout)
+  if [ "$timeout" -gt 0 ]; then
+    check_idle
+  fi
+  sleep 60
+done
+EOF
+
+    chmod +x /usr/local/bin/screen-timeout-handler.sh
+
+    # Autostart-Eintrag für den Benutzerwechsel
+    mkdir -p /etc/xdg/autostart/
+    cat > /etc/xdg/autostart/screen-timeout-handler.desktop <<EOF
+[Desktop Entry]
+Type=Application
+Name=Screen Timeout Handler
+Comment=Switches to user selection instead of locking when screen times out
+Exec=/usr/local/bin/screen-timeout-handler.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+fi
+
+# Gnome-Einstellungen systemweit vorkonfigurieren
+if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
+    echo "Konfiguriere Gnome-Standardeinstellungen systemweit..."
+    
+    # Verzeichnis für systemweite dconf-Profile erstellen
+    mkdir -p /etc/dconf/profile/
+    mkdir -p /etc/dconf/db/local.d/
+    
+    # dconf-Profil erstellen
+    cat > /etc/dconf/profile/user <<EOF
+user-db:user
+system-db:local
+EOF
+    
+# Systemweite Einstellungen definieren
+cat > /etc/dconf/db/local.d/00-system-settings <<EOF
+# Fensterknöpfe (Minimieren, Maximieren, Schließen) anzeigen
+[org/gnome/desktop/wm/preferences]
+button-layout='appmenu:minimize,maximize,close'
+
+# Dunkles Desktop-Theme aktivieren
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+gtk-theme='Adwaita-dark'
+
+# Desktop-Hintergrund
+[org/gnome/desktop/background]
+picture-uri='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
+picture-uri-dark='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
+
+# Bildschirm-Ausschaltverhalten konfigurieren
+[org/gnome/desktop/session]
+idle-delay=uint32 0
+
+# Bildschirm nie ausschalten
+[org/gnome/settings-daemon/plugins/power]
+power-button-action='interactive'
+sleep-inactive-ac-type='blank'
+sleep-inactive-battery-type='blank'
+sleep-inactive-ac-timeout=0
+sleep-inactive-battery-timeout=0
+idle-dim=false
+
+# Tastenkombination für Nautilus öffnen
+[org/gnome/settings-daemon/plugins/media-keys]
+home=['<Super>e']
+screensaver=['']
+
+# Tastenkombination für Bildschirmsperre aktivieren
+[org/gnome/shell/keybindings]
+switch-user=['<Super>l']
+
+# Standardaktion bei Bildschirmsperre umstellen
+[org/gnome/desktop/screensaver]
+idle-activation-enabled=false
+lock-enabled=false
+logout-enabled=true
+logout-delay=uint32 5
+user-switch-enabled=true
+picture-uri=''
+picture-options='none'
+color-shading-type='solid'
+primary-color='#000000'
+secondary-color='#000000'
+
+# Benutzerwechsel erlauben aber Bildschirmsperre vermeiden
+[org/gnome/desktop/lockdown]
+disable-user-switching=false
+disable-lock-screen=true
+disable-log-out=false
+user-administration-disabled=true
+disable-printing=false
+disable-print-setup=false
+
+# Privacy-Einstellungen
+[org/gnome/desktop/privacy]
+show-full-name-in-top-bar=false
+
+# Nautilus-Einstellungen
+[org/gnome/nautilus/preferences]
+default-folder-viewer='list-view'
+search-filter-time-type='last_modified'
+show-create-link=true
+show-delete-permanently=true
+
+# Terminal-Einstellungen
+[org/gnome/terminal/legacy]
+theme-variant='dark'
+EOF
+    
+# GDM (Login-Bildschirm) Konfiguration
+mkdir -p /etc/dconf/db/gdm.d/
+cat > /etc/dconf/db/gdm.d/01-gdm-settings <<EOF
+[org/gnome/login-screen]
+disable-user-list=true
+banner-message-enable=true
+banner-message-text='Zugriff nur für autorisierte Benutzer'
+logo=''
+
+[org/gnome/desktop/background]
+picture-uri=''
+primary-color='#000000'
+secondary-color='#000000'
+color-shading-type='solid'
+picture-options='none'
+EOF
+    
+    # Automatische Anmeldung für den erstellten Benutzer konfigurieren
+    mkdir -p /etc/gdm3/
+    cat > /etc/gdm3/custom.conf <<EOF
+# GDM configuration storage
+[daemon]
+AutomaticLoginEnable=true
+AutomaticLogin=${USERNAME}
+WaylandEnable=true
+
+[security]
+DisallowTCP=true
+AllowRoot=false
+
+[xdmcp]
+Enable=false
+
+[chooser]
+Hosts=
+EOF
+    
+    # Keyring ohne Passwort konfigurieren für automatische Anmeldung
+    # Stelle sicher, dass libpam-gnome-keyring installiert ist
+    pkg_install libpam-gnome-keyring
+    
+    # PAM-Konfiguration anpassen - Keyring automatisch entsperren
+    if ! grep -q "pam_gnome_keyring.so" /etc/pam.d/login; then
+        echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/login
+        echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/login
+    fi
+    
+    if ! grep -q "pam_gnome_keyring.so" /etc/pam.d/gdm-password; then
+        echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/gdm-password
+        echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/gdm-password
+    fi
+    
+    # Herunterfahren ohne Anmeldung deaktivieren
+    # Erstelle PolicyKit-Regel
+    cat > /etc/polkit-1/localauthority/50-local.d/restrict-shutdown.pkla <<EOF
+[Restrict system shutdown]
+Identity=unix-user:*
+Action=org.freedesktop.login1.power-off;org.freedesktop.login1.power-off-multiple-sessions;org.freedesktop.login1.reboot;org.freedesktop.login1.reboot-multiple-sessions
+ResultActive=auth_admin
+ResultAny=auth_admin
+ResultInactive=auth_admin
+EOF
+    
+    # Erstelle ein Skript zur Initialisierung des Keyrings ohne Passwort für den Benutzer
+    mkdir -p /home/${USERNAME}/.config/autostart/
+    cat > /home/${USERNAME}/.config/autostart/keyring-init.desktop <<EOF
+[Desktop Entry]
+Type=Application
+Name=Initialize Keyring
+Comment=Initialize Keyring without password
+Exec=/usr/bin/gnome-keyring-daemon --unlock
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Application
+EOF
+    
+    # Rechte anpassen
+    chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.config/
+
+# Dconf-Datenbank aktualisieren
+dconf update
+
+fi
+#   Systemanpassungen   #
+#########################
 
 
 # Aufräumen
