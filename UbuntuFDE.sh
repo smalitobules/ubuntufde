@@ -1257,30 +1257,30 @@ SOURCES
         echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
     fi
 
-    # Mozilla Team GPG-Schlüssel importieren
-    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg
+    ## Mozilla Team GPG-Schlüssel importieren
+    #curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg
 
-    # Mozilla Team Repository einrichten
-    echo "deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg] http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu ${UBUNTU_CODENAME} main" | tee /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+    ## Mozilla Team Repository einrichten
+    #echo "deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg] http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu ${UBUNTU_CODENAME} main" | tee /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
 
-    # Paket-Präferenzen für Mozilla Programme setzen
-    cat > /etc/apt/preferences.d/mozillateam <<EOF
-Package: firefox*
-Pin: release o=LP-PPA-mozillateam
-Pin-Priority: 1001
+    ## Paket-Präferenzen für Mozilla Programme setzen
+    #cat > /etc/apt/preferences.d/mozillateam <<EOF
+#Package: firefox*
+#Pin: release o=LP-PPA-mozillateam
+#Pin-Priority: 1001
 
-Package: firefox*
-Pin: release o=Ubuntu
-Pin-Priority: -1
+#Package: firefox*
+#Pin: release o=Ubuntu
+#Pin-Priority: -1
 
-Package: thunderbird*
-Pin: release o=LP-PPA-mozillateam
-Pin-Priority: 1001
+#Package: thunderbird*
+#Pin: release o=LP-PPA-mozillateam
+#Pin-Priority: 1001
 
-Package: thunderbird*
-Pin: release o=Ubuntu
-Pin-Priority: -1
-EOF
+#Package: thunderbird*
+#Pin: release o=Ubuntu
+#Pin-Priority: -1
+#EOF
 
 
     # Hier Platz für zukünftige Paketquellen
@@ -1324,8 +1324,8 @@ pkg_install --no-install-recommends \
     bleachbit \
     stacer \
     fastfetch \
-    firefox \
-    thunderbird \
+    #firefox \
+    #thunderbird \
     gparted \
     vlc \
     deluge \
