@@ -1739,74 +1739,102 @@ fi
     fi
 
 
-# Bei Inaktivität den Benutzerwechsel auslösen
+# Erstelle einen systemd-Dienst, der auf GNOME-Sitzungsereignisse reagiert
 if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
-    echo "Erstelle Skript für Bildschirmabschaltung ohne Lockscreen..."
+    echo "Erstelle alternativen Screen-Idle-Handler mit systemd..."
     
+    # Erstelle einen systemd-Dienst für Benutzer
+    mkdir -p /etc/systemd/user/
+    cat > /etc/systemd/user/gnome-idle-handler.service <<EOF
+[Unit]
+Description=GNOME Idle Handler Service
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/gnome-idle-handler.sh
+Restart=on-failure
+
+[Install]
+WantedBy=gnome-session.target
+EOF
+
+    # Erstelle das Skript
     mkdir -p /usr/local/bin/
-    cat > /usr/local/bin/screen-timeout-handler.sh <<'EOF'
+    cat > /usr/local/bin/gnome-idle-handler.sh <<'EOF'
 #!/bin/bash
 
-# Ein Skript, das den Benutzerwechsel (GDM) anstelle des Lockscreens aktiviert
-# wenn der Bildschirm durch Inaktivität ausgeschaltet wird
-
-# Funktion zum Auslösen des Benutzerwechsels
-trigger_user_switch() {
-    # Benutzerwechsel über GDM auslösen
-    gdmflexiserver --startnew || gnome-session-quit --logout
+# Funktion zum Abfangen von SIGTERM
+cleanup() {
+    exit 0
 }
 
-# Funktion zum Abrufen der aktuellen Timeout-Einstellung
-get_timeout() {
-    local timeout=$(gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout)
-    # Manchmal liefert gsettings Werte mit uint32 Präfix
-    echo "$timeout" | sed 's/uint32 //'
-}
+# Signal-Handler
+trap cleanup SIGTERM SIGINT
 
-# Hauptschleife
-while true; do
-    # Aktuelle Timeout-Einstellung abrufen
-    timeout=$(get_timeout)
+# Timeout überwachen - nutzt GNOME-Ereignisse
+monitor_timeout() {
+    # Registriere für Änderungen der Power-Einstellungen
+    gsettings monitor org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout | while read -r change; do
+        setup_idle_timer
+    done &
     
-    # Wenn Timeout aktiv ist, überwachen
+    # Initiale Einrichtung
+    setup_idle_timer
+    
+    # Warte auf Beendigung
+    wait
+}
+
+# Timer basierend auf Timeout einrichten
+setup_idle_timer() {
+    # Aktuelle Timeout-Einstellung abrufen
+    timeout=$(gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout)
+    timeout=$(echo $timeout | sed 's/uint32 //')
+    
+    # Wenn ein timeout aktiv ist, registriere beim Session-Manager
     if [ "$timeout" -gt 0 ]; then
-        # Wir prüfen alle 60 Sekunden
-        sleep 60
-        
-        # Prüfen, ob der Bildschirm inaktiv ist
-        # Dies ist eine vereinfachte Methode, aber funktioniert für den Zweck
-        if ! pgrep -f "gnome-screensaver" >/dev/null; then
-            # Überprüfen, ob seit längerem keine Benutzeraktivität vorliegt
-            # Wir verwenden einen Timer und die DBUS-Aktivitätsprüfung von GNOME
-            idle_time=$(dbus-send --session --dest=org.gnome.Mutter.IdleMonitor --print-reply /org/gnome/Mutter/IdleMonitor/Core org.gnome.Mutter.IdleMonitor.GetIdletime | awk '{print $2}')
-            
-            # Wenn Idle-Zeit größer als Timeout ist, Benutzerwechsel auslösen
-            if [ -n "$idle_time" ] && [ "$idle_time" -gt $((timeout * 1000)) ]; then
-                trigger_user_switch
-                # Nach dem Auslösen eine Weile warten, um Mehrfach-Auslösungen zu vermeiden
-                sleep 60
-            fi
+        # Berechne Leerlaufzeit (in Sekunden) - ziehe 5 Sekunden ab, um vor dem Standard-Timeout zu handeln
+        idle_seconds=$((timeout - 5))
+        if [ "$idle_seconds" -lt 5 ]; then
+            idle_seconds=5
         fi
+        
+        # Registriere unseren benutzerdefinierten Idle-Handler
+        dbus-send --session --dest=org.gnome.SessionManager \
+                  --type=method_call \
+                  /org/gnome/SessionManager \
+                  org.gnome.SessionManager.RegisterClient \
+                  string:"idle-handler" \
+                  string:""
+        
+        # Jetzt einfach warten, bis die Systemereignisse uns signalisieren
+        sleep infinity &
+        wait $!
     else
-        # Wenn kein Timeout aktiv ist, einfach warten und erneut prüfen
-        sleep 300
+        # Kein Timeout - nichts zu tun
+        sleep infinity &
+        wait $!
     fi
-done
+}
+
+# DBus-Signal-Handler für Idle-Benachrichtigung
+dbus-monitor --session "type='signal',interface='org.gnome.ScreenSaver'" | while read -r line; do
+    if echo "$line" | grep -q "boolean true"; then
+        # Screen Saver aktiviert - wir wollen stattdessen den Benutzerwechsel
+        # Bildschirmschoner beenden und Benutzerwechsel starten
+        gdmflexiserver --startnew || gnome-session-quit --logout
+    fi
+done &
+
+# Starte die Überwachung
+monitor_timeout
 EOF
 
-    chmod +x /usr/local/bin/screen-timeout-handler.sh
+    chmod +x /usr/local/bin/gnome-idle-handler.sh
 
-    # Autostart-Eintrag für den Benutzerwechsel
-    mkdir -p /etc/xdg/autostart/
-    cat > /etc/xdg/autostart/screen-timeout-handler.desktop <<EOF
-[Desktop Entry]
-Type=Application
-Name=Screen Timeout Handler
-Comment=Switches to user selection instead of locking when screen times out
-Exec=/usr/local/bin/screen-timeout-handler.sh
-Terminal=false
-X-GNOME-Autostart-enabled=true
-EOF
+    # Aktiviere den Dienst für alle Benutzer
+    systemctl --global enable gnome-idle-handler.service
 fi
 
 # Gnome-Einstellungen systemweit vorkonfigurieren
