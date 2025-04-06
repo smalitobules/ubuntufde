@@ -1234,6 +1234,8 @@ fi
 
 # Paketquellen und Repositories einrichten
 
+    mkdir -p /etc/apt/keyrings
+
     # Ubuntu Paketquellen
     cat > /etc/apt/sources.list <<-SOURCES
 #deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
@@ -1251,16 +1253,18 @@ SOURCES
     if [ "${KERNEL_TYPE}" = "liquorix" ]; then
         echo "Füge Liquorix-Kernel-Repository hinzu..."
         echo "deb http://liquorix.net/debian stable main" > /etc/apt/sources.list.d/liquorix.list
-        mkdir -p /etc/apt/keyrings
         curl -s 'https://liquorix.net/linux-liquorix-keyring.gpg' | gpg --dearmor -o /etc/apt/keyrings/liquorix-keyring.gpg
         echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
     fi
 
-    # Mozilla Team Repository
-    add-apt-repository -y ppa:mozillateam/ppa
+    # Mozilla Team GPG-Schlüssel importieren
+    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg
 
-    # Paket-Präferenzen für Firefox setzen
-    cat > /etc/apt/preferences.d/mozilla-firefox <<EOF
+    # Mozilla Team Repository einrichten
+    echo "deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg] http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu ${UBUNTU_CODENAME} main" | tee /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+
+    # Paket-Präferenzen für Mozilla Programme setzen
+    cat > /etc/apt/preferences.d/mozillateam <<EOF
 Package: firefox*
 Pin: release o=LP-PPA-mozillateam
 Pin-Priority: 1001
