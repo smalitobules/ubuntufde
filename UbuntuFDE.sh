@@ -1573,7 +1573,6 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
-                    xprintidle \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1593,7 +1592,6 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
-                    xprintidle \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1654,7 +1652,6 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
-                    xprintidle \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1753,33 +1750,47 @@ if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
 # Ein Skript, das den Benutzerwechsel (GDM) anstelle des Lockscreens aktiviert
 # wenn der Bildschirm durch Inaktivität ausgeschaltet wird
 
-# Funktion zum Prüfen der Inaktivität
-check_idle() {
-  # Idle-Zeit in Millisekunden abrufen
-  local idle_time=$(xprintidle)
-  local idle_threshold=$((15 * 60 * 1000))  # 15 Minuten in Millisekunden
-  
-  if [ "$idle_time" -ge "$idle_threshold" ]; then
-    # Wenn Idle-Zeit überschritten, Benutzerwechsel aktivieren
-    gdmflexiserver --startnew
-    # Kurze Pause, um wiederholtes Auslösen zu vermeiden
-    sleep 60
-  fi
+# Funktion zum Auslösen des Benutzerwechsels
+trigger_user_switch() {
+    # Benutzerwechsel über GDM auslösen
+    gdmflexiserver --startnew || gnome-session-quit --logout
 }
 
-# Hole aktuelle Energieeinstellung für Bildschirmabschaltung
-get_screen_timeout() {
-  gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout
+# Funktion zum Abrufen der aktuellen Timeout-Einstellung
+get_timeout() {
+    local timeout=$(gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout)
+    # Manchmal liefert gsettings Werte mit uint32 Präfix
+    echo "$timeout" | sed 's/uint32 //'
 }
 
 # Hauptschleife
 while true; do
-  # Nur prüfen, wenn der Timeout größer als 0 ist
-  timeout=$(get_screen_timeout)
-  if [ "$timeout" -gt 0 ]; then
-    check_idle
-  fi
-  sleep 60
+    # Aktuelle Timeout-Einstellung abrufen
+    timeout=$(get_timeout)
+    
+    # Wenn Timeout aktiv ist, überwachen
+    if [ "$timeout" -gt 0 ]; then
+        # Wir prüfen alle 60 Sekunden
+        sleep 60
+        
+        # Prüfen, ob der Bildschirm inaktiv ist
+        # Dies ist eine vereinfachte Methode, aber funktioniert für den Zweck
+        if ! pgrep -f "gnome-screensaver" >/dev/null; then
+            # Überprüfen, ob seit längerem keine Benutzeraktivität vorliegt
+            # Wir verwenden einen Timer und die DBUS-Aktivitätsprüfung von GNOME
+            idle_time=$(dbus-send --session --dest=org.gnome.Mutter.IdleMonitor --print-reply /org/gnome/Mutter/IdleMonitor/Core org.gnome.Mutter.IdleMonitor.GetIdletime | awk '{print $2}')
+            
+            # Wenn Idle-Zeit größer als Timeout ist, Benutzerwechsel auslösen
+            if [ -n "$idle_time" ] && [ "$idle_time" -gt $((timeout * 1000)) ]; then
+                trigger_user_switch
+                # Nach dem Auslösen eine Weile warten, um Mehrfach-Auslösungen zu vermeiden
+                sleep 60
+            fi
+        fi
+    else
+        # Wenn kein Timeout aktiv ist, einfach warten und erneut prüfen
+        sleep 300
+    fi
 done
 EOF
 
