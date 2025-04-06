@@ -974,15 +974,18 @@ setup_lvm() {
 mount_filesystems() {
     log_progress "Hänge Dateisysteme ein..."
     
-    # Mount-Punkte erstellen
+    # Einhängepunkte erstellen
     mkdir -p /mnt/ubuntu
     mount /dev/mapper/${VGNAME}-root /mnt/ubuntu
     mkdir -p /mnt/ubuntu/boot
     mount /dev/mapper/${LUKS_BOOT_NAME} /mnt/ubuntu/boot
     mkdir -p /mnt/ubuntu/boot/efi
     mount ${DEVP}3 /mnt/ubuntu/boot/efi
-    mkdir -p /mnt/ubuntu/data
-    mount /dev/mapper/${VGNAME}-data /mnt/ubuntu/data
+    mkdir -p /mnt/ubuntu/media/data
+    mount /dev/mapper/${VGNAME}-data /mnt/ubuntu/media/data
+    # Temporärer Einhängepunkt für Entwicklungsumgebung
+    mkdir -p /media/data
+    mount /dev/sdb1 /media/data
     
     show_progress 45
 }
@@ -1107,17 +1110,17 @@ SWAP_UUID=$(blkid -s UUID -o value /dev/mapper/${VGNAME}-swap)
 cat > /mnt/ubuntu/etc/fstab <<EOF
 # /etc/fstab
 # <file system>                                          <mount point>   <type>   <options>       <dump>  <pass>
-# / - Root-Partition
+# Root-Partition
 UUID=${ROOT_UUID} /               ext4    defaults        0       1
 
-# /boot - Boot-Partition (LUKS verschlüsselt)
+# Boot-Partition
 UUID=${BOOT_UUID} /boot           ext4    defaults        0       2
 
-# /boot/efi - EFI-Partition (nicht verschlüsselt)
-UUID=${EFI_UUID} /boot/efi       vfat    umask=0077      0       1
+# EFI-Partition
+UUID=${EFI_UUID} /boot/efi        vfat    umask=0077      0       1
 
-# /data - Daten-Partition
-UUID=${DATA_UUID} /data           ext4    defaults        0       2
+# Daten-Partition
+UUID=${DATA_UUID} /media/data     ext4    defaults        0       2
 
 # Swap-Partition
 UUID=${SWAP_UUID} none            swap    sw              0       0
