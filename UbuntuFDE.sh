@@ -1406,17 +1406,27 @@ fi
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
-# Schlüsseldatei und initramfs-hook einrichten
+
+##################
+#   CRYPTSETUP   #
+
+# Schlüsseldatei und Konfigurations-hook einrichten
 mkdir -p /etc/luks
 dd if=/dev/urandom of=/etc/luks/boot_os.keyfile bs=4096 count=1
 chmod -R u=rx,go-rwx /etc/luks
 chmod u=r,go-rwx /etc/luks/boot_os.keyfile
+
+# Schlüsseldatei zu LUKS-Volumes hinzufügen
+echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}1 /etc/luks/boot_os.keyfile -
+echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}5 /etc/luks/boot_os.keyfile -
+
+# Cryptsetup-Konfigurations-Hook erstellen
 echo "KEYFILE_PATTERN=/etc/luks/*.keyfile" >> /etc/cryptsetup-initramfs/conf-hook
 echo "CRYPTSETUP=y" >> /etc/cryptsetup-initramfs/conf-hook
 mkdir -p /etc/initramfs-tools/hooks/
 echo "UMASK=0077" >> /etc/initramfs-tools/initramfs.conf
 
-# Verschlüsselungsmodule zum initramfs hinzufügen
+# Das Laden der Verschlüsselungsmodule einrichten
 cat >> /etc/initramfs-tools/modules << EOT
 aes
 xts
@@ -1424,16 +1434,75 @@ sha256
 dm_crypt
 EOT
 
-# Schlüsseldatei zu LUKS-Volumes hinzufügen
-echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}1 /etc/luks/boot_os.keyfile -
-echo -n "${LUKS_PASSWORD}" | cryptsetup luksAddKey ${DEVP}5 /etc/luks/boot_os.keyfile -
-
-# Crypttab aktualisieren
-echo "${LUKS_BOOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard" > /etc/crypttab
+# Crypttab mit initramfs flag für boot einrichten
+echo "${LUKS_BOOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}1) /etc/luks/boot_os.keyfile luks,discard,initramfs" > /etc/crypttab
 echo "${LUKS_ROOT_NAME} UUID=\$(blkid -s UUID -o value ${DEVP}5) /etc/luks/boot_os.keyfile luks,discard" >> /etc/crypttab
 
 # Crypttab Datei-Rechte setzen
 chmod 600 /etc/crypttab
+
+# Initramfs-Hook für persistentes Boot-Mapping erstellen
+mkdir -p /etc/initramfs-tools/hooks/
+cat > /etc/initramfs-tools/hooks/persist-boot << 'EOF'
+#!/bin/sh
+set -e
+
+PREREQ="cryptroot"
+prereqs() {
+    echo "$PREREQ"
+}
+
+case "$1" in
+    prereqs)
+        prereqs
+        exit 0
+        ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+# Kopiere benötigte Tools ins initramfs
+copy_exec /sbin/dmsetup
+
+# Stelle sicher, dass das Zielverzeichnis existiert
+mkdir -p $DESTDIR/usr/share/initramfs-tools/scripts/local-top
+
+# Skript zum Persistieren des Mappings
+cat > "$DESTDIR/usr/share/initramfs-tools/scripts/local-top/persist_boot" << 'EOL'
+#!/bin/sh
+
+PREREQ="cryptroot"
+prereqs() {
+    echo "$PREREQ"
+}
+
+case "$1" in
+    prereqs)
+        prereqs
+        exit 0
+        ;;
+esac
+
+# Erstelle persistentes Mapping für boot
+if [ -e "/dev/mapper/BOOT" ]; then
+    dmsetup table /dev/mapper/BOOT > /tmp/boot_table
+    dmsetup remove /dev/mapper/BOOT
+    dmsetup create BOOT --table "$(cat /tmp/boot_table)"
+    # Flag setzen für systemd
+    mkdir -p /run/systemd
+    touch /run/systemd/cryptsetup-BOOT.service.active
+fi
+EOL
+
+chmod +x "$DESTDIR/usr/share/initramfs-tools/scripts/local-top/persist_boot"
+EOF
+
+# Hook ausführbar machen
+chmod +x /etc/initramfs-tools/hooks/persist-boot
+
+#   CRYPTSETUP   #
+##################
+
 
 # GRUB Verzeichnisse vorbereiten
 mkdir -p /etc/default/
