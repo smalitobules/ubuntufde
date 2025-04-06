@@ -1613,7 +1613,7 @@ WantedBy=local-fs.target
 EOF
 
 # Aktiviere die boot.mount-Einheit
-mkdir -p /mnt/ubuntu/etc/systemd/system/local-fs.target.wants/
+mkdir -p /etc/systemd/system/local-fs.target.wants/
 ln -sf /etc/systemd/system/boot.mount /etc/systemd/system/local-fs.target.wants/boot.mount
 
 
