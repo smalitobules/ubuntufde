@@ -1808,6 +1808,37 @@ show_progress 80
 
 #########################
 #  SYSTEMEINSTELLUNGEN  #
+# Automatische Benutzeranmeldung konfigurieren
+log_info "Konfiguriere GDM für automatische Anmeldung direkt in der Installation..."
+mkdir -p /mnt/ubuntu/etc/gdm3
+cat > /mnt/ubuntu/etc/gdm3/custom.conf <<EOF
+# GDM configuration storage
+[daemon]
+AutomaticLoginEnable=true
+AutomaticLogin=${USERNAME}
+WaylandEnable=true
+
+[security]
+DisallowTCP=true
+AllowRoot=false
+
+[xdmcp]
+Enable=false
+
+[chooser]
+Hosts=
+EOF
+
+# AccountsService konfigurieren
+mkdir -p /mnt/ubuntu/var/lib/AccountsService/users
+cat > /mnt/ubuntu/var/lib/AccountsService/users/${USERNAME} <<EOF
+[User]
+Language=${LOCALE}
+XSession=ubuntu
+SystemAccount=false
+AutomaticLogin=true
+EOF
+
 setup_system_settings() {
     log_progress "Erstelle Systemeinstellungen-Skript..."
     
@@ -2300,8 +2331,7 @@ EOE
 
     # Erstelle einen Profilordner, damit dconf die Konfiguration anwendet
     mkdir -p /etc/dconf/profile/
-    echo "user-db:user
-system-db:local" > /etc/dconf/profile/user
+    echo "user-db:user system-db:local" > /etc/dconf/profile/user
 
     # Stelle sicher, dass die Einstellungen für den aktuellen Benutzer sofort wirksam werden
     CURRENT_USER=$(logname)
@@ -2664,47 +2694,6 @@ EODESKTOP
 
     chmod 644 /etc/xdg/autostart/gnome-session-handler.desktop
 
-    # GDM automatische Anmeldung konfigurieren
-    echo "Konfiguriere GDM für automatische Anmeldung..."
-    if [ -f /etc/gdm3/custom.conf ]; then
-        # Username für automatische Anmeldung ermitteln (erster Benutzer im /home)
-        AUTO_USER=$(ls /home/ | grep -v lost+found | head -1)
-        
-        # Sicherstellen, dass die Abschnitte existieren
-        grep -q '^\[daemon\]' /etc/gdm3/custom.conf || echo -e "\n[daemon]" >> /etc/gdm3/custom.conf
-        
-        # Kommentierte Zeilen entfernen und neue Konfiguration setzen
-        sed -i '/^#\?AutomaticLoginEnable/d' /etc/gdm3/custom.conf
-        sed -i '/^#\?AutomaticLogin/d' /etc/gdm3/custom.conf
-        sed -i '/^#\?WaylandEnable/d' /etc/gdm3/custom.conf
-        
-        # Einstellungen zur [daemon] Sektion hinzufügen
-        sed -i '/^\[daemon\]/a AutomaticLoginEnable=true' /etc/gdm3/custom.conf
-        sed -i "/^\[daemon\]/a AutomaticLogin=$AUTO_USER" /etc/gdm3/custom.conf
-        sed -i '/^\[daemon\]/a WaylandEnable=true' /etc/gdm3/custom.conf
-    else
-        # Falls die Datei nicht existiert, komplett neu erstellen
-        mkdir -p /etc/gdm3
-        AUTO_USER=$(ls /home/ | grep -v lost+found | head -1)
-        cat > /etc/gdm3/custom.conf <<EOF2
-# GDM configuration storage
-[daemon]
-AutomaticLoginEnable=true
-AutomaticLogin=${AUTO_USER}
-WaylandEnable=true
-
-[security]
-DisallowTCP=true
-AllowRoot=false
-
-[xdmcp]
-Enable=false
-
-[chooser]
-Hosts=
-EOF2
-    fi
-
     # Zusätzlich direktes Setzen wichtiger Einstellungen per gsettings für den aktuellen Benutzer
     CURRENT_USER=$(logname || who | head -1 | awk '{print $1}')
     if [ -n "$CURRENT_USER" ]; then
@@ -2729,6 +2718,8 @@ elif [ "$DESKTOP_ENV" = "xfce" ]; then
 else
     echo "Keine bekannte Desktop-Umgebung gefunden."
 fi
+
+
 
 # Aufräumen und Selbstzerstörung einrichten
 echo "Einstellungen angewendet, entferne Autostart-Konfiguration."
