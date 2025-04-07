@@ -1811,10 +1811,22 @@ show_progress 80
 
 #########################
 #  SYSTEMEINSTELLUNGEN  #
-# Automatische Benutzeranmeldung konfigurieren
-log_info "Konfiguriere GDM für automatische Anmeldung direkt in der Installation..."
-mkdir -p /mnt/ubuntu/etc/gdm3
-cat > /mnt/ubuntu/etc/gdm3/custom.conf <<EOFGDM
+configure_autologin() {
+    # Wird nur ausgeführt, wenn Desktop-Installation aktiviert ist
+    if [ "$INSTALL_DESKTOP" != "1" ]; then
+        log_info "Kein Desktop gewählt, überspringe Autologin-Konfiguration"
+        return 0
+    fi
+
+    log_info "Konfiguriere automatische Anmeldung für ${USERNAME}..."
+    
+    case "${DESKTOP_ENV}" in
+        # GNOME Desktop
+        1)
+            log_info "Konfiguriere GDM für automatische Anmeldung..."
+            mkdir -p /mnt/ubuntu/etc/gdm3 || log_warn "Konnte GDM3-Verzeichnis nicht erstellen"
+            if [ -d "/mnt/ubuntu/etc/gdm3" ]; then
+                cat > /mnt/ubuntu/etc/gdm3/custom.conf <<EOFGDM
 # GDM configuration storage
 [daemon]
 AutomaticLoginEnable=true
@@ -1831,16 +1843,64 @@ Enable=false
 [chooser]
 Hosts=
 EOFGDM
+                chmod 644 /mnt/ubuntu/etc/gdm3/custom.conf
+                log_info "GDM-Konfiguration erstellt"
+            fi
 
-# AccountsService konfigurieren
-mkdir -p /mnt/ubuntu/var/lib/AccountsService/users
-cat > /mnt/ubuntu/var/lib/AccountsService/users/${USERNAME} <<EOFACCOUNT
+            # AccountsService konfigurieren
+            mkdir -p /mnt/ubuntu/var/lib/AccountsService/users || log_warn "Konnte AccountsService-Verzeichnis nicht erstellen"
+            if [ -d "/mnt/ubuntu/var/lib/AccountsService/users" ]; then
+                cat > "/mnt/ubuntu/var/lib/AccountsService/users/${USERNAME}" <<EOFACCOUNT
 [User]
-Language=${LOCALE}
+Language=${LOCALE:-de_DE.UTF-8}
 XSession=ubuntu
 SystemAccount=false
 AutomaticLogin=true
 EOFACCOUNT
+                chmod 644 "/mnt/ubuntu/var/lib/AccountsService/users/${USERNAME}"
+                log_info "AccountsService für Benutzer ${USERNAME} konfiguriert"
+            fi
+            ;;
+            
+        # KDE Plasma Desktop
+        2)
+            log_info "Konfiguriere SDDM für automatische Anmeldung..."
+            mkdir -p /mnt/ubuntu/etc/sddm.conf.d || log_warn "Konnte SDDM-Verzeichnis nicht erstellen"
+            if [ -d "/mnt/ubuntu/etc/sddm.conf.d" ]; then
+                cat > /mnt/ubuntu/etc/sddm.conf.d/autologin.conf <<EOFSDDM
+[Autologin]
+User=${USERNAME}
+Session=plasma.desktop
+Relogin=false
+EOFSDDM
+                chmod 644 /mnt/ubuntu/etc/sddm.conf.d/autologin.conf
+                log_info "SDDM-Konfiguration erstellt"
+            fi
+            ;;
+            
+        # Xfce Desktop
+        3)
+            log_info "Konfiguriere LightDM für automatische Anmeldung..."
+            mkdir -p /mnt/ubuntu/etc/lightdm || log_warn "Konnte LightDM-Verzeichnis nicht erstellen"
+            if [ -d "/mnt/ubuntu/etc/lightdm" ]; then
+                cat > /mnt/ubuntu/etc/lightdm/lightdm.conf <<EOFLIGHTDM
+[SeatDefaults]
+autologin-user=${USERNAME}
+autologin-user-timeout=0
+user-session=xfce
+greeter-session=lightdm-gtk-greeter
+EOFLIGHTDM
+                chmod 644 /mnt/ubuntu/etc/lightdm/lightdm.conf
+                log_info "LightDM-Konfiguration erstellt"
+            fi
+            ;;
+            
+        # Fallback für unbekannte Desktop-Umgebungen
+        *)
+            log_warn "Unbekannte Desktop-Umgebung ${DESKTOP_ENV}, überspringe Autologin-Konfiguration"
+            ;;
+    esac
+}
 
 setup_system_settings() {
     log_progress "Erstelle Systemeinstellungen-Skript..."
@@ -3024,7 +3084,7 @@ main() {
         unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
         gather_disk_input
         # Erneute Bestätigung, bis der Benutzer ja sagt
-        while ! confirm "${YELLOW}ALLE DATEN AUF $DEV WERDEN GELÖSCHT!${NC}; do
+        while ! confirm "${YELLOW}ALLE DATEN AUF $DEV WERDEN GELÖSCHT!${NC}"; do
             log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
             unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
             gather_disk_input
@@ -3045,8 +3105,10 @@ main() {
     download_thorium
     prepare_chroot
     execute_chroot
+    configure_autologin
     setup_system_settings
     finalize_installation
+
 }
 #  HAUPTFUNKTION  #
 ###################
