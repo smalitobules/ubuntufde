@@ -442,7 +442,7 @@ save_config() {
     
     log_info "Speichere Konfiguration in $config_path..."
     cat > "$config_path" << EOF
-# Ubuntu FDE Konfiguration
+# UbuntuFDE Konfiguration
 # Erstellt am $(date)
 HOSTNAME="$HOSTNAME"
 USERNAME="$USERNAME"
