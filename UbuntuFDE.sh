@@ -1908,6 +1908,44 @@ setup_system_settings() {
     # Skript erstellen, das beim ersten Start mit root-Rechten ausgeführt wird
     cat > /mnt/ubuntu/usr/local/bin/post_install_settings.sh <<'EOF'
 #!/bin/bash
+# Erweiterte Logging-Funktionen
+LOG_FILE="/var/log/post-install-settings.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "===== Start post-installation setup $(date) ====="
+
+# Hilfsfunktion für Logging
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Fehlerbehandlung verbessern
+set -e  # Exit bei Fehlern
+trap 'log "FEHLER: Ein Befehl ist fehlgeschlagen bei Zeile $LINENO"' ERR
+
+# Umgebungsvariablen explizit setzen
+export HOME=/root
+export XDG_RUNTIME_DIR=/run/user/0
+export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
+# ...
+
+# Prüfe GNOME-Komponenten
+log "Prüfe GNOME-Komponenten..."
+if [ -f /usr/bin/gnome-shell ]; then
+    log "GNOME Shell gefunden: $(gnome-shell --version)"
+else
+    log "WARNUNG: GNOME Shell nicht gefunden!"
+fi
+
+# DBus-Session für Systembenutzer starten
+if [ ! -e "/run/user/0/bus" ]; then
+    log "Starte dbus-daemon für System-Benutzer..."
+    mkdir -p /run/user/0
+    dbus-daemon --session --address=unix:path=/run/user/0/bus --nofork --print-address &
+    sleep 2
+    export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
+fi
+
 # Post-Installation Einstellungen
 # Wird beim ersten Start ausgeführt und löscht sich selbst
 
@@ -2962,15 +3000,23 @@ EOF
     cat > /mnt/ubuntu/etc/systemd/system/post-install-settings.service <<EOF
 [Unit]
 Description=Post-Installation Settings
+# Diese Zeile hinzufügen, damit es vor dem Display-Manager (Login-Bildschirm) läuft
+Before=display-manager.service
 After=network.target
+# Diese Option sicherstellen, dass GDM erst startet, wenn dieses Skript fertig ist
+Conflicts=rescue.service rescue.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/post_install_settings.sh
 RemainAfterExit=yes
+# Timeout erhöhen, falls das Skript länger braucht
+TimeoutSec=180
 
 [Install]
 WantedBy=multi-user.target
+# Auch hier sicherstellen, dass es vor GDM läuft
+WantedBy=display-manager.service
 EOF
     
     # Service aktivieren
