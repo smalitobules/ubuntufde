@@ -1,7 +1,7 @@
 #!/bin/bash
 # Ubuntu Full Disk Encryption - Automatisches Installationsskript
 # Dieses Skript automatisiert die Installation von Ubuntu mit vollständiger Festplattenverschlüsselung
-# Version: 0.0.1
+# Version: ${SCRIPT_VERSION}
 # Datum: $(date +%Y-%m-%d)
 # Autor: Smali Tobules
 
@@ -9,10 +9,10 @@
 ###################
 # Konfiguration   #
 SCRIPT_VERSION="0.0.1"
-DEFAULT_HOSTNAME="ubuntu-server"
-DEFAULT_USERNAME="admin"
-DEFAULT_ROOT_SIZE="100"
-DEFAULT_DATA_SIZE="0"  # 0 bedeutet restlicher Platz
+DEFAULT_HOSTNAME="ubuntu-fde"
+DEFAULT_USERNAME="user"
+DEFAULT_ROOT_SIZE="20"
+DEFAULT_DATA_SIZE="0"
 DEFAULT_SSH_PORT="22"
 CONFIG_FILE="ubuntu-fde.conf"
 LOG_FILE="ubuntu-fde.log"
