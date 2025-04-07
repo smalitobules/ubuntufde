@@ -1581,6 +1581,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
+                    unzip \
                     gir1.2-gtop-2.0 \
                     libgtop-2.0-11 \
                     dconf-editor \
@@ -1610,6 +1611,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
+                    unzip \
                     gir1.2-gtop-2.0 \
                     libgtop-2.0-11 \
                     dconf-editor \
@@ -1680,6 +1682,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
+                    unzip \
                     gir1.2-gtop-2.0 \
                     libgtop-2.0-11 \
                     dconf-editor \
