@@ -2438,7 +2438,7 @@ EOE
     echo "user-db:user system-db:local" > /etc/dconf/profile/user
 
     # Stelle sicher, dass die Einstellungen für den aktuellen Benutzer sofort wirksam werden
-    CURRENT_USER=$(logname)
+    CURRENT_USER="${USERNAME}"
     CURRENT_USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
     DBUS_SESSION="unix:path=/run/user/$CURRENT_USER_UID/bus"
     
