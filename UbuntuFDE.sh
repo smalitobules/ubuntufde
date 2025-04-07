@@ -1575,6 +1575,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-text-editor \
                     gnome-terminal \
                     gnome-tweaks \
+                    gnome-shell-extensions \
+                    chrome-gnome-shell \
                     gufw \
                     dconf-editor \
                     dconf-cli \
@@ -1597,6 +1599,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-text-editor \
                     gnome-terminal \
                     gnome-tweaks \
+                    gnome-shell-extensions \
+                    chrome-gnome-shell \
                     gufw \
                     dconf-editor \
                     dconf-cli \
@@ -1660,6 +1664,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-text-editor \
                     gnome-terminal \
                     gnome-tweaks \
+                    gnome-shell-extensions \
+                    chrome-gnome-shell \
                     gufw \
                     dconf-editor \
                     dconf-cli \
@@ -1720,11 +1726,167 @@ fi
 
 #########################
 #   SYSTEMANPASSUNGEN   #
-    # GNOME Shell Erweiterungen installieren
-    if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
-        echo "Installiere GNOME Shell Erweiterungen..."
-        pkg_install gnome-shell-extensions chrome-gnome-shell
+# GNOME Shell Erweiterungen global installieren
+if [ "${INSTALL_DESKTOP}" = "1" ] && [ "${DESKTOP_ENV}" = "1" ]; then
+    echo "Installiere GNOME Shell Erweiterungen..."
+    mkdir -p /usr/share/gnome-shell/extensions/
+    
+    # Liste der zu installierenden Extensions mit ihren URLs
+    declare -A EXTENSIONS=(
+        ["user-theme@gnome-shell-extensions.gcampax.github.com"]="https://extensions.gnome.org/extension-data/user-themegnome-shell-extensions.gcampax.github.com.v49.shell-extension.zip"
+        ["dash-to-panel@jderose9.github.com"]="https://extensions.gnome.org/extension-data/dash-to-paneljderose9.github.com.v52.shell-extension.zip"
+        # Weitere Extensions hier hinzufügen
+    )
+    
+    # Extensions herunterladen und installieren
+    for ext_uuid in "${!EXTENSIONS[@]}"; do
+        echo "Installiere Extension: $ext_uuid"
+        TMP_ZIP=$(mktemp)
+        if wget -q -O "$TMP_ZIP" "${EXTENSIONS[$ext_uuid]}"; then
+            mkdir -p "/usr/share/gnome-shell/extensions/$ext_uuid"
+            unzip -q -o "$TMP_ZIP" -d "/usr/share/gnome-shell/extensions/$ext_uuid"
+            chmod -R 755 "/usr/share/gnome-shell/extensions/$ext_uuid"
+            rm -f "$TMP_ZIP"
+            echo "Extension $ext_uuid erfolgreich installiert"
+        else
+            echo "Fehler beim Herunterladen von $ext_uuid"
+        fi
+    done
+    
+    # Extensions aktivieren (für neue Benutzer)
+    mkdir -p /etc/dconf/db/local.d/
+    cat > /etc/dconf/db/local.d/00-extensions <<EOE
+[org/gnome/shell]
+enabled-extensions=['dash-to-panel@jderose9.github.com', 'user-theme@gnome-shell-extensions.gcampax.github.com']
+EOE
+    
+    # Dconf-Datenbank aktualisieren
+    dconf update
+
+    # Auto-Update für GNOME Shell Erweiterungen einrichten
+    echo "Richte automatische Updates für GNOME Shell Erweiterungen ein..."
+    
+    # Skript erstellen, das Extensions aktualisiert
+    cat > /usr/local/bin/update-gnome-extensions <<'EOSCRIPT'
+#!/bin/bash
+
+# Funktion zum Abrufen der neuesten Version einer Extension
+get_latest_extension() {
+    local uuid="$1"
+    local tmp_dir=$(mktemp -d)
+    local info_url="https://extensions.gnome.org/extension-info/?uuid=${uuid}"
+    
+    echo "Prüfe Updates für $uuid..."
+    
+    # Neueste Version-Info abrufen
+    if ! curl -s "$info_url" -o "${tmp_dir}/info.json"; then
+        echo "Fehler beim Abrufen von Informationen für $uuid"
+        rm -rf "$tmp_dir"
+        return 1
     fi
+    
+    # Versions- und Download-Info extrahieren
+    if ! command -v jq &>/dev/null; then
+        apt-get update && apt-get install -y jq
+    fi
+    
+    local version=$(jq -r '.shell_version_map | keys[-1]' "${tmp_dir}/info.json")
+    local download_url=$(jq -r ".shell_version_map[\"$version\"].download_url" "${tmp_dir}/info.json")
+    
+    if [ -z "$download_url" ] || [ "$download_url" = "null" ]; then
+        echo "Keine Download-URL gefunden für $uuid"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+    
+    # Prüfen, ob Aktualisierung notwendig ist
+    local metadata_file="/usr/share/gnome-shell/extensions/${uuid}/metadata.json"
+    if [ -f "$metadata_file" ]; then
+        local current_version=$(jq -r '.version // "0"' "$metadata_file")
+        local latest_version=$(jq -r '.version // "0"' "${tmp_dir}/info.json")
+        
+        if [ "$current_version" = "$latest_version" ]; then
+            echo "Extension $uuid ist bereits aktuell (Version $current_version)"
+            rm -rf "$tmp_dir"
+            return 0
+        fi
+    fi
+    
+    # Extension herunterladen und installieren
+    local extension_url="https://extensions.gnome.org${download_url}"
+    if curl -s "$extension_url" -o "${tmp_dir}/extension.zip"; then
+        rm -rf "/usr/share/gnome-shell/extensions/${uuid}"
+        mkdir -p "/usr/share/gnome-shell/extensions/${uuid}"
+        unzip -q -o "${tmp_dir}/extension.zip" -d "/usr/share/gnome-shell/extensions/${uuid}"
+        chmod -R 755 "/usr/share/gnome-shell/extensions/${uuid}"
+        echo "Extension $uuid erfolgreich aktualisiert"
+    else
+        echo "Fehler beim Herunterladen der Extension $uuid"
+    fi
+    
+    rm -rf "$tmp_dir"
+}
+
+# Alle installierten Extensions finden und aktualisieren
+echo "Suche nach installierten GNOME Shell Erweiterungen..."
+for ext_dir in /usr/share/gnome-shell/extensions/*; do
+    if [ -d "$ext_dir" ]; then
+        uuid=$(basename "$ext_dir")
+        get_latest_extension "$uuid"
+    fi
+done
+
+# GNOME Shell neustarten, wenn Änderungen vorgenommen wurden
+if pgrep -x "gnome-shell" >/dev/null; then
+    # Sanfter Neustart nur im X11-Modus möglich
+    if [ "$XDG_SESSION_TYPE" = "x11" ]; then
+        echo "Starte GNOME Shell neu..."
+        sudo -u $(logname) DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u $(logname))/bus gnome-shell --replace &
+    else
+        echo "Bitte melde dich ab und wieder an, um die Änderungen zu übernehmen"
+    fi
+fi
+EOSCRIPT
+
+    chmod +x /usr/local/bin/update-gnome-extensions
+    
+    # systemd-Service erstellen
+    cat > /etc/systemd/system/update-gnome-extensions.service <<'EOSERVICE'
+[Unit]
+Description=Update GNOME Shell Extensions
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/update-gnome-extensions
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOSERVICE
+
+    # systemd-Timer erstellen (tägliche Prüfung)
+    cat > /etc/systemd/system/update-gnome-extensions.timer <<'EOTIMER'
+[Unit]
+Description=Run GNOME Shell Extensions update daily
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOTIMER
+
+    # Timer aktivieren
+    systemctl enable update-gnome-extensions.timer
+    
+    # Einmalig ausführen, um die neuesten Versionen zu installieren
+    /usr/local/bin/update-gnome-extensions
+fi
 
     # Deaktiviere unnötige systemd-Dienste
     systemctl disable --now \
