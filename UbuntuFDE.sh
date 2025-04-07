@@ -142,7 +142,8 @@ pkg_autoremove() {
 #   Systemcheck   #
 check_root() {
     if [ "$(id -u)" -ne 0 ]; then
-        log_error "Dieses Skript muss als Root ausgeführt werden."
+        echo -e "${YELLOW}[HINWEIS]${NC} Dieses Skript benötigt Root-Rechte. Starte neu mit sudo..."
+        exec sudo "$0" "$@"  # Starte das Skript neu mit sudo und behalte alle Argumente bei
     fi
 }
 
