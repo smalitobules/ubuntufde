@@ -1994,7 +1994,6 @@ resize-with-right-button=true
 visual-bell=false
 audible-bell=false
 num-workspaces=4
-titlebar-font='Ubuntu Bold 11'
 
 [org.gnome.desktop.interface]
 color-scheme='prefer-dark'
@@ -2005,12 +2004,9 @@ clock-show-seconds=true
 clock-show-weekday=true
 cursor-blink=true
 cursor-size=24
-document-font-name='Ubuntu 11'
 enable-animations=true
 font-antialiasing='rgba'
 font-hinting='slight'
-font-name='Ubuntu 11'
-monospace-font-name='Ubuntu Mono 13'
 show-battery-percentage=true
 text-scaling-factor=1.0
 toolbar-style='both-horiz'
