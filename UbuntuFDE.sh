@@ -728,7 +728,7 @@ gather_user_input() {
         *) TIMEZONE="Europe/Berlin" ;;
     esac
 
-    # Sprache und Tastatur
+    # Sprache der Tastatur
     echo -e "\n${CYAN}Sprache und Tastatur:${NC}"
     echo "1) Deutsch (Deutschland) - de_DE.UTF-8"
     echo "2) Deutsch (Schweiz) - de_CH.UTF-8"
@@ -1581,6 +1581,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
+                    gir1.2-gtop-2.0 \
+                    libgtop-2.0-11 \
                     dconf-editor \
                     dconf-cli \
                     nautilus \
@@ -1608,6 +1610,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
+                    gir1.2-gtop-2.0 \
+                    libgtop-2.0-11 \
                     dconf-editor \
                     dconf-cli \
                     nautilus \
@@ -1676,6 +1680,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
+                    gir1.2-gtop-2.0 \
+                    libgtop-2.0-11 \
                     dconf-editor \
                     dconf-cli \
                     nautilus \
@@ -2186,9 +2192,6 @@ EOGDM
     GNOME_VERSION=$(gnome-shell --version | cut -d ' ' -f 3 | cut -d '.' -f 1,2)
     GNOME_MAJOR_VERSION=$(echo $GNOME_VERSION | cut -d '.' -f 1)
     echo "Erkannte GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
-    
-    # Abhängigkeiten installieren
-    apt-get update && apt-get install -y curl jq unzip wget gir1.2-gtop-2.0 libgtop-2.0-11
     
     # Extension-Daten definieren
     DASH_TO_PANEL_UUID="dash-to-panel@jderose9.github.com"
