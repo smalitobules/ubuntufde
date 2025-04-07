@@ -15,7 +15,7 @@ if [ -z "$DISPLAY" ]; then
 fi
 
 # Warten bis die Desktop-Umgebung vollständig geladen ist
-sleep 1
+sleep 3
 
 # Nutzer-ID ermitteln (funktioniert auch bei root)
 REAL_USER=$(who | grep "$DISPLAY" | head -n1 | awk '{print $1}')
@@ -36,8 +36,8 @@ export GTK_THEME=Adwaita:dark
 
 # Benutzer benachrichtigen mit YAD
 yad --question \
-    --title="System-Einrichtung" \
-    --text="<b><big><span font_family='DejaVu Sans'>Systemanpassungen wurden durchgeführt!</span></big></b>\n\n\nEin Neustart ist nötig um alle Änderungen zu aktivieren.\n\nMöchtest Du jetzt neu starten?\n\n" \
+    --title="Einrichtung" \
+    --text="<b><big><span font_family='DejaVu Sans'>Systemanpassungen wurden durchgeführt!</span></big></b>\n\n\nEin Neustart ist nötig um alle Änderungen zu aktivieren.\n\nMöchtest Du das jetzt tun?\n\n" \
     --button="Später neu starten:1" \
     --button="Jetzt neu starten:0" \
     --center \
@@ -45,38 +45,53 @@ yad --question \
     --width=500 \
     --borders=20 \
     --text-align=center \
-    --buttons-layout=center
+    --buttons-layout=center \
+    --skip-taskbar \
+    --undecorated
+
 
 if [ $? -eq 0 ]; then
     # Benutzer hat "Jetzt neu starten" gewählt
+    # Entferne alle temporären Dateien
+    rm -f ~/.config/autostart/first-login-notification.desktop
     
     # Zeige eine kurze Info und starte neu
     yad --info \
         --title="Neustart" \
-        --text="\n\nDas System wird jetzt neu gestartet...\n\n" \
+        --text="\n\n<b><big><span font_family='DejaVu Sans'>Neustart!</span></big></b>\n\nDas System wird jetzt neu gestartet...\n\n" \
         --timeout=3 \
         --width=400 \
         --borders=20 \
         --text-align=center \
         --center \
         --fixed \
-        --button="OK:0" \
-        --buttons-layout=center
+        --buttons-layout=hidden \
+        --no-buttons \
+        --skip-taskbar \
+        --undecorated
     
     # Neustart durchführen
-    sudo reboot
+    #systemctl reboot
 else
     # Benutzer hat "Später neu starten" gewählt
     yad --info \
         --title="Information" \
-        --text="\n\nBitte starte später manuell neu.\n\nDiese Benachrichtigung wird nicht erneut angezeigt.\n\n" \
+        --text="<b><big><span font_family='DejaVu Sans'>Information!</span></big></b>\n\nBitte starte später manuell neu.\n\nDiese Benachrichtigung wird nicht erneut angezeigt.\n\n" \
         --width=400 \
         --borders=20 \
         --text-align=center \
         --center \
         --fixed \
         --button="OK:0" \
-        --buttons-layout=center
+        --buttons-layout=center \
+        --skip-taskbar \
+        --undecorated
+fi
+
+# Entferne dieses Skript aus dem Autostart und sich selbst
+rm -f ~/.config/autostart/first-login-notification.desktop
+if [ "$0" != "/dev/stdin" ]; then
+    rm -f "$0"
 fi
 
 exit 0

@@ -1585,6 +1585,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
+                    yad \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1611,6 +1612,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
+                    yad \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1678,6 +1680,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus \
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
+                    yad \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -2719,7 +2722,58 @@ else
     echo "Keine bekannte Desktop-Umgebung gefunden."
 fi
 
+# Erstelle ein Benachrichtigungsfenster für den ersten Login
+cat > /usr/local/bin/first-login-notification.sh <<'EOFIRST'
+#!/bin/bash
 
+# Zeige ein Benachrichtigungsfenster
+zenity --question \
+  --title="System-Einrichtung abgeschlossen" \
+  --text="Die System-Einrichtung wurde abgeschlossen.\nEin Neustart wird empfohlen, um alle Änderungen vollständig zu aktivieren.\n\nMöchtest du jetzt neu starten?" \
+  --width=400 \
+  --icon-name=system-software-update
+  
+if [ $? -eq 0 ]; then
+  # Benutzer hat "Ja" gewählt
+  zenity --info --title="Neustart" --text="Das System wird jetzt neu gestartet..." --timeout=3
+  # Entferne dieses Skript aus dem Autostart
+  rm -f ~/.config/autostart/first-login-notification.desktop
+  # Neustart
+  reboot
+else
+  # Benutzer hat "Nein" gewählt
+  zenity --info --title="Information" --text="Bitte starte das System später manuell neu."
+  # Entferne dieses Skript aus dem Autostart
+  rm -f ~/.config/autostart/first-login-notification.desktop
+fi
+EOFIRST
+
+# Mache das Skript ausführbar
+chmod +x /usr/local/bin/first-login-notification.sh
+
+# Erstelle einen Autostart-Eintrag für den Benutzer
+mkdir -p /etc/skel/.config/autostart
+cat > /etc/skel/.config/autostart/first-login-notification.desktop <<EOAUTO
+[Desktop Entry]
+Type=Application
+Name=First Login Notification
+Comment=Shows a notification after the first login
+Exec=/usr/local/bin/first-login-notification.sh
+Terminal=false
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+EOAUTO
+
+# Kopiere den Autostart-Eintrag für bestehende Benutzer
+for userdir in /home/*; do
+    username=$(basename "$userdir")
+    if [ -d "$userdir" ] && [ "$username" != "lost+found" ]; then
+        mkdir -p "$userdir/.config/autostart"
+        cp /etc/skel/.config/autostart/first-login-notification.desktop "$userdir/.config/autostart/"
+        chown -R "$username:$username" "$userdir/.config"
+    fi
+done
 
 # Aufräumen und Selbstzerstörung einrichten
 echo "Einstellungen angewendet, entferne Autostart-Konfiguration."
