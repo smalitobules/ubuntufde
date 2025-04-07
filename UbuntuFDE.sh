@@ -1814,7 +1814,7 @@ show_progress 80
 # Automatische Benutzeranmeldung konfigurieren
 log_info "Konfiguriere GDM für automatische Anmeldung direkt in der Installation..."
 mkdir -p /mnt/ubuntu/etc/gdm3
-cat > /mnt/ubuntu/etc/gdm3/custom.conf <<EOF
+cat > /mnt/ubuntu/etc/gdm3/custom.conf <<EOFGDM
 # GDM configuration storage
 [daemon]
 AutomaticLoginEnable=true
@@ -1830,17 +1830,17 @@ Enable=false
 
 [chooser]
 Hosts=
-EOF
+EOFGDM
 
 # AccountsService konfigurieren
 mkdir -p /mnt/ubuntu/var/lib/AccountsService/users
-cat > /mnt/ubuntu/var/lib/AccountsService/users/${USERNAME} <<EOF
+cat > /mnt/ubuntu/var/lib/AccountsService/users/${USERNAME} <<EOFACCOUNT
 [User]
 Language=${LOCALE}
 XSession=ubuntu
 SystemAccount=false
 AutomaticLogin=true
-EOF
+EOFACCOUNT
 
 setup_system_settings() {
     log_progress "Erstelle Systemeinstellungen-Skript..."
