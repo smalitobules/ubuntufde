@@ -65,7 +65,7 @@ log_progress() {
 # Fortschrittsbalken
 show_progress() {
     local percent=$1
-    local width=50
+    local width=100
     local num_bars=$((percent * width / 100))
     local progress="["
     
@@ -1066,7 +1066,7 @@ install_base_system() {
         mount -B $dir /mnt/ubuntu$dir
     done
     
-    show_progress 60
+    show_progress 55
 }
 
 download_thorium() {
@@ -1969,11 +1969,19 @@ show_progress 80
 setup_system_settings() {
     log_progress "Erstelle Systemeinstellungen-Skript..."
     
-    # Skript erstellen, das beim ersten Start ausgeführt wird
+    # Skript erstellen, das beim ersten Start mit root-Rechten ausgeführt wird
     cat > /mnt/ubuntu/usr/local/bin/post_install_settings.sh <<'EOF'
 #!/bin/bash
 # Post-Installation Einstellungen
 # Wird beim ersten Start ausgeführt und löscht sich selbst
+
+# Prüfen, ob das Skript mit Root-Rechten ausgeführt wird
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Dieses Skript muss mit Root-Rechten ausgeführt werden."
+    echo "Erneuter Start mit sudo..."
+    sudo "$0"
+    exit $?
+fi
 
 # Desktop-Umgebung erkennen
 if [ -f /usr/bin/gnome-shell ]; then
@@ -1992,41 +2000,29 @@ echo "Erkannte Desktop-Umgebung: $DESKTOP_ENV"
 if [ "$DESKTOP_ENV" = "gnome" ]; then
     echo "Konfiguriere GNOME-Einstellungen..."
     
-    # Verzeichnisse erstellen
-    mkdir -p /etc/dconf/profile
-    mkdir -p /etc/dconf/db/local.d
-    mkdir -p /etc/dconf/db/gdm.d
+    # GSettings direkt verwenden statt dconf-Dateien
+    # Systemweite Einstellungen für alle Benutzer
+    echo "Setze Systemweite Einstellungen..."
     
-    # Profile-Datei erstellen (user)
-    cat > /etc/dconf/profile/user <<EOPROFILE
-user-db:user
-system-db:local
-EOPROFILE
+    # Directory für gsettings-override erstellen
+    mkdir -p /usr/share/glib-2.0/schemas/
     
-    # GDM-Profil erstellen
-    cat > /etc/dconf/profile/gdm <<EOPROFILE
-user-db:user
-system-db:gdm
-file-db:/usr/share/gdm/greeter-dconf-defaults
-EOPROFILE
-    
-    # Systemweite Einstellungen erstellen
-    cat > /etc/dconf/db/local.d/00-system-settings <<EOSETTINGS
-# Fensterknöpfe (Minimieren, Maximieren, Schließen) anzeigen
-[org/gnome/desktop/wm/preferences]
+    # Erstelle Schema-Override-Datei
+    cat > /usr/share/glib-2.0/schemas/90_ubuntu-fde.gschema.override <<EOSETTINGS
+# Ubuntu FDE Schema Override
+
+[org.gnome.desktop.wm.preferences]
 button-layout='appmenu:minimize,maximize,close'
 focus-mode='sloppy'
 auto-raise=true
 auto-raise-delay=500
 
-# Dunkles Thema aktivieren
-[org/gnome/desktop/interface]
+[org.gnome.desktop.interface]
 color-scheme='prefer-dark'
 gtk-theme='Adwaita-dark'
 color='#955733'
 
-# Bildschirm nie ausschalten
-[org/gnome/settings-daemon/plugins/power]
+[org.gnome.settings-daemon.plugins.power]
 power-button-action='interactive'
 sleep-inactive-ac-type='nothing'
 sleep-inactive-battery-type='nothing'
@@ -2034,28 +2030,23 @@ sleep-inactive-ac-timeout=0
 sleep-inactive-battery-timeout=0
 idle-dim=false
 
-# Bildschirm-Ausschaltverhalten konfigurieren
-[org/gnome/desktop/session]
+[org.gnome.desktop.session]
 idle-delay=uint32 0
 
-# Desktop-Hintergrund
-[org/gnome/desktop/background]
+[org.gnome.desktop.background]
 picture-uri='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
 picture-uri-dark='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
-primary-color='#955733'  # Warty Brown
-secondary-color='#955733'  # Warty Brown
+primary-color='#955733'
+secondary-color='#955733'
 
-# Tastenkombination für Nautilus öffnen
-[org/gnome/settings-daemon/plugins/media-keys]
+[org.gnome.settings-daemon.plugins.media-keys]
 home=['<Super>e']
 screensaver=['']
 
-# Tastenkombination für Benutzer sperren
-[org/gnome/shell/keybindings]
+[org.gnome.shell.keybindings]
 switch-user=['<Super>l']
 
-# Standardaktion bei Bildschirmsperre umstellen
-[org/gnome/desktop/screensaver]
+[org.gnome.desktop.screensaver]
 idle-activation-enabled=false
 lock-enabled=false
 logout-enabled=true
@@ -2067,21 +2058,7 @@ color-shading-type='solid'
 primary-color='#000000'
 secondary-color='#000000'
 
-# Session-Einstellungen
-[org/gnome/desktop/session]
-session-manager-uses-logind=true
-
-# System-Menu Einstellungen
-[org/gnome/shell]
-always-show-log-out=true
-disable-user-extensions=false
-
-# Keine Abmeldebestätigung
-[org/gnome/gnome-session]
-logout-prompt=false
-
-# Benutzerwechsel erlauben aber Bildschirmsperre vermeiden
-[org/gnome/desktop/lockdown]
+[org.gnome.desktop.lockdown]
 disable-user-switching=false
 disable-lock-screen=true
 disable-log-out=false
@@ -2089,53 +2066,72 @@ user-administration-disabled=true
 disable-printing=false
 disable-print-setup=false
 
-# Privacy-Einstellungen
-[org/gnome/desktop/privacy]
+[org.gnome.desktop.privacy]
 show-full-name-in-top-bar=false
 
-# Nautilus-Einstellungen
-[org/gnome/nautilus/preferences]
+[org.gnome.nautilus.preferences]
 default-folder-viewer='list-view'
 search-filter-time-type='last_modified'
 show-create-link=true
 show-delete-permanently=true
 
-# Terminal-Einstellungen
-[org/gnome/terminal/legacy]
-theme-variant='dark'
+[org.gnome.shell]
+always-show-log-out=true
+disable-user-extensions=false
+
+[org.gnome.gnome-session]
+logout-prompt=false
 EOSETTINGS
 
-    # GDM-Einstellungen
-    cat > /etc/dconf/db/gdm.d/01-gdm-settings <<EOGDM
-[org/gnome/login-screen]
+    # GDM-Einstellungen auch über gsettings-override
+    cat > /usr/share/glib-2.0/schemas/91_gdm-settings.gschema.override <<EOGDM
+[org.gnome.login-screen]
 disable-user-list=true
 banner-message-enable=false
 banner-message-text='Zugriff nur für autorisierte Benutzer'
 logo=''
 
-[org/gnome/desktop/interface]
+[org.gnome.shell:gdm]
+disable-user-display=true
+
+[org.gnome.desktop.interface:gdm]
 color-scheme='prefer-dark'
 gtk-theme='Adwaita-dark'
 
-[org/gnome/desktop/background]
+[org.gnome.desktop.background:gdm]
 picture-uri=''
 primary-color='#000000'
 secondary-color='#000000'
 color-shading-type='solid'
 picture-options='none'
-
-[org/gnome/shell/theme]
-background-color='#000000'
 EOGDM
 
-    # Automatische Anmeldung-Konfiguration in /etc/gdm3/custom.conf
-    if [ -f /etc/gdm3/custom.conf ]; then
-        sed -i '/\[daemon\]/,/\[/ s/^#\?WaylandEnable=.*/WaylandEnable=true/' /etc/gdm3/custom.conf
-        sed -i '/\[security\]/,/\[/ s/^#\?DisallowTCP=.*/DisallowTCP=true/' /etc/gdm3/custom.conf
-        sed -i '/\[security\]/,/\[/ s/^#\?AllowRoot=.*/AllowRoot=false/' /etc/gdm3/custom.conf
-    fi
+    # Schemas kompilieren
+    echo "Kompiliere glib-Schemas..."
+    glib-compile-schemas /usr/share/glib-2.0/schemas/
 
-    # GNOME Shell Hook für Benutzer-Wechsel statt Sperren
+    # Script für GDM ScreenLocker-Ersatz
+    echo "Erstelle ScreenLocker-Ersatz für Benutzer-Wechsel..."
+    mkdir -p /usr/local/bin/
+    cat > /usr/local/bin/gnome-session-handler.sh <<'EOSESSIONHANDLER'
+#!/bin/bash
+
+# Die Idee: Wenn der Standard-Bildschirmschoner/Sperren ausgelöst wird,
+# stattdessen den Benutzer-Wechsel-Dialog auslösen
+
+# DBus-Signal-Handler für Idle-Benachrichtigung
+dbus-monitor --session "type='signal',interface='org.gnome.ScreenSaver'" | 
+while read -r line; do
+    if echo "$line" | grep -q "boolean true"; then
+        # Bildschirmschoner aktiviert - stattdessen Benutzerwechsel
+        gdmflexiserver --startnew || gnome-session-quit --logout
+    fi
+done
+EOSESSIONHANDLER
+
+    chmod 755 /usr/local/bin/gnome-session-handler.sh
+
+    # Autostart-Eintrag für alle Benutzer
     mkdir -p /etc/xdg/autostart/
     cat > /etc/xdg/autostart/gnome-session-handler.desktop <<EODESKTOP
 [Desktop Entry]
@@ -2148,51 +2144,32 @@ Hidden=false
 X-GNOME-Autostart-Phase=Applications
 EODESKTOP
 
-    # Session-Handler-Skript erstellen
-    mkdir -p /usr/local/bin/
-    cat > /usr/local/bin/gnome-session-handler.sh <<EOSESSIONHANDLER
-#!/bin/bash
+    chmod 644 /etc/xdg/autostart/gnome-session-handler.desktop
 
-# Session-Handler für GNOME
-# Leitet "Sperrbildschirm" zum Benutzer-Wechsel um
-
-# Funktion, die bei DBUS-Signal ausgeführt wird
-handle_lock_screen() {
-    # Statt Sperren -> Benutzer-Wechsel
-    gdmflexiserver --startnew
-}
-
-# Lausche auf DBUS-Signale für Bildschirmsperre
-dbus-monitor --session "type='signal',interface='org.gnome.ScreenSaver',member='ActiveChanged'" | 
-while read -r line; do
-    if echo "\$line" | grep -q "boolean true"; then
-        handle_lock_screen
+    # Automatische Anmeldung-Konfiguration in /etc/gdm3/custom.conf
+    if [ -f /etc/gdm3/custom.conf ]; then
+        echo "Konfiguriere GDM für automatische Anmeldung..."
+        sed -i '/\[daemon\]/,/\[/ s/^#\?WaylandEnable=.*/WaylandEnable=true/' /etc/gdm3/custom.conf
+        sed -i '/\[daemon\]/,/\[/ s/^#\?AutomaticLoginEnable=.*/AutomaticLoginEnable=true/' /etc/gdm3/custom.conf
+        
+        # Username für automatische Anmeldung ermitteln
+        # Standardwert ist der erste gefundene Benutzer mit Home-Verzeichnis
+        AUTO_USER=$(ls /home/ | grep -v lost+found | head -1)
+        if [ -n "$AUTO_USER" ]; then
+            sed -i "/\[daemon\]/,/\[/ s/^#\?AutomaticLogin=.*/AutomaticLogin=$AUTO_USER/" /etc/gdm3/custom.conf
+        fi
+        
+        # Weitere GDM-Einstellungen
+        sed -i '/\[security\]/,/\[/ s/^#\?DisallowTCP=.*/DisallowTCP=true/' /etc/gdm3/custom.conf
+        sed -i '/\[security\]/,/\[/ s/^#\?AllowRoot=.*/AllowRoot=false/' /etc/gdm3/custom.conf
     fi
-done
-EOSESSIONHANDLER
-
-    chmod +x /usr/local/bin/gnome-session-handler.sh
-
-    # Datenbankaktualisierung erzwingen
-    dconf update
-
-    # Systemd-Service zum Laden der dconf-Einstellungen nach dem Start erstellen
-    cat > /etc/systemd/system/dconf-update.service <<EOSERVICE
-[Unit]
-Description=Update dconf databases at startup
-After=multi-user.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/dconf update
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOSERVICE
-
-    # Dienst aktivieren
-    systemctl enable dconf-update.service
+    
+    # Leere GDM-Hintergrundfarbe durch Schwarz ersetzen (direkt in den CSS-Dateien)
+    if [ -d /usr/share/gnome-shell/theme/ ]; then
+        echo "Setze schwarzen GDM-Hintergrund..."
+        find /usr/share/gnome-shell/theme/ -name "*.css" -exec sed -i 's/background-color: #2e3436;/background-color: #000000;/g' {} \;
+        find /usr/share/gnome-shell/theme/ -name "*.css" -exec sed -i 's/background-color: #000000;/background-color: #000000;/g' {} \;
+    fi
 
 elif [ "$DESKTOP_ENV" = "kde" ]; then
     # KDE-spezifische Einstellungen (Platzhalter)
@@ -2205,33 +2182,58 @@ elif [ "$DESKTOP_ENV" = "xfce" ]; then
     # Hier würden Xfce-spezifische Einstellungen kommen
 fi
 
-# Aufräumen und Selbstzerstörung
-echo "Einstellungen angewendet, entferne temporäre Dateien und Auto-Start-Konfiguration."
+# Aufräumen und Selbstzerstörung einrichten
+echo "Einstellungen angewendet, entferne Autostart-Konfiguration."
 
-# Entferne dieses Skript aus dem Autostart
+# Entferne Autostart-Eintrag für dieses Skript
 if [ -f /etc/xdg/autostart/post-install-settings.desktop ]; then
     rm -f /etc/xdg/autostart/post-install-settings.desktop
 fi
 
-# Selbstzerstörung
-rm -f "$0"
-EOF
+# Selbstzerstörung für den nächsten Reboot
+echo "#!/bin/bash
+rm -f /usr/local/bin/post_install_settings.sh
+rm -f \$0" > /usr/local/bin/cleanup_settings.sh
+chmod 755 /usr/local/bin/cleanup_settings.sh
 
-    # Skript ausführbar machen
-    chmod +x /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    
-    # Autostart-Eintrag erstellen
-    mkdir -p /mnt/ubuntu/etc/xdg/autostart/
-    cat > /mnt/ubuntu/etc/xdg/autostart/post-install-settings.desktop <<EOF
+# Autostart für die Bereinigung
+cat > /etc/xdg/autostart/cleanup-settings.desktop <<EOCLEANUP
 [Desktop Entry]
 Type=Application
-Name=Post-Installation Settings
-Comment=Applies system settings after first boot
-Exec=/usr/local/bin/post_install_settings.sh
+Name=Cleanup Settings
+Comment=Removes temporary settings files
+Exec=/usr/local/bin/cleanup_settings.sh
 Terminal=false
 Hidden=false
 X-GNOME-Autostart-Phase=Applications
+EOCLEANUP
+
+echo "Konfiguration abgeschlossen. Beim nächsten Reboot werden alle temporären Dateien bereinigt."
+exit 0
 EOF
+
+    # Skript ausführbar machen
+    chmod 755 /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    
+    # Systemd-Service erstellen, der das Skript beim ersten Start mit Root-Rechten ausführt
+    mkdir -p /mnt/ubuntu/etc/systemd/system/
+    cat > /mnt/ubuntu/etc/systemd/system/post-install-settings.service <<EOF
+[Unit]
+Description=Post-Installation Settings
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/post_install_settings.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    # Service aktivieren
+    mkdir -p /mnt/ubuntu/etc/systemd/system/multi-user.target.wants/
+    ln -sf /etc/systemd/system/post-install-settings.service /mnt/ubuntu/etc/systemd/system/multi-user.target.wants/post-install-settings.service
     
     log_info "Systemeinstellungen-Skript erfolgreich erstellt."
     show_progress 90
