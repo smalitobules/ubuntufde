@@ -2899,12 +2899,12 @@ main() {
     gather_disk_input
 
     # Warnung vor der Partitionierung
-    if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
+    if ! confirm "${YELLOW}ALLE DATEN AUF $DEV WERDEN GELÖSCHT!${NC}"; then
         log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
         unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
         gather_disk_input
         # Erneute Bestätigung, bis der Benutzer ja sagt
-        while ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; do
+        while ! confirm "${YELLOW}ALLE DATEN AUF $DEV WERDEN GELÖSCHT!${NC}; do
             log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
             unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
             gather_disk_input
