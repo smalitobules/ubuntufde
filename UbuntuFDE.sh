@@ -1576,6 +1576,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-terminal \
                     gnome-tweaks \
                     gnome-shell-extensions \
+                    gnome-shell-extension-manager \
                     chrome-gnome-shell \
                     gufw \
                     dconf-editor \
@@ -1600,6 +1601,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-terminal \
                     gnome-tweaks \
                     gnome-shell-extensions \
+                    gnome-shell-extension-manager \
                     chrome-gnome-shell \
                     gufw \
                     dconf-editor \
@@ -1665,6 +1667,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-terminal \
                     gnome-tweaks \
                     gnome-shell-extensions \
+                    gnome-shell-extension-manager \
                     chrome-gnome-shell \
                     gufw \
                     dconf-editor \
