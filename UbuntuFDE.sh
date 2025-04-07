@@ -2978,20 +2978,7 @@ X-GNOME-Autostart-Phase=Applications
 EOCLEANUP
 
 echo "Konfiguration abgeschlossen."
-# Frage nach einem Systemneustart
-echo
-echo -e "\nMöchtest du das System jetzt neu starten, um alle Änderungen zu aktivieren? (j/n)"
-read -n 1 -r restart_system
-echo
 
-if [[ "$restart_system" =~ ^[Jj]$ ]]; then
-    echo "Systemneustart wird durchgeführt..."
-    echo "Das System wird jetzt neu gestartet..."
-    sleep 2
-    reboot
-else
-    echo "Bitte starte das System neu, um alle Änderungen vollständig zu aktivieren."
-fi
 exit 0
 EOF
 
