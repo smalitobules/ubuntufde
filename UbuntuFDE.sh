@@ -2898,7 +2898,7 @@ if [ $? -eq 0 ]; then
         --undecorated
     
     # Neustart durchführen
-    #systemctl reboot
+    systemctl reboot
 else
     # Benutzer hat "Später neu starten" gewählt
     yad --info \
