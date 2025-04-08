@@ -1149,8 +1149,16 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 set -e
 
 # Unterdrücke die Zwischenaufrufe von Kernel-Aktualisierungen
-mkdir -p /mnt/ubuntu/etc/apt/apt.conf.d/
-echo 'DPkg::Post-Invoke { "if [ -d /boot/initrd.img ]; then exit 0; fi"; };' > /mnt/ubuntu/etc/apt/apt.conf.d/no-initramfs-update
+dpkg-divert --add --rename --divert /usr/sbin/update-initramfs.real /usr/sbin/update-initramfs
+
+# Erstelle einen temporären Ersatz
+cat > /usr/sbin/update-initramfs << 'EOF'
+#!/bin/sh
+# Temporär deaktiviertes update-initramfs während der Installation
+echo "update-initramfs wurde temporär deaktiviert"
+exit 0
+EOF
+chmod +x /usr/sbin/update-initramfs
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -1543,7 +1551,8 @@ chmod 644 /etc/default/grub
 sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
 
 # Entferne die Unterdrückung der Zwischenaufrufe von Kernel-Aktualisierungen
-rm -f /etc/apt/apt.conf.d/no-initramfs-update
+rm -f /usr/sbin/update-initramfs
+dpkg-divert --remove --rename /usr/sbin/update-initramfs
 
 # Initramfs aktualisieren und GRUB installieren
 update-initramfs -u -k all
