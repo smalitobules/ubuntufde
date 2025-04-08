@@ -186,9 +186,9 @@ find_fastest_mirrors() {
     
     # Sicherstellen, dass nala installiert ist
     if ! command -v nala &> /dev/null; then
-        log_warn "Nala nicht gefunden, überspringe Mirror-Optimierung."
-        MIRRORS_OPTIMIZED="false"
-        return
+        log_error "${RED}Fehler: Nala wurde nicht gefunden!${NC} Die Installation kann nicht fortgesetzt werden. Bitte starte die Installation erneut."
+        echo -e "${RED}Fehler: Nala wurde nicht gefunden!${NC} Die Installation kann nicht fortgesetzt werden. Bitte starte die Installation erneut."
+        exit 1
     fi
     
     # Ländererkennung basierend auf IP-Adresse
@@ -209,16 +209,40 @@ find_fastest_mirrors() {
         log_info "Erkanntes Land: $COUNTRY_CODE"
     fi
     
-    # Führe nala fetch mit dem erkannten Land aus
-    nala fetch --auto --fetches 3 --country "$COUNTRY_CODE"
+    # Variable für maximale Anzahl von Versuchen
+    MAX_ATTEMPTS=3
+    ATTEMPTS=0
+    
+    # Schleife für nala fetch mit mehreren Versuchen
+    while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+        # Erhöhe Versuchszähler
+        ((ATTEMPTS++))
+        
+        log_info "Versuche $ATTEMPTS/$MAX_ATTEMPTS: Suche nach schnellen Mirrors..."
+        
+        # Führe nala fetch mit dem erkannten Land aus
+        if nala fetch --auto --fetches 3 --country "$COUNTRY_CODE"; then
+            # Erfolg: Schleife verlassen
+            break
+        fi
+        
+        # Kurze Pause zwischen Versuchen
+        sleep 6
+        
+        # Wenn letzter Versuch gescheitert
+        if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
+            log_error "${RED}Konnte nach $MAX_ATTEMPTS Versuchen keine Mirrors finden!${NC} Bitte überprüfe Deine Netzwerkverbindung und starte das Installationsskript erneut."
+            exit 1
+        fi
+    done
     
     # Prüfe, ob die Optimierung erfolgreich war
     if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
         log_info "Mirror-Optimierung erfolgreich."
         MIRRORS_OPTIMIZED="true"
     else
-        log_warn "Keine optimierten Mirrors gefunden."
-        MIRRORS_OPTIMIZED="false"
+        log_error "Keine optimierten Mirrors gefunden. Bitte überprüfe deine Netzwerkverbindung und starte das Installationsskript erneut."
+        exit 1
     fi
     
     # Exportiere die Variablen
