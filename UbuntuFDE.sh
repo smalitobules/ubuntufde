@@ -1149,6 +1149,7 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 set -e
 
 # Unterdrücke die Zwischenaufrufe von Kernel-Aktualisierungen
+mkdir -p /mnt/ubuntu/etc/apt/apt.conf.d/
 echo 'DPkg::Post-Invoke { "if [ -d /boot/initrd.img ]; then exit 0; fi"; };' > /mnt/ubuntu/etc/apt/apt.conf.d/no-initramfs-update
 
 export DEBIAN_FRONTEND=noninteractive
