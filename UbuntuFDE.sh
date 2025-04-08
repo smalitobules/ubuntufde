@@ -1881,7 +1881,7 @@ desktop_version_detect() {
                 if GNOME_VERSION_OUTPUT=$(chroot /mnt/ubuntu gnome-shell --version 2>/dev/null); then
                     GNOME_VERSION=$(echo "$GNOME_VERSION_OUTPUT" | cut -d ' ' -f 3 | cut -d '.' -f 1,2)
                     GNOME_MAJOR_VERSION=$(echo "$GNOME_VERSION" | cut -d '.' -f 1)
-                    log_info "Erkannte GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
+                    log_info "Erkannte GNOME Shell Version: $GNOME_VERSION"
                 else
                     log_warn "Konnte GNOME-Version nicht ermitteln. Installation wird trotzdem fortgesetzt."
                 fi
@@ -3142,8 +3142,8 @@ Conflicts=rescue.service rescue.target
 Type=oneshot
 ExecStart=/usr/local/bin/post_install_settings.sh
 RemainAfterExit=yes
-# Timeout erhöhen, falls das Skript länger braucht
-TimeoutSec=180
+## Timeout erhöhen, falls das Skript länger braucht
+#TimeoutSec=180
 
 [Install]
 WantedBy=multi-user.target
