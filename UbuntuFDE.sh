@@ -1989,7 +1989,11 @@ if [ "$DESKTOP_ENV" = "gnome" ]; then
     
     # Erstelle Schema-Override-Datei für allgemeine GNOME-Einstellungen
     cat > /usr/share/glib-2.0/schemas/90_ubuntu-fde.gschema.override <<EOSETTINGS
-# Ubuntu FDE Schema Override für GNOME
+# UbuntuFDE Schema Override für GNOME
+
+[org.gnome.desktop.input-sources]
+sources=[('xkb', '${KEYBOARD_LAYOUT}')]
+xkb-options=[]
 
 [org.gnome.desktop.wm.preferences]
 button-layout='appmenu:minimize,maximize,close'
@@ -2152,7 +2156,11 @@ EOSETTINGS
 
     # Schema-Override für den GDM-Anmeldebildschirm 
     cat > /usr/share/glib-2.0/schemas/91_gdm-settings.gschema.override <<EOGDM
-# Ubuntu FDE Schema Override für GDM
+# UbuntuFDE Schema Override für GDM
+
+[org.gnome.desktop.input-sources:gdm]
+sources=[('xkb', '${KEYBOARD_LAYOUT}')]
+xkb-options=[]
 
 [org.gnome.login-screen]
 disable-user-list=true
@@ -2169,7 +2177,6 @@ color-scheme='prefer-dark'
 gtk-theme='Adwaita-dark'
 cursor-theme='Adwaita'
 cursor-size=24
-font-name='Ubuntu 11'
 clock-show-seconds=true
 clock-show-date=true
 clock-show-weekday=true
@@ -2443,11 +2450,12 @@ EOE
     DBUS_SESSION="unix:path=/run/user/$CURRENT_USER_UID/bus"
     
     # Versuche, die Einstellungen anzuwenden
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe' 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe' 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows animation-time 300 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows pixelwipe-pixel-size 7 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.desktop.input-sources sources "[('xkb', '${KEYBOARD_LAYOUT}')]"
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe' 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe' 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows animation-time 300 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows pixelwipe-pixel-size 7 2>/dev/null || true
 
     # Dconf-Datenbank aktualisieren
     dconf update
