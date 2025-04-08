@@ -32,8 +32,12 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Logdatei einrichten im aktuellen Verzeichnis
-LOG_FILE="$(pwd)/UbuntuFDE_$(date +%Y%m%d_%H%M%S).log"
+# Temporärer Einhängepunkt für Entwicklungsumgebung
+mkdir -p /media/data
+mount /dev/sdb1 /media/data || { echo "Datenpartition für Logging /dev/sdb1 nicht vorhanden!"; exit 1; }
+
+# Logdatei einrichten in temporärem Einhängepunkt
+LOG_FILE="/media/data/UbuntuFDE_$(date +%Y%m%d_%H%M%S).log"
 touch "$LOG_FILE"
 chmod 600 "$LOG_FILE"
 
@@ -996,9 +1000,6 @@ mount_filesystems() {
     mount ${DEVP}3 /mnt/ubuntu/boot/efi
     mkdir -p /mnt/ubuntu/media/data
     mount /dev/mapper/${VGNAME}-data /mnt/ubuntu/media/data
-    # Temporärer Einhängepunkt für Entwicklungsumgebung
-    mkdir -p /media/data
-    mount /dev/sdb1 /media/data
     
     show_progress 45
 }
