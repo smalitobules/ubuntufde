@@ -1148,6 +1148,9 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 #!/bin/bash
 set -e
 
+# Unterdrücke die Zwischenaufrufe von Kernel-Aktualisierungen
+echo 'DPkg::Post-Invoke { "if [ -d /boot/initrd.img ]; then exit 0; fi"; };' > /mnt/ubuntu/etc/apt/apt.conf.d/no-initramfs-update
+
 export DEBIAN_FRONTEND=noninteractive
 
 # SSH-Server deaktivieren
@@ -1537,6 +1540,9 @@ chmod 644 /etc/default/grub
 
 # GRUB Hauptkonfiguration aktualisieren
 sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
+
+# Entferne die Unterdrückung der Zwischenaufrufe von Kernel-Aktualisierungen
+rm -f /etc/apt/apt.conf.d/no-initramfs-update
 
 # Initramfs aktualisieren und GRUB installieren
 update-initramfs -u -k all
@@ -2445,7 +2451,7 @@ EOE
     echo "user-db:user system-db:local" > /etc/dconf/profile/user
 
     # Stelle sicher, dass die Einstellungen für den aktuellen Benutzer sofort wirksam werden
-    CURRENT_USER="${USERNAME}"
+    CURRENT_USER="${USERNAME:-$(getent passwd | awk -F: '($3 >= 1000 && $3 < 65534) {print $1; exit}')}"
     CURRENT_USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
     DBUS_SESSION="unix:path=/run/user/$CURRENT_USER_UID/bus"
     
@@ -2807,7 +2813,7 @@ EODESKTOP
     chmod 644 /etc/xdg/autostart/gnome-session-handler.desktop
 
     # Zusätzlich direktes Setzen wichtiger Einstellungen per gsettings für den aktuellen Benutzer
-    CURRENT_USER="${USERNAME}" || who | head -1 | awk '{print $1}')
+    CURRENT_USER="${USERNAME:-$(getent passwd | awk -F: '($3 >= 1000 && $3 < 65534) {print $1; exit}')}"
     if [ -n "$CURRENT_USER" ]; then
         echo "Wende Einstellungen direkt für Benutzer $CURRENT_USER an..."
         USER_UID=$(id -u "$CURRENT_USER")

@@ -70,7 +70,11 @@ if [ "$DESKTOP_ENV" = "gnome" ]; then
     
     # Erstelle Schema-Override-Datei für allgemeine GNOME-Einstellungen
     cat > /usr/share/glib-2.0/schemas/90_ubuntu-fde.gschema.override <<EOSETTINGS
-# Ubuntu FDE Schema Override für GNOME
+# UbuntuFDE Schema Override für GNOME
+
+[org.gnome.desktop.input-sources]
+sources=[('xkb', '${KEYBOARD_LAYOUT}')]
+xkb-options=[]
 
 [org.gnome.desktop.wm.preferences]
 button-layout='appmenu:minimize,maximize,close'
@@ -233,7 +237,11 @@ EOSETTINGS
 
     # Schema-Override für den GDM-Anmeldebildschirm 
     cat > /usr/share/glib-2.0/schemas/91_gdm-settings.gschema.override <<EOGDM
-# Ubuntu FDE Schema Override für GDM
+# UbuntuFDE Schema Override für GDM
+
+[org.gnome.desktop.input-sources:gdm]
+sources=[('xkb', '${KEYBOARD_LAYOUT}')]
+xkb-options=[]
 
 [org.gnome.login-screen]
 disable-user-list=true
@@ -250,7 +258,6 @@ color-scheme='prefer-dark'
 gtk-theme='Adwaita-dark'
 cursor-theme='Adwaita'
 cursor-size=24
-font-name='Ubuntu 11'
 clock-show-seconds=true
 clock-show-date=true
 clock-show-weekday=true
@@ -524,11 +531,12 @@ EOE
     DBUS_SESSION="unix:path=/run/user/$CURRENT_USER_UID/bus"
     
     # Versuche, die Einstellungen anzuwenden
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe' 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe' 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows animation-time 300 2>/dev/null || true
-    sudo -u $CURRENT_USER DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows pixelwipe-pixel-size 7 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.desktop.input-sources sources "[('xkb', '${KEYBOARD_LAYOUT}')]"
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe' 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe' 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows animation-time 300 2>/dev/null || true
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows pixelwipe-pixel-size 7 2>/dev/null || true
 
     # Dconf-Datenbank aktualisieren
     dconf update
@@ -793,7 +801,7 @@ if pgrep -x "gnome-shell" >/dev/null; then
     # Sanfter Neustart nur im X11-Modus möglich
     if [ "$XDG_SESSION_TYPE" = "x11" ]; then
         echo "Starte GNOME Shell neu..."
-        sudo -u $(logname) DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u $(logname))/bus gnome-shell --replace &
+        sudo -u "${USERNAME}" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u "${USERNAME}")/bus gnome-shell --replace &
     else
         echo "Bitte melde dich ab und wieder an, um die Änderungen zu übernehmen"
     fi
@@ -846,8 +854,8 @@ EOTIMER
 # Verhindern, dass GNOME die Bildschirmsperre verwendet
 
 # GNOME-Sitzung erkennen und DBus-Adresse ermitteln
-for pid in $(pgrep -u $(logname) gnome-session); do
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u $(logname))/bus"
+for pid in $(pgrep -u "${USERNAME}" gnome-session); do
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u "${USERNAME}")/bus"
     break
 done
 
@@ -856,7 +864,7 @@ dbus-monitor --session "type='signal',interface='org.gnome.ScreenSaver'" |
 while read -r line; do
     if echo "$line" | grep -q "boolean true"; then
         # Bildschirmschoner aktiviert - stattdessen Benutzerwechsel auslösen
-        sudo -u $(logname) DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" gdmflexiserver --startnew
+        sudo -u "${USERNAME}" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" gdmflexiserver --startnew
     fi
 done
 EOSESSIONHANDLER
@@ -880,7 +888,7 @@ EODESKTOP
     chmod 644 /etc/xdg/autostart/gnome-session-handler.desktop
 
     # Zusätzlich direktes Setzen wichtiger Einstellungen per gsettings für den aktuellen Benutzer
-    CURRENT_USER=$(logname || who | head -1 | awk '{print $1}')
+    CURRENT_USER="${USERNAME}" || who | head -1 | awk '{print $1}')
     if [ -n "$CURRENT_USER" ]; then
         echo "Wende Einstellungen direkt für Benutzer $CURRENT_USER an..."
         USER_UID=$(id -u "$CURRENT_USER")
@@ -979,7 +987,7 @@ if [ $? -eq 0 ]; then
         --undecorated
     
     # Neustart durchführen
-    #systemctl reboot
+    systemctl reboot
 else
     # Benutzer hat "Später neu starten" gewählt
     yad --info \
@@ -1031,3 +1039,34 @@ for userdir in /home/*; do
         chown -R "$username:$username" "$userdir/.config"
     fi
 done
+
+# Aufräumen und Selbstzerstörung einrichten
+echo "Einstellungen angewendet, entferne Autostart-Konfiguration."
+
+# Entferne Autostart-Eintrag für dieses Skript
+if [ -f /etc/xdg/autostart/post-install-settings.desktop ]; then
+    rm -f /etc/xdg/autostart/post-install-settings.desktop
+fi
+
+# Selbstzerstörung für den nächsten Reboot
+echo "#!/bin/bash
+rm -f /usr/local/bin/post_install_settings.sh
+rm -f \$0" > /usr/local/bin/cleanup_settings.sh
+chmod 755 /usr/local/bin/cleanup_settings.sh
+
+# Autostart für die Bereinigung
+cat > /etc/xdg/autostart/cleanup-settings.desktop <<EOCLEANUP
+[Desktop Entry]
+Type=Application
+Name=Cleanup Settings
+Comment=Removes temporary settings files
+Exec=/usr/local/bin/cleanup_settings.sh
+Terminal=false
+Hidden=false
+X-GNOME-Autostart-Phase=Applications
+EOCLEANUP
+
+echo "Konfiguration abgeschlossen."
+
+exit 0
+EOPOSTSCRIPT
