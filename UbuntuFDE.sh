@@ -6,6 +6,15 @@
 # Autor: Smali Tobules
 
 
+# Überprüfe die Ausführung mit erhöhten Rechten
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo -e "${YELLOW}[HINWEIS]${NC} Dieses Skript benötigt Root-Rechte. Starte neu mit sudo..."
+        exec sudo "$0" "$@"  # Starte das Skript neu mit sudo und behalte alle Argumente bei
+    fi
+}
+
+
 ###################
 # Konfiguration   #
 SCRIPT_VERSION="0.0.1"
@@ -144,14 +153,6 @@ pkg_autoremove() {
 
 ###################
 #   Systemcheck   #
-# Überprüfe die Ausführung mit erhöhten Rechten
-check_root() {
-    if [ "$(id -u)" -ne 0 ]; then
-        echo -e "${YELLOW}[HINWEIS]${NC} Dieses Skript benötigt Root-Rechte. Starte neu mit sudo..."
-        exec sudo "$0" "$@"  # Starte das Skript neu mit sudo und behalte alle Argumente bei
-    fi
-}
-
 # Abhängigkeiten prüfen und installieren
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
@@ -3248,7 +3249,6 @@ main() {
         fi    
         
         # Systemcheck
-        check_root
         check_system
         check_dependencies
         find_fastest_mirrors
