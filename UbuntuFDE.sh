@@ -1916,7 +1916,7 @@ setup_system_settings() {
     log_progress "Erstelle Systemeinstellungen-Skript..."
     
     # Skript erstellen, das beim ersten Start mit root-Rechten ausgeführt wird
-    cat > /mnt/ubuntu/usr/local/bin/post_install_settings.sh <<'EOF'
+    cat > /mnt/ubuntu/usr/local/bin/post_install_settings.sh <<'EOPOSTSCRIPT'
 #!/bin/bash
 # Erweiterte Logging-Funktionen
 LOG_FILE="/var/log/post-install-settings.log"
@@ -2720,7 +2720,7 @@ if pgrep -x "gnome-shell" >/dev/null; then
     # Sanfter Neustart nur im X11-Modus möglich
     if [ "$XDG_SESSION_TYPE" = "x11" ]; then
         echo "Starte GNOME Shell neu..."
-        sudo -u $(logname) DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u $(logname))/bus gnome-shell --replace &
+        sudo -u "${USERNAME}" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u "${USERNAME}")/bus gnome-shell --replace &
     else
         echo "Bitte melde dich ab und wieder an, um die Änderungen zu übernehmen"
     fi
@@ -2773,8 +2773,8 @@ EOTIMER
 # Verhindern, dass GNOME die Bildschirmsperre verwendet
 
 # GNOME-Sitzung erkennen und DBus-Adresse ermitteln
-for pid in $(pgrep -u $(logname) gnome-session); do
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u $(logname))/bus"
+for pid in $(pgrep -u "${USERNAME}" gnome-session); do
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u "${USERNAME}")/bus"
     break
 done
 
@@ -2783,7 +2783,7 @@ dbus-monitor --session "type='signal',interface='org.gnome.ScreenSaver'" |
 while read -r line; do
     if echo "$line" | grep -q "boolean true"; then
         # Bildschirmschoner aktiviert - stattdessen Benutzerwechsel auslösen
-        sudo -u $(logname) DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" gdmflexiserver --startnew
+        sudo -u "${USERNAME}" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" gdmflexiserver --startnew
     fi
 done
 EOSESSIONHANDLER
@@ -2807,7 +2807,7 @@ EODESKTOP
     chmod 644 /etc/xdg/autostart/gnome-session-handler.desktop
 
     # Zusätzlich direktes Setzen wichtiger Einstellungen per gsettings für den aktuellen Benutzer
-    CURRENT_USER=$(logname || who | head -1 | awk '{print $1}')
+    CURRENT_USER="${USERNAME}" || who | head -1 | awk '{print $1}')
     if [ -n "$CURRENT_USER" ]; then
         echo "Wende Einstellungen direkt für Benutzer $CURRENT_USER an..."
         USER_UID=$(id -u "$CURRENT_USER")
@@ -2988,14 +2988,14 @@ EOCLEANUP
 echo "Konfiguration abgeschlossen."
 
 exit 0
-EOF
+EOPOSTSCRIPT
 
     # Skript ausführbar machen
     chmod 755 /mnt/ubuntu/usr/local/bin/post_install_settings.sh
     
     # Systemd-Service erstellen, der das Skript beim ersten Start mit Root-Rechten ausführt
     mkdir -p /mnt/ubuntu/etc/systemd/system/
-    cat > /mnt/ubuntu/etc/systemd/system/post-install-settings.service <<EOF
+    cat > /mnt/ubuntu/etc/systemd/system/post-install-settings.service <<EOPOSTSERVICE
 [Unit]
 Description=Post-Installation Settings
 # Diese Zeile hinzufügen, damit es vor dem Display-Manager (Login-Bildschirm) läuft
@@ -3015,7 +3015,7 @@ TimeoutSec=180
 WantedBy=multi-user.target
 # Auch hier sicherstellen, dass es vor GDM läuft
 WantedBy=display-manager.service
-EOF
+EOPOSTSERVICE
     
     # Service aktivieren
     mkdir -p /mnt/ubuntu/etc/systemd/system/multi-user.target.wants/
