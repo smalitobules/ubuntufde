@@ -1022,7 +1022,7 @@ install_base_system() {
 
     # Optional auszuschließende Pakete definieren
     EXCLUDED_PACKAGES=(
-        snapd cloud-init ubuntu-docs*
+        snapd cloud-init ubuntu-pro-client ubuntu-docs*
     )
 
     # Pakete zu kommagetrennter Liste zusammenfügen
