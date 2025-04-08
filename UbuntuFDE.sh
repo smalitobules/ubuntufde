@@ -1342,11 +1342,8 @@ pkg_install --no-install-recommends \
     coreutils \
     timeshift \
     bleachbit \
-    stacer \
     fastfetch \
     gparted \
-    vlc \
-    deluge \
     ufw \
     jq
 
@@ -1606,6 +1603,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
                     yad \
+                    stacer \
+                    vlc \
+                    deluge \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1636,6 +1636,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
                     yad \
+                    stacer \
+                    vlc \
+                    deluge \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1707,6 +1710,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
                     yad \
+                    stacer \
+                    vlc \
+                    deluge \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
