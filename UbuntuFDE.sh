@@ -1148,17 +1148,17 @@ cat > /mnt/ubuntu/setup.sh <<MAINEOF
 #!/bin/bash
 set -e
 
-# Unterdrücke die Zwischenaufrufe von Kernel-Aktualisierungen
-dpkg-divert --add --rename --divert /usr/sbin/update-initramfs.real /usr/sbin/update-initramfs
-
-# Erstelle einen temporären Ersatz
-cat > /usr/sbin/update-initramfs << 'EOF'
-#!/bin/sh
-# Temporär deaktiviertes update-initramfs während der Installation
-echo "update-initramfs wurde temporär deaktiviert"
-exit 0
-EOF
-chmod +x /usr/sbin/update-initramfs
+## Unterdrücke die Zwischenaufrufe von Kernel-Aktualisierungen
+#dpkg-divert --add --rename --divert /usr/sbin/update-initramfs.real /usr/sbin/update-initramfs
+#
+## Erstelle einen temporären Ersatz
+#cat > /usr/sbin/update-initramfs << 'EOF'
+##!/bin/sh
+## Temporär deaktiviertes update-initramfs während der Installation
+#echo "update-initramfs wurde temporär deaktiviert"
+#exit 0
+#EOF
+#chmod +x /usr/sbin/update-initramfs
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -1531,7 +1531,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=1
 GRUB_DISTRIBUTOR="$(. /etc/os-release && echo "$NAME")"
-GRUB_CMDLINE_LINUX_DEFAULT="nomodeset"
+GRUB_CMDLINE_LINUX_DEFAULT="nomodeset vga=normal pci=nomsi noapic"
 GRUB_CMDLINE_LINUX=""
 GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXMODE=1280x1024
@@ -1547,9 +1547,9 @@ chmod 644 /etc/default/grub
 # GRUB Hauptkonfiguration aktualisieren
 sed -i 's/GRUB_ENABLE_CRYPTODISK=.*/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
 
-# Entferne die Unterdrückung der Zwischenaufrufe von Kernel-Aktualisierungen
-rm -f /usr/sbin/update-initramfs
-dpkg-divert --remove --rename /usr/sbin/update-initramfs
+## Entferne die Unterdrückung der Zwischenaufrufe von Kernel-Aktualisierungen
+#rm -f /usr/sbin/update-initramfs
+#dpkg-divert --remove --rename /usr/sbin/update-initramfs
 
 # Initramfs aktualisieren und GRUB installieren
 update-initramfs -u -k all
