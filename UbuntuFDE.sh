@@ -6,15 +6,6 @@
 # Autor: Smali Tobules
 
 
-# Überprüfe die Ausführung mit erhöhten Rechten
-check_root() {
-    if [ "$(id -u)" -ne 0 ]; then
-        echo -e "${YELLOW}[HINWEIS]${NC} Dieses Skript benötigt Root-Rechte. Starte neu mit sudo..."
-        exec sudo "$0" "$@"  # Starte das Skript neu mit sudo und behalte alle Argumente bei
-    fi
-}
-
-
 ###################
 # Konfiguration   #
 SCRIPT_VERSION="0.0.1"
@@ -41,12 +32,8 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Temporärer Einhängepunkt für Entwicklungsumgebung
-mkdir -p /media/data
-mount /dev/sdb1 /media/data || { echo "Datenpartition für Logging /dev/sdb1 nicht vorhanden!"; exit 1; }
-
-# Logdatei einrichten in temporärem Einhängepunkt
-LOG_FILE="/media/data/UbuntuFDE_$(date +%Y%m%d_%H%M%S).log"
+# Logdatei einrichten im aktuellen Verzeichnis
+LOG_FILE="$(pwd)/UbuntuFDE_$(date +%Y%m%d_%H%M%S).log"
 touch "$LOG_FILE"
 chmod 600 "$LOG_FILE"
 
@@ -153,6 +140,14 @@ pkg_autoremove() {
 
 ###################
 #   Systemcheck   #
+# Überprüfe die Ausführung mit erhöhten Rechten
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo -e "${YELLOW}[HINWEIS]${NC} Dieses Skript benötigt Root-Rechte. Starte neu mit sudo..."
+        exec sudo "$0" "$@"  # Starte das Skript neu mit sudo und behalte alle Argumente bei
+    fi
+}
+
 # Abhängigkeiten prüfen und installieren
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
@@ -3181,6 +3176,14 @@ finalize_installation() {
     # Aufräumen
     log_info "Bereinige und beende Installation..."
     umount -R /mnt/ubuntu
+
+    # Logdatei auf externe Partition kopieren
+    if mount /dev/sdb1 /media/data; then
+        cp -f "$LOG_FILE" /media/data
+        umount /media/data
+    else
+        echo "WARNUNG: Konnte /dev/sdb1 nicht mounten. Logdatei bleibt an originalem Speicherort."
+    fi
     
     log_info "Installation abgeschlossen!"
     log_info "System kann jetzt neu gestartet werden."
@@ -3214,9 +3217,6 @@ finalize_installation() {
 ###################
 #  HAUPTFUNKTION  #
 main() {
-    # Prüfe auf Root-Rechte
-    check_root
-
     # Prüfe auf SSH-Verbindung
     if [ "$1" = "ssh_connect" ]; then
         clear
@@ -3249,6 +3249,7 @@ main() {
         fi    
         
         # Systemcheck
+        check_root
         check_system
         check_dependencies
         find_fastest_mirrors
