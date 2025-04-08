@@ -526,12 +526,23 @@ EOE
     echo "user-db:user system-db:local" > /etc/dconf/profile/user
 
     # Stelle sicher, dass die Einstellungen für den aktuellen Benutzer sofort wirksam werden
-    CURRENT_USER="${USERNAME}"
+    CURRENT_USER="${USERNAME:-$(getent passwd | awk -F: '($3 >= 1000 && $3 < 65534) {print $1; exit}')}"
     CURRENT_USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
     DBUS_SESSION="unix:path=/run/user/$CURRENT_USER_UID/bus"
+
+    
+    # DBus-Session für regulären Benutzer starten
+    USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
+    if [ ! -e "/run/user/$USER_UID/bus" ]; then
+        log "Starte dbus-daemon für Benutzer $CURRENT_USER..."
+        mkdir -p /run/user/$USER_UID
+        chown $CURRENT_USER:$CURRENT_USER /run/user/$USER_UID
+        sudo -u "$CURRENT_USER" dbus-daemon --session --address=unix:path=/run/user/$USER_UID/bus --nofork --print-address &
+        sleep 2
+    fi
     
     # Versuche, die Einstellungen anzuwenden
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.desktop.input-sources sources "[('xkb', '${KEYBOARD_LAYOUT}')]"
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.desktop.input-sources sources "[('xkb', \"$KEYBOARD_LAYOUT\")]"
     sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3 2>/dev/null || true
     sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe' 2>/dev/null || true
     sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe' 2>/dev/null || true
@@ -888,7 +899,7 @@ EODESKTOP
     chmod 644 /etc/xdg/autostart/gnome-session-handler.desktop
 
     # Zusätzlich direktes Setzen wichtiger Einstellungen per gsettings für den aktuellen Benutzer
-    CURRENT_USER="${USERNAME}" || who | head -1 | awk '{print $1}')
+    CURRENT_USER="${USERNAME:-$(getent passwd | awk -F: '($3 >= 1000 && $3 < 65534) {print $1; exit}')}"
     if [ -n "$CURRENT_USER" ]; then
         echo "Wende Einstellungen direkt für Benutzer $CURRENT_USER an..."
         USER_UID=$(id -u "$CURRENT_USER")

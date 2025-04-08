@@ -983,7 +983,7 @@ setup_lvm() {
 
 
 ###################
-#   Basissystem   #
+#   BASISSYSTEM   #
 mount_filesystems() {
     log_progress "Hänge Dateisysteme ein..."
     
@@ -1138,13 +1138,13 @@ UUID=${DATA_UUID} /media/data     ext4    defaults        0       2
 # Swap-Partition
 UUID=${SWAP_UUID} none            swap    sw              0       0
 EOF
-#   Basissystem   #
+#   BASISSYSTEM   #
 ###################
 
 
 # System-Setup in chroot
 log_progress "Konfiguriere System in chroot-Umgebung..."
-cat > /mnt/ubuntu/setup.sh <<MAINEOF
+cat > /mnt/ubuntu/setup.sh <<EOSETUP
 #!/bin/bash
 set -e
 
@@ -1797,7 +1797,7 @@ echo "Bereinige temporäre Dateien..."
 pkg_clean
 pkg_autoremove
 rm -f /setup.sh
-MAINEOF
+EOSETUP
 
 # Setze Variablen für das Chroot-Skript
 sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/setup.sh
@@ -1823,8 +1823,27 @@ sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
 sed -i "s/\${LUKS_BOOT_NAME}/$LUKS_BOOT_NAME/g" /mnt/ubuntu/setup.sh
 sed -i "s/\${LUKS_ROOT_NAME}/$LUKS_ROOT_NAME/g" /mnt/ubuntu/setup.sh
 
-# Ausführbar machen
+# Setup.sh Ausführbar machen
 chmod +x /mnt/ubuntu/setup.sh
+
+# Setze Variablen für das Post-Install-Skript
+sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${DESKTOP_NAME}/$DESKTOP_NAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${DESKTOP_VERSION}/$DESKTOP_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${DESKTOP_MAJOR_VERSION}/$DESKTOP_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${GNOME_VERSION}/$GNOME_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${GNOME_MAJOR_VERSION}/$GNOME_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${KDE_VERSION}/$KDE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${KDE_MAJOR_VERSION}/$KDE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${XFCE_VERSION}/$XFCE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+sed -i "s/\${XFCE_MAJOR_VERSION}/$XFCE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
 
 show_progress 70
 }
@@ -1843,6 +1862,85 @@ show_progress 80
 
 #########################
 #  SYSTEMEINSTELLUNGEN  #
+# Desktop-Versionen ermitteln
+desktop_version_detect() {
+    log_progress "Ermittle Desktop-Umgebungsversionen..."
+    
+    # Variablen initialisieren (ohne Standardwerte)
+    GNOME_VERSION=""
+    GNOME_MAJOR_VERSION=""
+    KDE_VERSION=""
+    KDE_MAJOR_VERSION=""
+    XFCE_VERSION=""
+    XFCE_MAJOR_VERSION=""
+    
+    if [ "$INSTALL_DESKTOP" = "1" ]; then
+        case "$DESKTOP_ENV" in
+            # GNOME
+            1)
+                log_info "Prüfe GNOME-Version..."
+                if GNOME_VERSION_OUTPUT=$(chroot /mnt/ubuntu gnome-shell --version 2>/dev/null); then
+                    GNOME_VERSION=$(echo "$GNOME_VERSION_OUTPUT" | cut -d ' ' -f 3 | cut -d '.' -f 1,2)
+                    GNOME_MAJOR_VERSION=$(echo "$GNOME_VERSION" | cut -d '.' -f 1)
+                    log_info "Erkannte GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
+                else
+                    log_warn "Konnte GNOME-Version nicht ermitteln. Installation wird trotzdem fortgesetzt."
+                fi
+                ;;
+                
+            # KDE Plasma
+            2)
+                log_info "Prüfe KDE Plasma Version..."
+                if KDE_VERSION_OUTPUT=$(chroot /mnt/ubuntu plasmashell --version 2>/dev/null); then
+                    KDE_VERSION=$(echo "$KDE_VERSION_OUTPUT" | grep -oP '\d+\.\d+\.\d+')
+                    KDE_MAJOR_VERSION=$(echo "$KDE_VERSION" | cut -d '.' -f 1)
+                    log_info "Erkannte KDE Plasma Version: $KDE_VERSION (Major: $KDE_MAJOR_VERSION)"
+                else
+                    log_warn "Konnte KDE-Version nicht ermitteln. Installation wird trotzdem fortgesetzt."
+                fi
+                ;;
+                
+            # Xfce
+            3)
+                log_info "Prüfe Xfce Version..."
+                if XFCE_VERSION_OUTPUT=$(chroot /mnt/ubuntu xfce4-about --version 2>/dev/null || chroot /mnt/ubuntu xfce4-session --version 2>/dev/null); then
+                    XFCE_VERSION=$(echo "$XFCE_VERSION_OUTPUT" | grep -oP '\d+\.\d+\.\d+' | head -1)
+                    XFCE_MAJOR_VERSION=$(echo "$XFCE_VERSION" | cut -d '.' -f 1)
+                    log_info "Erkannte Xfce Version: $XFCE_VERSION (Major: $XFCE_MAJOR_VERSION)"
+                else
+                    log_warn "Konnte Xfce-Version nicht ermitteln. Installation wird trotzdem fortgesetzt."
+                fi
+                ;;
+                
+            *)
+                log_warn "Unbekannte Desktop-Umgebung: $DESKTOP_ENV. Installation wird trotzdem fortgesetzt."
+                ;;
+        esac
+    else
+        log_info "Keine Desktop-Installation ausgewählt."
+    fi
+    
+    # Exportiere alle Variablen
+    export GNOME_VERSION GNOME_MAJOR_VERSION KDE_VERSION KDE_MAJOR_VERSION XFCE_VERSION XFCE_MAJOR_VERSION
+    
+    # Zusätzliche Desktop-spezifische Variablen erstellen
+    case "$DESKTOP_ENV" in
+        1) DESKTOP_NAME="GNOME"; DESKTOP_VERSION="$GNOME_VERSION"; DESKTOP_MAJOR_VERSION="$GNOME_MAJOR_VERSION" ;;
+        2) DESKTOP_NAME="KDE"; DESKTOP_VERSION="$KDE_VERSION"; DESKTOP_MAJOR_VERSION="$KDE_MAJOR_VERSION" ;;
+        3) DESKTOP_NAME="Xfce"; DESKTOP_VERSION="$XFCE_VERSION"; DESKTOP_MAJOR_VERSION="$XFCE_MAJOR_VERSION" ;;
+        *) DESKTOP_NAME="Unknown"; DESKTOP_VERSION=""; DESKTOP_MAJOR_VERSION="" ;;
+    esac
+    
+    export DESKTOP_NAME DESKTOP_VERSION DESKTOP_MAJOR_VERSION
+    
+    if [ -n "$DESKTOP_VERSION" ]; then
+        log_info "Desktop-Umgebung: $DESKTOP_NAME Version $DESKTOP_VERSION"
+    else
+        log_info "Desktop-Umgebung: $DESKTOP_NAME"
+    fi
+}
+
+# Autologin für erstellen Benutzer aktivieren
 configure_autologin() {
     # Wird nur ausgeführt, wenn Desktop-Installation aktiviert ist
     if [ "$INSTALL_DESKTOP" != "1" ]; then
@@ -1934,6 +2032,7 @@ EOFLIGHTDM
     esac
 }
 
+# Konfiguriere das installierte System
 setup_system_settings() {
     log_progress "Erstelle Systemeinstellungen-Skript..."
     
@@ -1989,22 +2088,25 @@ if [ "$(id -u)" -ne 0 ]; then
     exit $?
 fi
 
-# Desktop-Umgebung erkennen
-if [ -f /usr/bin/gnome-shell ]; then
-    DESKTOP_ENV="gnome"
-elif [ -f /usr/bin/plasmashell ]; then
-    DESKTOP_ENV="kde"
-elif [ -f /usr/bin/xfce4-session ]; then
-    DESKTOP_ENV="xfce"
-else
-    DESKTOP_ENV="unknown"
-fi
+echo "Verwende erkannte Desktop-Umgebung: ${DESKTOP_NAME} ${DESKTOP_VERSION}"
 
-echo "Erkannte Desktop-Umgebung: $DESKTOP_ENV"
+if [ -z "$DESKTOP_ENV" ]; then
+    # Fallback-Erkennung nur wenn nötig
+    if [ -f /usr/bin/gnome-shell ]; then
+        DESKTOP_ENV="gnome"
+    elif [ -f /usr/bin/plasmashell ]; then
+        DESKTOP_ENV="kde"
+    elif [ -f /usr/bin/xfce4-session ]; then
+        DESKTOP_ENV="xfce"
+    else
+        DESKTOP_ENV="unknown"
+    fi
+    echo "Desktop-Umgebung lokal erkannt: $DESKTOP_ENV"
+fi
 
 # GNOME-spezifische Einstellungen
 if [ "$DESKTOP_ENV" = "gnome" ]; then
-    echo "Konfiguriere GNOME-Einstellungen..."
+    echo "Konfiguriere ${DESKTOP_NAME} ${DESKTOP_VERSION} Einstellungen..."
     
     # Directory für gsettings-override erstellen
     mkdir -p /usr/share/glib-2.0/schemas/
@@ -2014,7 +2116,7 @@ if [ "$DESKTOP_ENV" = "gnome" ]; then
 # UbuntuFDE Schema Override für GNOME
 
 [org.gnome.desktop.input-sources]
-sources=[('xkb', '${KEYBOARD_LAYOUT}')]
+sources=[('xkb', '$KEYBOARD_LAYOUT')]
 xkb-options=[]
 
 [org.gnome.desktop.wm.preferences]
@@ -2181,7 +2283,7 @@ EOSETTINGS
 # UbuntuFDE Schema Override für GDM
 
 [org.gnome.desktop.input-sources:gdm]
-sources=[('xkb', '${KEYBOARD_LAYOUT}')]
+sources=[('xkb', '$KEYBOARD_LAYOUT')]
 xkb-options=[]
 
 [org.gnome.login-screen]
@@ -2470,9 +2572,20 @@ EOE
     CURRENT_USER="${USERNAME:-$(getent passwd | awk -F: '($3 >= 1000 && $3 < 65534) {print $1; exit}')}"
     CURRENT_USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
     DBUS_SESSION="unix:path=/run/user/$CURRENT_USER_UID/bus"
+
+    
+    # DBus-Session für regulären Benutzer starten
+    USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
+    if [ ! -e "/run/user/$USER_UID/bus" ]; then
+        log "Starte dbus-daemon für Benutzer $CURRENT_USER..."
+        mkdir -p /run/user/$USER_UID
+        chown $CURRENT_USER:$CURRENT_USER /run/user/$USER_UID
+        sudo -u "$CURRENT_USER" dbus-daemon --session --address=unix:path=/run/user/$USER_UID/bus --nofork --print-address &
+        sleep 2
+    fi
     
     # Versuche, die Einstellungen anzuwenden
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.desktop.input-sources sources "[('xkb', \"$KEYBOARD_LAYOUT\")]"
+    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.desktop.input-sources sources "[('xkb', '$KEYBOARD_LAYOUT')]"
     sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3 2>/dev/null || true
     sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe' 2>/dev/null || true
     sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe' 2>/dev/null || true
@@ -2489,10 +2602,10 @@ EOE
     cat > /usr/local/bin/update-gnome-extensions <<'EOSCRIPT'
 #!/bin/bash
 
-# GNOME Shell Version ermitteln
-GNOME_VERSION=$(gnome-shell --version | cut -d ' ' -f 3 | cut -d '.' -f 1,2)
-GNOME_MAJOR_VERSION=$(echo $GNOME_VERSION | cut -d '.' -f 1)
-echo "Erkannte GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
+# GNOME Shell Version
+GNOME_VERSION="${GNOME_VERSION}"
+GNOME_MAJOR_VERSION="${GNOME_MAJOR_VERSION}"
+echo "Verwende GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
 
 # Extension-Daten definieren
 DASH_TO_PANEL_UUID="dash-to-panel@jderose9.github.com"
@@ -2842,12 +2955,12 @@ EODESKTOP
 
 elif [ "$DESKTOP_ENV" = "kde" ]; then
     # KDE-spezifische Einstellungen
-    echo "KDE-Einstellungen werden implementiert..."
+    echo "${DESKTOP_NAME} ${DESKTOP_VERSION} Einstellungen werden implementiert..."
     # Hier würden KDE-spezifische Einstellungen kommen
 
 elif [ "$DESKTOP_ENV" = "xfce" ]; then
     # Xfce-spezifische Einstellungen
-    echo "Xfce-Einstellungen werden implementiert..."
+    echo "${DESKTOP_NAME} ${DESKTOP_VERSION} Einstellungen werden implementiert..."
     # Hier würden Xfce-spezifische Einstellungen kommen
 else
     echo "Keine bekannte Desktop-Umgebung gefunden."
@@ -3171,6 +3284,7 @@ main() {
     download_thorium
     prepare_chroot
     execute_chroot
+    desktop_version_detect
     configure_autologin
     setup_system_settings
     finalize_installation
