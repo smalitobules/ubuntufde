@@ -182,7 +182,7 @@ check_system() {
 
 
 find_fastest_mirrors() {
-    log_info "Suche nach schnellsten Paketquellen..."
+    log_info "Suche nach den schnellsten Paketquellen..."
     
     # Sicherstellen, dass nala installiert ist
     if ! command -v nala &> /dev/null; then
@@ -218,7 +218,7 @@ find_fastest_mirrors() {
         # Erhöhe Versuchszähler
         ((ATTEMPTS++))
         
-        log_info "Versuche $ATTEMPTS/$MAX_ATTEMPTS: Suche nach schnellen Mirrors..."
+        log_info "Versuche $ATTEMPTS/$MAX_ATTEMPTS: Suche nach den schnellsten Spiegelservern..."
         
         # Führe nala fetch mit dem erkannten Land aus
         if nala fetch --auto --fetches 3 --country "$COUNTRY_CODE"; then
@@ -231,17 +231,17 @@ find_fastest_mirrors() {
         
         # Wenn letzter Versuch gescheitert
         if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
-            log_error "${RED}Konnte nach $MAX_ATTEMPTS Versuchen keine Mirrors finden!${NC} Bitte überprüfe Deine Netzwerkverbindung und starte das Installationsskript erneut."
+            log_error "${RED}Konnte nach $MAX_ATTEMPTS Versuchen keine Spiegelserver finden!${NC} Bitte überprüfe Deine Netzwerkverbindung und starte das Installationsskript erneut."
             exit 1
         fi
     done
     
     # Prüfe, ob die Optimierung erfolgreich war
     if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-        log_info "Mirror-Optimierung erfolgreich."
+        log_info "Spiegelserver-Optimierung erfolgreich."
         MIRRORS_OPTIMIZED="true"
     else
-        log_error "Keine optimierten Mirrors gefunden. Bitte überprüfe deine Netzwerkverbindung und starte das Installationsskript erneut."
+        log_error "Keine optimierten Spiegelserver gefunden. Bitte überprüfe deine Netzwerkverbindung und starte das Installationsskript erneut."
         exit 1
     fi
     
@@ -252,7 +252,7 @@ find_fastest_mirrors() {
 
 copy_nala_config() {
     if [ "${MIRRORS_OPTIMIZED}" = "true" ] && [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-        log_info "Kopiere optimierte nala-Konfiguration in die chroot-Umgebung..."
+        log_info "Kopiere optimierte Nala-Konfiguration in die chroot-Umgebung..."
         mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
         cp /etc/apt/sources.list.d/nala-sources.list /mnt/ubuntu/etc/apt/sources.list.d/
         
@@ -1064,7 +1064,6 @@ install_base_system() {
             --exclude="$EXCLUDED_PACKAGELIST" \
             --variant=minbase \
             --components=main,restricted,universe,multiverse \
-            --no-install-recommends \
             --arch=amd64 \
             oracular \
             /mnt/ubuntu \
@@ -1074,7 +1073,6 @@ install_base_system() {
             --include="$INCLUDED_PACKAGELIST" \
             --exclude="$EXCLUDED_PACKAGELIST" \
             --components=main,restricted,universe,multiverse \
-            --no-install-recommends \
             --arch=amd64 \
             oracular \
             /mnt/ubuntu \
