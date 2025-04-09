@@ -1822,51 +1822,32 @@ pkg_autoremove
 rm -f /setup.sh
 EOSETUP
 
-# Setze Variablen für das Chroot-Skript
-sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${USER_PASSWORD}/$USER_PASSWORD/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${LUKS_PASSWORD}/$LUKS_PASSWORD/g" /mnt/ubuntu/setup.sh
-sed -i "s|\${DEVP}|$DEVP|g" /mnt/ubuntu/setup.sh
-sed -i "s|\${DM}|$DM|g" /mnt/ubuntu/setup.sh
-sed -i "s/\${KERNEL_TYPE}/$KERNEL_TYPE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${INSTALL_MODE}/$INSTALL_MODE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${ADDITIONAL_PACKAGES}/$ADDITIONAL_PACKAGES/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${UBUNTU_CODENAME}/$UBUNTU_CODENAME/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${UPDATE_OPTION}/$UPDATE_OPTION/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${INSTALL_DESKTOP}/$INSTALL_DESKTOP/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${NETWORK_CONFIG}/$NETWORK_CONFIG/g" /mnt/ubuntu/setup.sh
-sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
-sed -i "s/\${LUKS_BOOT_NAME}/$LUKS_BOOT_NAME/g" /mnt/ubuntu/setup.sh
-sed -i "s/\${LUKS_ROOT_NAME}/$LUKS_ROOT_NAME/g" /mnt/ubuntu/setup.sh
+    # Setup.sh Ausführbar machen
+    chmod 755 /mnt/ubuntu/setup.sh
 
-# Setup.sh Ausführbar machen
-chmod +x /mnt/ubuntu/setup.sh
-
-# Setze Variablen für das Post-Install-Skript
-sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${DESKTOP_NAME}/$DESKTOP_NAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${DESKTOP_VERSION}/$DESKTOP_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${DESKTOP_MAJOR_VERSION}/$DESKTOP_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${GNOME_VERSION}/$GNOME_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${GNOME_MAJOR_VERSION}/$GNOME_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${KDE_VERSION}/$KDE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${KDE_MAJOR_VERSION}/$KDE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${XFCE_VERSION}/$XFCE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-sed -i "s/\${XFCE_MAJOR_VERSION}/$XFCE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    # Setze Variablen für das Chroot-Skript
+    sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${USER_PASSWORD}/$USER_PASSWORD/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${LUKS_PASSWORD}/$LUKS_PASSWORD/g" /mnt/ubuntu/setup.sh
+    sed -i "s|\${DEVP}|$DEVP|g" /mnt/ubuntu/setup.sh
+    sed -i "s|\${DM}|$DM|g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${KERNEL_TYPE}/$KERNEL_TYPE/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${INSTALL_MODE}/$INSTALL_MODE/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${ADDITIONAL_PACKAGES}/$ADDITIONAL_PACKAGES/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${UBUNTU_CODENAME}/$UBUNTU_CODENAME/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${UPDATE_OPTION}/$UPDATE_OPTION/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${INSTALL_DESKTOP}/$INSTALL_DESKTOP/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${NETWORK_CONFIG}/$NETWORK_CONFIG/g" /mnt/ubuntu/setup.sh
+    sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${LUKS_BOOT_NAME}/$LUKS_BOOT_NAME/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${LUKS_ROOT_NAME}/$LUKS_ROOT_NAME/g" /mnt/ubuntu/setup.sh
 
 show_progress 70
 }
@@ -3150,10 +3131,29 @@ EOPOSTSCRIPT
 
     # Skript ausführbar machen
     chmod 755 /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+
+    # Setze Variablen für das Post-Install-Skript
+    sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${DESKTOP_NAME}/$DESKTOP_NAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${DESKTOP_VERSION}/$DESKTOP_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${DESKTOP_MAJOR_VERSION}/$DESKTOP_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${GNOME_VERSION}/$GNOME_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${GNOME_MAJOR_VERSION}/$GNOME_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${KDE_VERSION}/$KDE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${KDE_MAJOR_VERSION}/$KDE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${XFCE_VERSION}/$XFCE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    sed -i "s/\${XFCE_MAJOR_VERSION}/$XFCE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
     
-    # Systemd-Service erstellen, der das Skript beim ersten Start mit Root-Rechten ausführt
-    mkdir -p /mnt/ubuntu/etc/systemd/system/
-    cat > /mnt/ubuntu/etc/systemd/system/post-install-settings.service <<EOPOSTSERVICE
+# Systemd-Service erstellen, der das Skript beim ersten Start mit Root-Rechten ausführt
+mkdir -p /mnt/ubuntu/etc/systemd/system/
+cat > /mnt/ubuntu/etc/systemd/system/post-install-settings.service <<EOPOSTSERVICE
 [Unit]
 Description=Post-Installation Settings
 # Diese Zeile hinzufügen, damit es vor dem Display-Manager (Login-Bildschirm) läuft
