@@ -1582,12 +1582,12 @@ update-grub
 ##################
 
 
-# Zram für Swap konfigurieren
-cat > /etc/default/zramswap <<EOZ
-# Konfiguration für zramswap
-PERCENT=200
-ALLOCATION=lz4
-EOZ
+## Zram für Swap konfigurieren
+#cat > /etc/default/zramswap <<EOZ
+## Konfiguration für zramswap
+#PERCENT=200
+#ALLOCATION=lz4
+#EOZ
 
 # Benutzer anlegen
 useradd -m -s /bin/bash -G sudo ${USERNAME}
