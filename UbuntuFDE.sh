@@ -2040,11 +2040,45 @@ EOFLIGHTDM
 setup_system_settings() {
     log_progress "Erstelle Systemeinstellungen-Skript..."
     
-    # Skript erstellen, das beim ersten Start mit root-Rechten ausgeführt wird
-    cat > /mnt/ubuntu/usr/local/bin/post_install_settings.sh <<'EOPOSTSCRIPT'
+    # Systemd-Service erstellen, der das Skript beim ersten Start mit Root-Rechten ausführt
+    mkdir -p /mnt/ubuntu/etc/systemd/system/
+    cat > /mnt/ubuntu/etc/systemd/system/post-install-setup.service <<EOPOSTSERVICE
+[Unit]
+Description=Post-Installation Setup
+# Diese Zeile hinzufügen, damit es vor dem Display-Manager (Login-Bildschirm) läuft
+Before=display-manager.service
+After=network.target
+# Diese Option sicherstellen, dass GDM erst startet, wenn dieses Skript fertig ist
+Conflicts=rescue.service rescue.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/post_install_setup.sh
+RemainAfterExit=yes
+Timeout=120
+
+[Install]
+WantedBy=multi-user.target
+# Auch hier sicherstellen, dass es vor GDM läuft
+WantedBy=display-manager.service
+EOPOSTSERVICE
+    
+    # Service aktivieren
+    mkdir -p /mnt/ubuntu/etc/systemd/system/multi-user.target.wants/
+    ln -sf /etc/systemd/system/post-install-setup.service /mnt/ubuntu/etc/systemd/system/multi-user.target.wants/post-install-setup.service
+    
+    # Skript für post-install-setup erstellen
+    mkdir -p /mnt/ubuntu/usr/local/bin/
+    cat > /mnt/ubuntu/usr/local/bin/post_install_setup.sh <<'EOPOSTSCRIPT'
 #!/bin/bash
+# Post-Installation Setup für systemweite Einstellungen
+# Wird VOR der Benutzeranmeldung ausgeführt
+#
+# Datum: $(date +%Y-%m-%d)
+
 # Erweiterte Logging-Funktionen
-LOG_FILE="/var/log/post-install-settings.log"
+LOG_FILE="/var/log/post-install-setup.log"
+mkdir -p "$(dirname "$LOG_FILE")"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "===== Start post-installation setup $(date) ====="
@@ -2062,14 +2096,13 @@ trap 'log "FEHLER: Ein Befehl ist fehlgeschlagen bei Zeile $LINENO"' ERR
 export HOME=/root
 export XDG_RUNTIME_DIR=/run/user/0
 export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
-# ...
 
 # Prüfe GNOME-Komponenten
 log "Prüfe GNOME-Komponenten..."
 if [ -f /usr/bin/gnome-shell ]; then
     log "GNOME Shell gefunden: $(gnome-shell --version)"
 else
-    log "WARNUNG: GNOME Shell nicht gefunden!"
+    log "INFO: GNOME Shell nicht gefunden. Dies ist normal, wenn kein Desktop installiert wurde."
 fi
 
 # DBus-Session für Systembenutzer starten
@@ -2081,18 +2114,8 @@ if [ ! -e "/run/user/0/bus" ]; then
     export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
 fi
 
-# Post-Installation Einstellungen
-# Wird beim ersten Start ausgeführt und löscht sich selbst
-
-# Prüfen, ob das Skript mit Root-Rechten ausgeführt wird
-if [ "$(id -u)" -ne 0 ]; then
-    echo "Dieses Skript muss mit Root-Rechten ausgeführt werden."
-    echo "Erneuter Start mit sudo..."
-    sudo "$0"
-    exit $?
-fi
-
-echo "Verwende erkannte Desktop-Umgebung: ${DESKTOP_NAME} ${DESKTOP_VERSION}"
+# Systemweite GNOME-Einstellungen - wird VOR der Benutzeranmeldung ausgeführt
+log "Verwende erkannte Desktop-Umgebung: ${DESKTOP_NAME} ${DESKTOP_VERSION}"
 
 if [ -z "$DESKTOP_ENV" ]; then
     # Fallback-Erkennung nur wenn nötig
@@ -2105,12 +2128,12 @@ if [ -z "$DESKTOP_ENV" ]; then
     else
         DESKTOP_ENV="unknown"
     fi
-    echo "Desktop-Umgebung lokal erkannt: $DESKTOP_ENV"
+    log "Desktop-Umgebung lokal erkannt: $DESKTOP_ENV"
 fi
 
 # GNOME-spezifische Einstellungen
 if [ "$DESKTOP_ENV" = "gnome" ]; then
-    echo "Konfiguriere ${DESKTOP_NAME} ${DESKTOP_VERSION} Einstellungen..."
+    log "Konfiguriere ${DESKTOP_NAME} ${DESKTOP_VERSION} Einstellungen..."
     
     # Directory für gsettings-override erstellen
     mkdir -p /usr/share/glib-2.0/schemas/
@@ -2320,16 +2343,16 @@ picture-options='none'
 EOGDM
 
     # Schemas kompilieren
-    echo "Kompiliere glib-Schemas..."
+    log "Kompiliere glib-Schemas..."
     glib-compile-schemas /usr/share/glib-2.0/schemas/
 
 # Installiere GNOME Shell Erweiterungen
-    echo "Installiere GNOME Shell Erweiterungen..."
+    log "Installiere GNOME Shell Erweiterungen..."
     
     # GNOME Shell Version ermitteln
-    GNOME_VERSION=$(gnome-shell --version | cut -d ' ' -f 3 | cut -d '.' -f 1,2)
+    GNOME_VERSION=$(gnome-shell --version 2>/dev/null | cut -d ' ' -f 3 | cut -d '.' -f 1,2 || echo "")
     GNOME_MAJOR_VERSION=$(echo $GNOME_VERSION | cut -d '.' -f 1)
-    echo "Erkannte GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
+    log "Erkannte GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
     
     # Extension-Daten definieren
     DASH_TO_PANEL_UUID="dash-to-panel@jderose9.github.com"
@@ -2405,7 +2428,7 @@ EOGDM
                 extension_version="${DASH_TO_PANEL_VERSIONS[$gnome_version]}"
             else
                 extension_version="68"
-                echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
+                log "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
             fi
             echo "https://extensions.gnome.org/extension-data/dash-to-paneljderose9.github.com.v${extension_version}.shell-extension.zip"
         
@@ -2414,7 +2437,7 @@ EOGDM
                 extension_version="${USER_THEME_VERSIONS[$gnome_version]}"
             else
                 extension_version="63"
-                echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
+                log "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
             fi
             echo "https://extensions.gnome.org/extension-data/user-themegnome-shell-extensions.gcampax.github.com.v${extension_version}.shell-extension.zip"
         
@@ -2423,7 +2446,7 @@ EOGDM
                 extension_version="${IMPATIENCE_VERSIONS[$gnome_version]}"
             else
                 extension_version="28"
-                echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
+                log "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
             fi
             echo "https://extensions.gnome.org/extension-data/impatiencegfxmonk.net.v${extension_version}.shell-extension.zip"
         
@@ -2432,7 +2455,7 @@ EOGDM
                 extension_version="${BURN_MY_WINDOWS_VERSIONS[$gnome_version]}"
             else
                 extension_version="46"
-                echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
+                log "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
             fi
             echo "https://extensions.gnome.org/extension-data/burn-my-windowsschneegans.github.com.v${extension_version}.shell-extension.zip"
         
@@ -2442,11 +2465,11 @@ EOGDM
                 echo "https://extensions.gnome.org/extension-data/system-monitorgnome-shell-extensions.gcampax.github.com.v${extension_version}.shell-extension.zip"
             else
                 # Da System Monitor nicht für alle Versionen verfügbar ist, geben wir hier eine Warnung aus
-                echo "System Monitor ist nicht für GNOME $gnome_version verfügbar"
+                log "System Monitor ist nicht für GNOME $gnome_version verfügbar"
                 return 1
             fi
         else
-            echo "Unbekannte Extension UUID: $uuid"
+            log "Unbekannte Extension UUID: $uuid"
             return 1
         fi
     }
@@ -2461,37 +2484,37 @@ EOGDM
         local download_url=$(get_extension_url "$uuid" "$GNOME_MAJOR_VERSION")
         
         if [ -z "$download_url" ]; then
-            echo "Konnte keine Download-URL für $uuid generieren - diese Extension wird übersprungen"
+            log "Konnte keine Download-URL für $uuid generieren - diese Extension wird übersprungen"
             rm -rf "$tmp_dir"
             return 1
         fi
         
-        echo "Installiere Extension: $uuid"
-        echo "Download URL: $download_url"
+        log "Installiere Extension: $uuid"
+        log "Download URL: $download_url"
         
         # Entferne vorhandene Extension vollständig
         if [ -d "/usr/share/gnome-shell/extensions/$uuid" ]; then
-            echo "Entferne vorherige Version von $uuid"
+            log "Entferne vorherige Version von $uuid"
             rm -rf "/usr/share/gnome-shell/extensions/$uuid"
             sleep 1  # Kurze Pause, um sicherzustellen, dass Dateien gelöscht werden
         fi
         
         # Download und Installation
         if wget -q -O "$tmp_zip" "$download_url"; then
-            echo "Download erfolgreich"
+            log "Download erfolgreich"
             
             # Erstelle Zielverzeichnis
             mkdir -p "/usr/share/gnome-shell/extensions/$uuid"
             
             # Entpacke die Extension
             if unzip -q -o "$tmp_zip" -d "/usr/share/gnome-shell/extensions/$uuid"; then
-                echo "Extension erfolgreich entpackt"
+                log "Extension erfolgreich entpackt"
                 
                 # Überprüfe, ob extension.js vorhanden ist
                 if [ -f "/usr/share/gnome-shell/extensions/$uuid/extension.js" ]; then
-                    echo "extension.js gefunden"
+                    log "extension.js gefunden"
                 else
-                    echo "WARNUNG: extension.js nicht gefunden!"
+                    log "WARNUNG: extension.js nicht gefunden!"
                 fi
                 
                 # Setze Berechtigungen
@@ -2499,34 +2522,40 @@ EOGDM
                 
                 # Passe metadata.json an, um die GNOME-Version explizit zu unterstützen
                 if [ -f "/usr/share/gnome-shell/extensions/$uuid/metadata.json" ]; then
-                    echo "Passe metadata.json an, um GNOME $GNOME_VERSION zu unterstützen"
+                    log "Passe metadata.json an, um GNOME $GNOME_VERSION zu unterstützen"
                     
                     # Sicherungskopie erstellen
                     cp "/usr/share/gnome-shell/extensions/$uuid/metadata.json" "/usr/share/gnome-shell/extensions/$uuid/metadata.json.bak"
                     
                     # Füge die aktuelle GNOME-Version zur Liste der unterstützten Versionen hinzu
-                    jq --arg version "$GNOME_MAJOR_VERSION" --arg fullversion "$GNOME_VERSION" \
-                       'if .["shell-version"] then .["shell-version"] += [$version, $fullversion] else .["shell-version"] = [$version, $fullversion] end' \
-                       "/usr/share/gnome-shell/extensions/$uuid/metadata.json.bak" > "/usr/share/gnome-shell/extensions/$uuid/metadata.json"
+                    if command -v jq &>/dev/null; then
+                        jq --arg version "$GNOME_MAJOR_VERSION" --arg fullversion "$GNOME_VERSION" \
+                           'if .["shell-version"] then .["shell-version"] += [$version, $fullversion] else .["shell-version"] = [$version, $fullversion] end' \
+                           "/usr/share/gnome-shell/extensions/$uuid/metadata.json.bak" > "/usr/share/gnome-shell/extensions/$uuid/metadata.json"
+                    else
+                        # Fallback wenn jq nicht verfügbar ist
+                        # Wir verwenden sed, um die Versionen hinzuzufügen
+                        sed -i 's/"shell-version": \[\(.*\)\]/"shell-version": [\1, "'$GNOME_MAJOR_VERSION'", "'$GNOME_VERSION'"]/' "/usr/share/gnome-shell/extensions/$uuid/metadata.json"
+                    fi
                     
-                    echo "metadata.json angepasst: Version $GNOME_VERSION hinzugefügt"
+                    log "metadata.json angepasst: Version $GNOME_VERSION hinzugefügt"
                 else
-                    echo "WARNUNG: metadata.json nicht gefunden"
+                    log "WARNUNG: metadata.json nicht gefunden"
                 fi
                 
                 # Kompiliere Schemas, falls vorhanden
                 if [ -d "/usr/share/gnome-shell/extensions/$uuid/schemas" ]; then
-                    echo "Kompiliere GSettings Schemas"
+                    log "Kompiliere GSettings Schemas"
                     glib-compile-schemas "/usr/share/gnome-shell/extensions/$uuid/schemas"
                 fi
                 
-                echo "Extension $uuid erfolgreich installiert"
+                log "Extension $uuid erfolgreich installiert"
                 return 0
             else
-                echo "FEHLER: Konnte Extension nicht entpacken"
+                log "FEHLER: Konnte Extension nicht entpacken"
             fi
         else
-            echo "FEHLER: Download fehlgeschlagen für URL: $download_url"
+            log "FEHLER: Download fehlgeschlagen für URL: $download_url"
         fi
         
         rm -rf "$tmp_dir"
@@ -2534,653 +2563,625 @@ EOGDM
     }
     
     # Extensions installieren
-    echo "Installiere Dash to Panel..."
+    log "Installiere Dash to Panel..."
     install_extension "$DASH_TO_PANEL_UUID"
     
-    echo "Installiere User Theme..."
+    log "Installiere User Theme..."
     install_extension "$USER_THEME_UUID"
     
-    echo "Installiere Impatience..."
+    log "Installiere Impatience..."
     install_extension "$IMPATIENCE_UUID"
     
-    echo "Installiere Burn My Windows..."
+    log "Installiere Burn My Windows..."
     install_extension "$BURN_MY_WINDOWS_UUID"
     
-    echo "Installiere System Monitor..."
-    install_extension "$SYSTEM_MONITOR_UUID"
-    
-    # Extensions aktivieren (für alle Benutzer)
-    echo "Aktiviere Extensions für alle Benutzer..."
-    mkdir -p /etc/dconf/db/local.d/
-    cat > /etc/dconf/db/local.d/00-extensions <<EOE
-[org/gnome/shell]
-enabled-extensions=['$DASH_TO_PANEL_UUID', '$USER_THEME_UUID', '$IMPATIENCE_UUID', '$BURN_MY_WINDOWS_UUID', '$SYSTEM_MONITOR_UUID']
+    log "Installiere System Monitor..."
+    install_extension "$SYSTEM_MONITOR_UUID" || true  # Fortsetzung auch bei Fehler
 
-# Impatience Konfiguration für schnellere Animationen
-[org/gnome/shell/extensions/impatience]
-speed-factor=0.3
-
-# Burn My Windows Konfiguration
-[org/gnome/shell/extensions/burn-my-windows]
-close-effect='pixelwipe'
-open-effect='pixelwipe'
-animation-time=300
-pixelwipe-pixel-size=7
-EOE
-
-    # Erstelle einen Profilordner, damit dconf die Konfiguration anwendet
-    mkdir -p /etc/dconf/profile/
-    echo "user-db:user system-db:local" > /etc/dconf/profile/user
-
-    # Stelle sicher, dass die Einstellungen für den aktuellen Benutzer sofort wirksam werden
-    CURRENT_USER="${USERNAME:-$(getent passwd | awk -F: '($3 >= 1000 && $3 < 65534) {print $1; exit}')}"
-    CURRENT_USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
-    DBUS_SESSION="unix:path=/run/user/$CURRENT_USER_UID/bus"
-
-    
-    # DBus-Session für regulären Benutzer starten
-    USER_UID=$(id -u "$CURRENT_USER" 2>/dev/null || echo "1000")
-    if [ ! -e "/run/user/$USER_UID/bus" ]; then
-        log "Starte dbus-daemon für Benutzer $CURRENT_USER..."
-        mkdir -p /run/user/$USER_UID
-        chown $CURRENT_USER:$CURRENT_USER /run/user/$USER_UID
-        sudo -u "$CURRENT_USER" dbus-daemon --session --address=unix:path=/run/user/$USER_UID/bus --nofork --print-address &
-        sleep 2
-    fi
-    
-    # Versuche, die Einstellungen anzuwenden
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.desktop.input-sources sources "[('xkb', '$KEYBOARD_LAYOUT')]"
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3 2>/dev/null || true
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe' 2>/dev/null || true
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe' 2>/dev/null || true
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows animation-time 300 2>/dev/null || true
-    sudo -u "$CURRENT_USER" env DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION" gsettings set org.gnome.shell.extensions.burn-my-windows pixelwipe-pixel-size 7 2>/dev/null || true
-
-    # Dconf-Datenbank aktualisieren
-    dconf update
-
-    # Auto-Update für GNOME Shell Erweiterungen einrichten
-    echo "Richte automatische Updates für GNOME Shell Erweiterungen ein..."
-    
-    # Skript erstellen, das Extensions aktualisiert
-    cat > /usr/local/bin/update-gnome-extensions <<'EOSCRIPT'
-#!/bin/bash
-
-# GNOME Shell Version
-GNOME_VERSION="${GNOME_VERSION}"
-GNOME_MAJOR_VERSION="${GNOME_MAJOR_VERSION}"
-echo "Verwende GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
-
-# Extension-Daten definieren
-DASH_TO_PANEL_UUID="dash-to-panel@jderose9.github.com"
-USER_THEME_UUID="user-theme@gnome-shell-extensions.gcampax.github.com"
-IMPATIENCE_UUID="impatience@gfxmonk.net"
-BURN_MY_WINDOWS_UUID="burn-my-windows@schneegans.github.com"
-SYSTEM_MONITOR_UUID="system-monitor@gnome-shell-extensions.gcampax.github.com"
-
-# Version-Mapping für alle Extensions
-declare -A DASH_TO_PANEL_VERSIONS
-DASH_TO_PANEL_VERSIONS[48]=68
-DASH_TO_PANEL_VERSIONS[47]=68
-DASH_TO_PANEL_VERSIONS[46]=68
-DASH_TO_PANEL_VERSIONS[45]=60
-DASH_TO_PANEL_VERSIONS[44]=56
-DASH_TO_PANEL_VERSIONS[43]=56
-DASH_TO_PANEL_VERSIONS[42]=56
-DASH_TO_PANEL_VERSIONS[41]=52
-DASH_TO_PANEL_VERSIONS[40]=69
-
-declare -A USER_THEME_VERSIONS
-USER_THEME_VERSIONS[48]=63
-USER_THEME_VERSIONS[47]=61
-USER_THEME_VERSIONS[46]=60
-USER_THEME_VERSIONS[45]=54
-USER_THEME_VERSIONS[44]=51
-USER_THEME_VERSIONS[43]=50
-USER_THEME_VERSIONS[42]=49
-USER_THEME_VERSIONS[41]=48
-USER_THEME_VERSIONS[40]=46
-
-declare -A IMPATIENCE_VERSIONS
-IMPATIENCE_VERSIONS[48]=28
-IMPATIENCE_VERSIONS[47]=28
-IMPATIENCE_VERSIONS[46]=28
-IMPATIENCE_VERSIONS[45]=28
-IMPATIENCE_VERSIONS[44]=22
-IMPATIENCE_VERSIONS[43]=22
-IMPATIENCE_VERSIONS[42]=22
-IMPATIENCE_VERSIONS[41]=22
-IMPATIENCE_VERSIONS[40]=22
-
-declare -A BURN_MY_WINDOWS_VERSIONS
-BURN_MY_WINDOWS_VERSIONS[48]=46
-BURN_MY_WINDOWS_VERSIONS[47]=46
-BURN_MY_WINDOWS_VERSIONS[46]=46
-BURN_MY_WINDOWS_VERSIONS[45]=46
-BURN_MY_WINDOWS_VERSIONS[44]=42
-BURN_MY_WINDOWS_VERSIONS[43]=42
-BURN_MY_WINDOWS_VERSIONS[42]=42
-BURN_MY_WINDOWS_VERSIONS[41]=42
-BURN_MY_WINDOWS_VERSIONS[40]=42
-
-declare -A SYSTEM_MONITOR_VERSIONS
-SYSTEM_MONITOR_VERSIONS[48]=8
-SYSTEM_MONITOR_VERSIONS[47]=6
-SYSTEM_MONITOR_VERSIONS[46]=5
-SYSTEM_MONITOR_VERSIONS[45]=0
-SYSTEM_MONITOR_VERSIONS[44]=0
-SYSTEM_MONITOR_VERSIONS[43]=0
-SYSTEM_MONITOR_VERSIONS[42]=0
-SYSTEM_MONITOR_VERSIONS[41]=0
-SYSTEM_MONITOR_VERSIONS[40]=0
-
-# Funktion zum Erstellen der korrekten Download-URL basierend auf Extension UUID und GNOME-Version
-get_extension_url() {
-    local uuid="$1"
-    local gnome_version="$2"
-    local extension_version
-    
-    if [[ "$uuid" == "$DASH_TO_PANEL_UUID" ]]; then
-        if [[ -n "${DASH_TO_PANEL_VERSIONS[$gnome_version]}" ]]; then
-            extension_version="${DASH_TO_PANEL_VERSIONS[$gnome_version]}"
-        else
-            extension_version="68"
-            echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
-        fi
-        echo "https://extensions.gnome.org/extension-data/dash-to-paneljderose9.github.com.v${extension_version}.shell-extension.zip"
-    
-    elif [[ "$uuid" == "$USER_THEME_UUID" ]]; then
-        if [[ -n "${USER_THEME_VERSIONS[$gnome_version]}" ]]; then
-            extension_version="${USER_THEME_VERSIONS[$gnome_version]}"
-        else
-            extension_version="63"
-            echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
-        fi
-        echo "https://extensions.gnome.org/extension-data/user-themegnome-shell-extensions.gcampax.github.com.v${extension_version}.shell-extension.zip"
-    
-    elif [[ "$uuid" == "$IMPATIENCE_UUID" ]]; then
-        if [[ -n "${IMPATIENCE_VERSIONS[$gnome_version]}" ]]; then
-            extension_version="${IMPATIENCE_VERSIONS[$gnome_version]}"
-        else
-            extension_version="28"
-            echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
-        fi
-        echo "https://extensions.gnome.org/extension-data/impatiencegfxmonk.net.v${extension_version}.shell-extension.zip"
-    
-    elif [[ "$uuid" == "$BURN_MY_WINDOWS_UUID" ]]; then
-        if [[ -n "${BURN_MY_WINDOWS_VERSIONS[$gnome_version]}" ]]; then
-            extension_version="${BURN_MY_WINDOWS_VERSIONS[$gnome_version]}"
-        else
-            extension_version="46"
-            echo "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
-        fi
-        echo "https://extensions.gnome.org/extension-data/burn-my-windowsschneegans.github.com.v${extension_version}.shell-extension.zip"
-    
-    elif [[ "$uuid" == "$SYSTEM_MONITOR_UUID" ]]; then
-        if [[ -n "${SYSTEM_MONITOR_VERSIONS[$gnome_version]}" ]]; then
-            extension_version="${SYSTEM_MONITOR_VERSIONS[$gnome_version]}"
-            echo "https://extensions.gnome.org/extension-data/system-monitorgnome-shell-extensions.gcampax.github.com.v${extension_version}.shell-extension.zip"
-        else
-            # Da System Monitor nicht für alle Versionen verfügbar ist, geben wir hier eine Warnung aus
-            echo "System Monitor ist nicht für GNOME $gnome_version verfügbar"
-            return 1
-        fi
-    else
-        echo "Unbekannte Extension UUID: $uuid"
-        return 1
-    fi
-}
-
-# Funktion zum Aktualisieren einer Extension
-update_extension() {
-    local uuid="$1"
-    local tmp_dir=$(mktemp -d)
-    local tmp_zip="$tmp_dir/extension.zip"
-    
-    echo "Prüfe Updates für $uuid (GNOME $GNOME_VERSION)..."
-    
-    # Generiere die URL basierend auf UUID und GNOME Version
-    local download_url=$(get_extension_url "$uuid" "$GNOME_MAJOR_VERSION")
-    
-    if [ -z "$download_url" ]; then
-        echo "Konnte keine Download-URL für $uuid generieren - diese Extension wird übersprungen"
-        rm -rf "$tmp_dir"
-        return 1
-    fi
-    
-    # Prüfen, ob Aktualisierung notwendig ist
-    local metadata_file="/usr/share/gnome-shell/extensions/${uuid}/metadata.json"
-    local current_version="0"
-    local extension_version
-    
-    if [ -f "$metadata_file" ]; then
-        current_version=$(grep -o '"version": *[0-9]*' "$metadata_file" | grep -o '[0-9]*' || echo "0")
-        
-        # Extrahiere die Versionsnummer aus der URL
-        extension_version=$(echo "$download_url" | grep -o 'v[0-9]*' | grep -o '[0-9]*')
-        
-        if [ "$current_version" = "$extension_version" ]; then
-            echo "Extension $uuid ist bereits aktuell (Version $current_version)"
-            rm -rf "$tmp_dir"
-            return 0
-        fi
-    fi
-    
-    echo "Neue Version verfügbar: $extension_version (aktuell installiert: $current_version)"
-    
-    # Entferne vorhandene Extension vollständig
-    if [ -d "/usr/share/gnome-shell/extensions/$uuid" ]; then
-        echo "Entferne vorherige Version von $uuid"
-        rm -rf "/usr/share/gnome-shell/extensions/$uuid"
-        sleep 1  # Kurze Pause, um sicherzustellen, dass Dateien gelöscht werden
-    fi
-    
-    # Download und Installation
-    if wget -q -O "$tmp_zip" "$download_url"; then
-        echo "Download erfolgreich"
-        
-        # Erstelle Zielverzeichnis
-        mkdir -p "/usr/share/gnome-shell/extensions/$uuid"
-        
-        # Entpacke die Extension
-        if unzip -q -o "$tmp_zip" -d "/usr/share/gnome-shell/extensions/$uuid"; then
-            echo "Extension erfolgreich entpackt"
-            
-            # Überprüfe, ob extension.js vorhanden ist
-            if [ -f "/usr/share/gnome-shell/extensions/$uuid/extension.js" ]; then
-                echo "extension.js gefunden"
-            else
-                echo "WARNUNG: extension.js nicht gefunden!"
-                ls -la "/usr/share/gnome-shell/extensions/$uuid/"
-            fi
-            
-            # Setze Berechtigungen
-            chmod -R 755 "/usr/share/gnome-shell/extensions/$uuid"
-            
-            # Passe metadata.json an, um die GNOME-Version explizit zu unterstützen
-            if [ -f "/usr/share/gnome-shell/extensions/$uuid/metadata.json" ]; then
-                echo "Passe metadata.json an, um GNOME $GNOME_VERSION zu unterstützen"
-                
-                # Sicherungskopie erstellen
-                cp "/usr/share/gnome-shell/extensions/$uuid/metadata.json" "/usr/share/gnome-shell/extensions/$uuid/metadata.json.bak"
-                
-                # Füge die aktuelle GNOME-Version zur Liste der unterstützten Versionen hinzu
-                if command -v jq &>/dev/null; then
-                    jq --arg version "$GNOME_MAJOR_VERSION" --arg fullversion "$GNOME_VERSION" \
-                       'if .["shell-version"] then .["shell-version"] += [$version, $fullversion] else .["shell-version"] = [$version, $fullversion] end' \
-                       "/usr/share/gnome-shell/extensions/$uuid/metadata.json.bak" > "/usr/share/gnome-shell/extensions/$uuid/metadata.json"
-                fi
-                
-                echo "metadata.json angepasst"
-            fi
-            
-            # Kompiliere Schemas, falls vorhanden
-            if [ -d "/usr/share/gnome-shell/extensions/$uuid/schemas" ]; then
-                echo "Kompiliere GSettings Schemas"
-                glib-compile-schemas "/usr/share/gnome-shell/extensions/$uuid/schemas"
-            fi
-            
-            echo "Extension $uuid erfolgreich aktualisiert"
-            return 0
-        else
-            echo "FEHLER: Konnte Extension nicht entpacken"
-        fi
-    else
-        echo "FEHLER: Download fehlgeschlagen für URL: $download_url"
-    fi
-    
-    rm -rf "$tmp_dir"
-    return 1
-}
-
-# Aktualisiere die installierten Extensions
-update_extension "$DASH_TO_PANEL_UUID"
-update_extension "$USER_THEME_UUID"
-update_extension "$IMPATIENCE_UUID"
-update_extension "$BURN_MY_WINDOWS_UUID"
-update_extension "$SYSTEM_MONITOR_UUID"
-
-# Suche auch nach anderen installierten Extensions
-echo "Suche nach anderen installierten GNOME Shell Erweiterungen..."
-for ext_dir in /usr/share/gnome-shell/extensions/*; do
-    if [ -d "$ext_dir" ]; then
-        uuid=$(basename "$ext_dir")
-        if [ "$uuid" != "$DASH_TO_PANEL_UUID" ] && [ "$uuid" != "$USER_THEME_UUID" ] && 
-           [ "$uuid" != "$IMPATIENCE_UUID" ] && [ "$uuid" != "$BURN_MY_WINDOWS_UUID" ] && 
-           [ "$uuid" != "$SYSTEM_MONITOR_UUID" ]; then
-            echo "Gefunden: $uuid"
-            # Hier könnten weitere Aktionen für andere Extensions ausgeführt werden
-        fi
-    fi
-done
-
-# GNOME Shell neustarten, wenn Änderungen vorgenommen wurden
-if pgrep -x "gnome-shell" >/dev/null; then
-    # Sanfter Neustart nur im X11-Modus möglich
-    if [ "$XDG_SESSION_TYPE" = "x11" ]; then
-        echo "Starte GNOME Shell neu..."
-        sudo -u "${USERNAME}" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u "${USERNAME}")/bus gnome-shell --replace &
-    else
-        echo "Bitte melde dich ab und wieder an, um die Änderungen zu übernehmen"
-    fi
-fi
-EOSCRIPT
-
-    chmod +x /usr/local/bin/update-gnome-extensions
-
-    # systemd-Service erstellen
-    cat > /etc/systemd/system/update-gnome-extensions.service <<'EOSERVICE'
-[Unit]
-Description=Update GNOME Shell Extensions
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/update-gnome-extensions
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOSERVICE
-
-    # systemd-Timer erstellen (tägliche Prüfung)
-    cat > /etc/systemd/system/update-gnome-extensions.timer <<'EOTIMER'
-[Unit]
-Description=Run GNOME Shell Extensions update daily
-
-[Timer]
-OnCalendar=daily
-RandomizedDelaySec=1h
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOTIMER
-
-    # Timer aktivieren
-    systemctl enable update-gnome-extensions.timer    
-
-    # Script erstellen für Umleitung des Sperr-Knopfes zum Benutzer-Wechsel
-    echo "Erstelle ScreenLocker-Ersatz für Benutzer-Wechsel..."
+    # Erstelle das first_login_setup.sh Skript für Benutzereinstellungen
+    log "Erstelle first_login_setup.sh für benutzerspezifische Einstellungen..."
     mkdir -p /usr/local/bin/
-    cat > /usr/local/bin/gnome-session-handler.sh <<'EOSESSIONHANDLER'
+    
+    cat > /usr/local/bin/first_login_setup.sh << 'EOLOGINSETUP'
 #!/bin/bash
+# First-Login-Setup für benutzerspezifische Einstellungen
 
-# Umleitung Bildschirmsperre -> Benutzerwechsel
-# Verhindern, dass GNOME die Bildschirmsperre verwendet
+# Protokollierung aktivieren
+LOG_FILE="$HOME/.first-login-setup.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "===== First-Login-Setup gestartet: $(date) ====="
 
-# GNOME-Sitzung erkennen und DBus-Adresse ermitteln
-for pid in $(pgrep -u "${USERNAME}" gnome-session); do
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u "${USERNAME}")/bus"
-    break
-done
+# Hilfsfunktion für Progress
+show_progress() {
+    local percent=$1
+    # Wird vom YAD Dialog ausgewertet
+    echo $percent
+}
 
-# DBus-Signal-Handler für Idle-Benachrichtigung
-dbus-monitor --session "type='signal',interface='org.gnome.ScreenSaver'" | 
-while read -r line; do
-    if echo "$line" | grep -q "boolean true"; then
-        # Bildschirmschoner aktiviert - stattdessen Benutzerwechsel auslösen
-        sudo -u "${USERNAME}" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" gdmflexiserver --startnew
-    fi
-done
-EOSESSIONHANDLER
+# Sperrt alle Eingaben und zeigt einen Fortschrittsbalken
+# Verwende YAD Dialog im Vollbildmodus
+TITLE="System-Einrichtung"
+MESSAGE="<big><b>System wird eingerichtet...</b></big>\n\nBitte warten Sie, bis dieser Vorgang abgeschlossen ist."
+WIDTH=400
+HEIGHT=200
 
-    chmod 755 /usr/local/bin/gnome-session-handler.sh
+# Starte YAD im Hintergrund und speichere die PID
+(
+    # Blockieren aller Eingaben (Vollbild mit wmctrl)
+    (
+        sleep 0.5  # Kurze Verzögerung, damit YAD starten kann
+        # Vollbild aktivieren für das YAD-Fenster
+        WID=$(xdotool search --name "$TITLE" | head -1)
+        if [ -n "$WID" ]; then
+            # Fenster im Vordergrund halten und maximieren
+            wmctrl -i -r $WID -b add,fullscreen
+            # Fenster im Fokus halten
+            while pgrep -f "yad.*$TITLE" >/dev/null; do
+                wmctrl -i -a $WID
+                sleep 0.5
+            done
+        fi
+    ) &
+    
+    # Fortschrittsbalken Konfiguration
+    # Wird vom YAD Dialog alle 0.5 Sekunden ausgewertet
+    show_progress 0
 
-    # Autostart-Eintrag für alle Benutzer
-    mkdir -p /etc/xdg/autostart/
-    cat > /etc/xdg/autostart/gnome-session-handler.desktop <<EODESKTOP
-[Desktop Entry]
-Type=Application
-Name=GNOME Session Handler
-Comment=Handles GNOME session events
-Exec=/usr/local/bin/gnome-session-handler.sh
-Terminal=false
-Hidden=false
-X-GNOME-Autostart-Phase=Applications
-NoDisplay=true
-EODESKTOP
-
-    chmod 644 /etc/xdg/autostart/gnome-session-handler.desktop
-
-    # Zusätzlich direktes Setzen wichtiger Einstellungen per gsettings für den aktuellen Benutzer
-    CURRENT_USER="${USERNAME:-$(getent passwd | awk -F: '($3 >= 1000 && $3 < 65534) {print $1; exit}')}"
-    if [ -n "$CURRENT_USER" ]; then
-        echo "Wende Einstellungen direkt für Benutzer $CURRENT_USER an..."
-        USER_UID=$(id -u "$CURRENT_USER")
-        
-        # dconf/gsettings direkt für den Benutzer anwenden
-        su - "$CURRENT_USER" -c "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$USER_UID/bus gsettings set org.gnome.gnome-session logout-prompt false"
-        su - "$CURRENT_USER" -c "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$USER_UID/bus gsettings set org.gnome.SessionManager logout-prompt false"
-        su - "$CURRENT_USER" -c "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$USER_UID/bus gsettings set org.gnome.desktop.wm.preferences focus-mode 'click'"
-    fi
-
-elif [ "$DESKTOP_ENV" = "kde" ]; then
-    # KDE-spezifische Einstellungen
-    echo "${DESKTOP_NAME} ${DESKTOP_VERSION} Einstellungen werden implementiert..."
-    # Hier würden KDE-spezifische Einstellungen kommen
-
-elif [ "$DESKTOP_ENV" = "xfce" ]; then
-    # Xfce-spezifische Einstellungen
-    echo "${DESKTOP_NAME} ${DESKTOP_VERSION} Einstellungen werden implementiert..."
-    # Hier würden Xfce-spezifische Einstellungen kommen
-else
-    echo "Keine bekannte Desktop-Umgebung gefunden."
-fi
-
-# Erstelle ein Benachrichtigungsfenster für den ersten Login
-cat > /usr/local/bin/first-login-notification.sh <<'EOFIRST'
-#!/bin/bash
-
-# Versuchen, die korrekte Display-Umgebung zu ermitteln
-if [ -z "$DISPLAY" ]; then
-    # Finde den ersten aktiven X-Display
-    for display in $(w -hs | grep -oP ':\d+' | sort | uniq); do
-        export DISPLAY=$display
-        break
+    sleep 1
+    show_progress 5
+    
+    # Warten bis DBus vollständig initialisiert ist
+    echo "Warte auf DBus-Initialisierung..."
+    for i in {1..30}; do
+        if dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.GetId >/dev/null 2>&1; then
+            echo "DBus ist bereit nach $i Sekunden"
+            break
+        fi
+        sleep 1
+        if [ $i -eq 30 ]; then
+            echo "DBus konnte nicht initialisiert werden, fahre trotzdem fort..."
+        fi
     done
-
-    # Wenn kein aktives Display gefunden wurde, versuche Standard-Display
-    if [ -z "$DISPLAY" ]; then
-        export DISPLAY=:0
-    fi
-fi
-
-# Warten bis die Desktop-Umgebung vollständig geladen ist
-sleep 3
-
-# Nutzer-ID ermitteln (funktioniert auch bei root)
-REAL_USER=$(who | grep "$DISPLAY" | head -n1 | awk '{print $1}')
-USER_ID=$(id -u "$REAL_USER")
-
-# Korrekte DBus-Adresse für den Benutzer setzen
-export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$USER_ID/bus"
-
-# Prüfen, ob wir als root ausgeführt werden aber eigentlich ein Benutzer-Display ansprechen
-if [ "$(id -u)" -eq 0 ] && [ -n "$REAL_USER" ] && [ "$REAL_USER" != "root" ]; then
-    # Führe das Skript als normaler Benutzer aus
-    su - "$REAL_USER" -c "DISPLAY=$DISPLAY DBUS_SESSION_BUS_ADDRESS='$DBUS_SESSION_BUS_ADDRESS' GTK_THEME='Adwaita:dark' $0"
-    exit $?
-fi
-
-# Hier läuft das Skript nun als normaler Benutzer
-export GTK_THEME=Adwaita:dark
-
-# Benutzer benachrichtigen mit YAD
-yad --question \
-    --title="Einrichtung" \
-    --text="<b><big><span font_family='DejaVu Sans'>Systemanpassungen wurden durchgeführt!</span></big></b>\n\n\nEin Neustart ist nötig um alle Änderungen zu aktivieren.\n\nMöchtest Du das jetzt tun?\n\n" \
-    --button="Später neu starten:1" \
-    --button="Jetzt neu starten:0" \
-    --center \
-    --fixed \
-    --width=500 \
-    --borders=20 \
-    --text-align=center \
-    --buttons-layout=center \
-    --skip-taskbar \
-    --undecorated
-
-
-if [ $? -eq 0 ]; then
-    # Benutzer hat "Jetzt neu starten" gewählt
-    # Entferne alle temporären Dateien
-    rm -f ~/.config/autostart/first-login-notification.desktop
     
-    # Zeige eine kurze Info und starte neu
-    yad --info \
-        --title="Neustart" \
-        --text="\n\n<b><big><span font_family='DejaVu Sans'>Neustart!</span></big></b>\n\nDas System wird jetzt neu gestartet...\n\n" \
-        --timeout=3 \
-        --width=400 \
-        --borders=20 \
-        --text-align=center \
+    show_progress 10
+    
+    # Warten auf GNOME-Shell
+    echo "Warte auf GNOME-Shell..."
+    for i in {1..30}; do
+        if pgrep -x "gnome-shell" >/dev/null; then
+            echo "GNOME-Shell läuft nach $i Sekunden"
+            break
+        fi
+        sleep 1
+        if [ $i -eq 30 ]; then
+            echo "GNOME-Shell wurde nicht erkannt, fahre trotzdem fort..."
+        fi
+    done
+    
+    show_progress 15
+    
+    # Systemvariablen ermitteln
+    DESKTOP_ENV=""
+    KEYBOARD_LAYOUT="de"  # Standardwert, wird später überschrieben
+    
+    # Desktop-Umgebung erkennen
+    if [ -f /usr/bin/gnome-shell ]; then
+        DESKTOP_ENV="gnome"
+        GNOME_VERSION=$(gnome-shell --version 2>/dev/null | cut -d ' ' -f 3 | cut -d '.' -f 1,2 || echo "")
+        GNOME_MAJOR_VERSION=$(echo $GNOME_VERSION | cut -d '.' -f 1)
+        echo "Erkannte GNOME Shell Version: $GNOME_VERSION (Major: $GNOME_MAJOR_VERSION)"
+    elif [ -f /usr/bin/plasmashell ]; then
+        DESKTOP_ENV="kde"
+    elif [ -f /usr/bin/xfce4-session ]; then
+        DESKTOP_ENV="xfce"
+    else
+        DESKTOP_ENV="unknown"
+    fi
+    echo "Desktop-Umgebung lokal erkannt: $DESKTOP_ENV"
+    
+    # Tastaturlayout aus System-Einstellungen ermitteln
+    if [ -f /etc/default/keyboard ]; then
+        source /etc/default/keyboard
+        KEYBOARD_LAYOUT="$XKBLAYOUT"
+        echo "Tastaturlayout aus System-Einstellungen: $KEYBOARD_LAYOUT"
+    fi
+    
+    show_progress 20
+    
+    # Alle notwendigen gsettings anwenden
+    echo "Wende benutzerspezifische Einstellungen an..."
+    
+    if [ "$DESKTOP_ENV" = "gnome" ]; then
+        # Tastaturlayout
+        gsettings set org.gnome.desktop.input-sources sources "[('xkb', '$KEYBOARD_LAYOUT')]"
+        show_progress 25
+        
+        # GNOME-Erweiterungen aktivieren
+        extensions=(
+            'dash-to-panel@jderose9.github.com' 
+            'user-theme@gnome-shell-extensions.gcampax.github.com'
+            'impatience@gfxmonk.net'
+            'burn-my-windows@schneegans.github.com'
+            'system-monitor@gnome-shell-extensions.gcampax.github.com'
+        )
+        
+        # Aktuell aktivierte Erweiterungen ermitteln
+        current_exts=$(gsettings get org.gnome.shell enabled-extensions)
+        
+        # Neue Liste vorbereiten
+        new_exts=$(echo $current_exts | sed 's/]$//')
+        if [[ "$new_exts" == "[]" || "$new_exts" == "@as []" ]]; then
+            new_exts="["
+        else
+            new_exts="$new_exts, "
+        fi
+        
+        # Überprüfen und Erweiterungen hinzufügen
+        echo "Aktiviere GNOME-Erweiterungen..."
+        for ext in "${extensions[@]}"; do
+            if [ -d "/usr/share/gnome-shell/extensions/$ext" ]; then
+                if ! echo "$current_exts" | grep -q "$ext"; then
+                    echo "Aktiviere $ext"
+                    new_exts="$new_exts'$ext', "
+                else
+                    echo "$ext ist bereits aktiviert"
+                fi
+            else
+                echo "Erweiterung $ext nicht gefunden, wird übersprungen"
+            fi
+        done
+        new_exts="${new_exts%, }]"
+        
+        # Erweiterungen aktivieren
+        gsettings set org.gnome.shell enabled-extensions "$new_exts"
+        show_progress 35
+        
+        # Erweiterungseinstellungen konfigurieren
+        echo "Konfiguriere Erweiterungen..."
+        
+        # Impatience (schnellere Animationen)
+        if gsettings list-schemas | grep -q "org.gnome.shell.extensions.impatience"; then
+            gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3
+        fi
+        
+        # Burn My Windows
+        if gsettings list-schemas | grep -q "org.gnome.shell.extensions.burn-my-windows"; then
+            gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe'
+            gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe'
+            gsettings set org.gnome.shell.extensions.burn-my-windows animation-time 300
+            gsettings set org.gnome.shell.extensions.burn-my-windows pixelwipe-pixel-size 7
+        fi
+        
+        show_progress 40
+        
+        # Dash to Panel
+        if gsettings list-schemas | grep -q "org.gnome.shell.extensions.dash-to-panel"; then
+            gsettings set org.gnome.shell.extensions.dash-to-panel panel-size 48
+            gsettings set org.gnome.shell.extensions.dash-to-panel animate-show-apps true
+            gsettings set org.gnome.shell.extensions.dash-to-panel appicon-margin 4
+            gsettings set org.gnome.shell.extensions.dash-to-panel appicon-padding 4
+            gsettings set org.gnome.shell.extensions.dash-to-panel dot-position 'BOTTOM'
+            gsettings set org.gnome.shell.extensions.dash-to-panel dot-style-focused 'DOTS'
+            gsettings set org.gnome.shell.extensions.dash-to-panel dot-style-unfocused 'DOTS'
+            gsettings set org.gnome.shell.extensions.dash-to-panel focus-highlight true
+            gsettings set org.gnome.shell.extensions.dash-to-panel isolate-workspaces true
+        fi
+        
+        show_progress 45
+        
+        # Weitere GNOME-spezifische Einstellungen
+        gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+        gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+        gsettings set org.gnome.desktop.session idle-delay 0
+        gsettings set org.gnome.desktop.screensaver lock-enabled false
+        gsettings set org.gnome.desktop.privacy show-full-name-in-top-bar false
+        gsettings set org.gnome.desktop.interface clock-show-seconds true
+        gsettings set org.gnome.desktop.interface clock-show-weekday true
+        
+        # Media Keys und Shortcuts
+        gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']"
+        
+        show_progress 55
+        
+        # Nautilus-Einstellungen
+        if command -v nautilus &>/dev/null; then
+            gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+            gsettings set org.gnome.nautilus.preferences default-sort-order 'type'
+            gsettings set org.gnome.nautilus.preferences show-create-link true
+            gsettings set org.gnome.nautilus.preferences show-delete-permanently true
+            gsettings set org.gnome.nautilus.list-view default-zoom-level 'small'
+            gsettings set org.gnome.nautilus.list-view use-tree-view false
+        fi
+        
+        show_progress 65
+        
+        # Übersicht der aktivierten Erweiterungen ausgeben
+        echo "Aktivierte GNOME-Erweiterungen:"
+        gsettings get org.gnome.shell enabled-extensions
+        
+    elif [ "$DESKTOP_ENV" = "kde" ]; then
+        # KDE-spezifische Einstellungen
+        echo "KDE-spezifische Einstellungen werden angewendet..."
+        # Hier kdeneon-Konfigurationen hinzufügen
+        
+    elif [ "$DESKTOP_ENV" = "xfce" ]; then
+        # Xfce-spezifische Einstellungen
+        echo "Xfce-spezifische Einstellungen werden angewendet..."
+        # Hier xfce-Konfigurationen hinzufügen
+    fi
+    
+    # Desktop-unabhängige Einstellungen
+    show_progress 75
+
+    # Validierung der Benutzereinstellungen
+    validate_user_settings() {
+        local errors=0
+        local warnings=0
+        local user_log_file="$HOME/.first-login-validation.log"
+        
+        echo "===== Validierung der Benutzereinstellungen =====" > "$user_log_file"
+        echo "Gestartet am: $(date)" >> "$user_log_file"
+        
+        # 1. Prüfen, ob DBus korrekt funktioniert
+        echo "Prüfe DBus-Funktionalität..." >> "$user_log_file"
+        if ! dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.GetId > /dev/null 2>&1; then
+            echo "FEHLER: DBus funktioniert nicht korrekt!" >> "$user_log_file"
+            ((errors++))
+        else
+            echo "OK: DBus funktioniert." >> "$user_log_file"
+        fi
+        
+        if [ "$DESKTOP_ENV" = "gnome" ]; then
+            # 2. Prüfen, ob GNOME-Erweiterungen aktiviert wurden
+            echo "Prüfe aktivierte GNOME-Erweiterungen..." >> "$user_log_file"
+            enabled_extensions=$(gsettings get org.gnome.shell enabled-extensions)
+            required_extensions=("dash-to-panel@jderose9.github.com" "user-theme@gnome-shell-extensions.gcampax.github.com")
+            
+            for ext in "${required_extensions[@]}"; do
+                if ! echo "$enabled_extensions" | grep -q "$ext"; then
+                    echo "WARNUNG: Erweiterung $ext ist nicht aktiviert!" >> "$user_log_file"
+                    ((warnings++))
+                else
+                    echo "OK: Erweiterung $ext ist aktiviert." >> "$user_log_file"
+                fi
+            done
+            
+            # 3. Prüfen, ob die Tastatureinstellungen korrekt sind
+            echo "Prüfe Tastaturlayout..." >> "$user_log_file"
+            current_layout=$(gsettings get org.gnome.desktop.input-sources sources)
+            expected_layout="[('xkb', '${KEYBOARD_LAYOUT}')]"
+            
+            if [ "$current_layout" != "$expected_layout" ]; then
+                echo "WARNUNG: Falsches Tastaturlayout. Ist: $current_layout, Erwartet: $expected_layout" >> "$user_log_file"
+                ((warnings++))
+            else
+                echo "OK: Tastaturlayout korrekt eingestellt." >> "$user_log_file"
+            fi
+            
+            # 4. Prüfen, ob das Farbschema korrekt gesetzt wurde
+            echo "Prüfe Farbschema..." >> "$user_log_file"
+            current_scheme=$(gsettings get org.gnome.desktop.interface color-scheme)
+            expected_scheme="'prefer-dark'"
+            
+            if [ "$current_scheme" != "$expected_scheme" ]; then
+                echo "WARNUNG: Falsches Farbschema. Ist: $current_scheme, Erwartet: $expected_scheme" >> "$user_log_file"
+                ((warnings++))
+            else
+                echo "OK: Farbschema korrekt eingestellt." >> "$user_log_file"
+            fi
+        fi
+        
+        # 5. Prüfen, ob die Desktop-Umgebung läuft
+        echo "Prüfe Desktop-Umgebungs-Status..." >> "$user_log_file"
+        if [ "$DESKTOP_ENV" = "gnome" ] && ! pgrep -x "gnome-shell" > /dev/null; then
+            echo "FEHLER: GNOME-Shell scheint nicht zu laufen!" >> "$user_log_file"
+            ((errors++))
+        elif [ "$DESKTOP_ENV" = "kde" ] && ! pgrep -x "plasmashell" > /dev/null; then
+            echo "FEHLER: KDE Plasma Shell scheint nicht zu laufen!" >> "$user_log_file"
+            ((errors++))
+        elif [ "$DESKTOP_ENV" = "xfce" ] && ! pgrep -x "xfwm4" > /dev/null; then
+            echo "FEHLER: Xfce Window Manager scheint nicht zu laufen!" >> "$user_log_file"
+            ((errors++))
+        else
+            echo "OK: Desktop-Umgebung läuft." >> "$user_log_file"
+        fi
+        
+        # Ausgabe des Ergebnisses
+        echo "===== Validierungszusammenfassung =====" >> "$user_log_file"
+        if [ $errors -eq 0 ]; then
+            if [ $warnings -eq 0 ]; then
+                echo "ERFOLG: Alle Benutzereinstellungen wurden korrekt implementiert." >> "$user_log_file"
+                echo "Benutzer-Setup erfolgreich abgeschlossen. Alle Prüfungen bestanden."
+                return 0
+            else
+                echo "TEILWEISER ERFOLG: Benutzereinstellungen wurden mit $warnings Warnungen implementiert." >> "$user_log_file"
+                echo "Benutzer-Setup mit $warnings Warnungen abgeschlossen."
+                return 1
+            fi
+        else
+            echo "FEHLER: $errors kritische Probleme bei der Benutzerkonfiguration gefunden." >> "$user_log_file"
+            echo "WARNUNG: Benutzer-Setup nicht vollständig abgeschlossen. $errors Probleme und $warnings Warnungen gefunden."
+            echo "Prüfen Sie die Logdatei für Details: $user_log_file"
+            return 2
+        fi
+    }
+    
+    # GNOME-Shell neustarten, um Änderungen zu übernehmen
+    echo "Überprüfe, ob GNOME-Shell-Neustart erforderlich ist..."
+    NEEDS_RESTART=true
+    SESSION_TYPE=$(echo $XDG_SESSION_TYPE)
+    
+    if [ "$DESKTOP_ENV" = "gnome" ]; then
+        if [ "$SESSION_TYPE" = "x11" ]; then
+            echo "X11-Sitzung erkannt, führe sanften GNOME-Shell-Neustart durch..."
+            # Versuche einen sanften Neustart, falls in X11
+            dbus-send --session --type=method_call --dest=org.gnome.Shell /org/gnome/Shell org.gnome.Shell.Eval string:'global.reexec_self()' &>/dev/null || true
+            show_progress 85
+            sleep 2
+            NEEDS_RESTART=false
+        elif [ "$SESSION_TYPE" = "wayland" ]; then
+            echo "Wayland-Sitzung erkannt, kann GNOME-Shell nicht sanft neustarten."
+            NEEDS_RESTART=true
+        fi
+    fi
+    
+    # Validiere die Benutzereinstellungen
+    show_progress 95
+    validate_result=$(validate_user_settings)
+    validation_exit_code=$?
+    
+    # Bereite Zusammenfassung vor
+    show_progress 100
+    sleep 1
+    echo "$validation_result"
+    
+    # Beenden des YAD-Dialogs
+    ) | yad --progress \
+        --title="$TITLE" \
+        --text="$MESSAGE" \
+        --width=$WIDTH \
+        --height=$HEIGHT \
         --center \
-        --fixed \
-        --buttons-layout=hidden \
+        --auto-close \
+        --auto-kill \
         --no-buttons \
+        --undecorated \
+        --fixed \
+        --on-top \
         --skip-taskbar \
-        --undecorated
-    
-    # Neustart durchführen
-    systemctl reboot
-else
-    # Benutzer hat "Später neu starten" gewählt
+        --borders=20
+
+# Nach dem YAD-Dialog: Zeige eine Zusammenfassung und validiere das Setup
+if [ "$validation_exit_code" -eq 0 ]; then
+    # Erfolgsmeldung
     yad --info \
-        --title="Information" \
-        --text="<b><big><span font_family='DejaVu Sans'>Information!</span></big></b>\n\nBitte starte später manuell neu.\n\nDiese Benachrichtigung wird nicht erneut angezeigt.\n\n" \
-        --width=400 \
+        --title="Setup abgeschlossen" \
+        --text="<b><big>System-Setup erfolgreich!</big></b>\n\nAlle Einstellungen wurden korrekt angewendet." \
+        --button="OK":0 \
+        --center --width=400 \
         --borders=20 \
         --text-align=center \
-        --center \
         --fixed \
-        --button="OK:0" \
-        --buttons-layout=center \
-        --skip-taskbar \
-        --undecorated
+        --on-top
+        
+    # Entferne dieses Skript aus dem Autostart
+    rm -f "$HOME/.config/autostart/first-login-setup.desktop"
+    
+    # Selbstzerstörung mit Verzögerung einleiten
+    (sleep 3 && sudo rm -f "$0") &
+elif [ "$validation_exit_code" -eq 1 ]; then
+    # Teilweise erfolgreich mit Warnungen
+    yad --warning \
+        --title="Setup mit Warnungen abgeschlossen" \
+        --text="<b><big>System-Setup teilweise abgeschlossen!</big></b>\n\nEinige Einstellungen konnten nicht vollständig angewendet werden.\nDas System ist aber funktionsfähig.\n\nSiehe: $HOME/.first-login-validation.log" \
+        --button="OK":0 \
+        --center --width=450 \
+        --borders=20 \
+        --text-align=center \
+        --fixed \
+        --on-top
+        
+    # Entferne dieses Skript aus dem Autostart
+    rm -f "$HOME/.config/autostart/first-login-setup.desktop"
+    
+    # Selbstzerstörung mit Verzögerung einleiten
+    (sleep 3 && sudo rm -f "$0") &
+else
+    # Fehlgeschlagen
+    yad --error \
+        --title="Setup unvollständig" \
+        --text="<b><big>System-Setup unvollständig!</big></b>\n\nKritische Einstellungen konnten nicht angewendet werden.\n\nBitte prüfen Sie die Logdatei: $HOME/.first-login-validation.log\n\nDas Setup wird beim nächsten Login erneut versucht." \
+        --button="OK":0 \
+        --center --width=450 \
+        --borders=20 \
+        --text-align=center \
+        --fixed \
+        --on-top
+    
+    # Skript bleibt für einen weiteren Versuch erhalten
+    echo "Setup unvollständig. Das Skript bleibt für einen weiteren Versuch erhalten."
 fi
 
-# Entferne dieses Skript aus dem Autostart und sich selbst
-rm -f ~/.config/autostart/first-login-notification.desktop
-if [ "$0" != "/dev/stdin" ]; then
-    rm -f "$0"
-fi
+# Beenden mit entsprechendem Exitcode
+exit $validation_exit_code
+EOLOGINSETUP
 
-exit 0
-EOFIRST
-
-# Mache das Skript ausführbar
-chmod +x /usr/local/bin/first-login-notification.sh
-
-# Erstelle einen Autostart-Eintrag für den Benutzer
-mkdir -p /etc/skel/.config/autostart
-cat > /etc/skel/.config/autostart/first-login-notification.desktop <<EOAUTO
+    # Skript ausführbar machen
+    chmod 755 /usr/local/bin/first_login_setup.sh
+    
+    # Erstellen des Autostart-Eintrags für alle Benutzer (Template in /etc/skel)
+    mkdir -p /etc/skel/.config/autostart
+    cat > /etc/skel/.config/autostart/first-login-setup.desktop <<EOAUTOSTART
 [Desktop Entry]
 Type=Application
-Name=First Login Notification
-Comment=Shows a notification after the first login
-Exec=/usr/local/bin/first-login-notification.sh
+Name=First Login Setup
+Comment=Initial user configuration after first login
+Exec=/usr/local/bin/first_login_setup.sh
 Terminal=false
-Hidden=false
-NoDisplay=false
 X-GNOME-Autostart-enabled=true
-EOAUTO
+X-GNOME-Autostart-Phase=Applications
+X-GNOME-Autostart-Delay=3
+NoDisplay=false
+EOAUTOSTART
 
-# Kopiere den Autostart-Eintrag für bestehende Benutzer
-for userdir in /home/*; do
-    username=$(basename "$userdir")
-    if [ -d "$userdir" ] && [ "$username" != "lost+found" ]; then
-        mkdir -p "$userdir/.config/autostart"
-        cp /etc/skel/.config/autostart/first-login-notification.desktop "$userdir/.config/autostart/"
-        chown -R "$username:$username" "$userdir/.config"
-    fi
-done
-
-# Aufräumen und Selbstzerstörung einrichten
-echo "Einstellungen angewendet, entferne Autostart-Konfiguration."
-
-# Entferne Autostart-Eintrag für dieses Skript
-if [ -f /etc/xdg/autostart/post-install-settings.desktop ]; then
-    rm -f /etc/xdg/autostart/post-install-settings.desktop
+    # Kopiere den Autostart-Eintrag für bestehende Benutzer
+    mkdir -p /home/${USERNAME}/.config/autostart
+    cp /etc/skel/.config/autostart/first-login-setup.desktop /home/${USERNAME}/.config/autostart/
+    chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.config
+    
+elif [ "$DESKTOP_ENV" = "kde" ]; then
+    # KDE-spezifische Einstellungen (ähnliche Struktur wie für GNOME)
+    log "KDE-spezifische Einstellungen werden implementiert..."
+    # Hier KDE-spezifische Code einfügen
+    
+elif [ "$DESKTOP_ENV" = "xfce" ]; then
+    # Xfce-spezifische Einstellungen (ähnliche Struktur wie für GNOME)
+    log "Xfce-spezifische Einstellungen werden implementiert..."
+    # Hier Xfce-spezifische Code einfügen
+    
+else
+    log "Keine bekannte Desktop-Umgebung gefunden."
 fi
 
-# Selbstzerstörung für den nächsten Reboot
-echo "#!/bin/bash
-rm -f /usr/local/bin/post_install_settings.sh
-rm -f \$0" > /usr/local/bin/cleanup_settings.sh
-chmod 755 /usr/local/bin/cleanup_settings.sh
+# Funktion zur Überprüfung, ob Systemkomponenten korrekt installiert wurden
+check_system_setup() {
+    local errors=0
+    local log_file="/var/log/system-setup-validation.log"
+    
+    log "===== Validierung der Systemeinstellungen ====="
+    log "Gestartet am: $(date)" 
+    
+    # 1. Prüfen, ob alle erforderlichen Verzeichnisse existieren
+    log "Prüfe erforderliche Verzeichnisse..." 
+    required_dirs=("/usr/local/bin" "/etc/skel/.config/autostart")
+    for dir in "${required_dirs[@]}"; do
+        if [ ! -d "$dir" ]; then
+            log "FEHLER: Verzeichnis $dir wurde nicht erstellt!"
+            ((errors++))
+        else
+            log "OK: Verzeichnis $dir existiert."
+        fi
+    done
+    
+    # 2. Prüfen, ob das First-Login-Setup erstellt wurde
+    log "Prüfe First-Login-Setup-Skript..." 
+    if [ ! -f "/usr/local/bin/first_login_setup.sh" ]; then
+        log "FEHLER: First-Login-Setup-Skript fehlt!"
+        ((errors++))
+    else
+        if [ ! -x "/usr/local/bin/first_login_setup.sh" ]; then
+            log "FEHLER: First-Login-Setup-Skript ist nicht ausführbar!"
+            ((errors++))
+        else
+            log "OK: First-Login-Setup-Skript wurde korrekt erstellt."
+        fi
+    fi
+    
+    # 3. Prüfen, ob der Autostart-Eintrag erstellt wurde
+    log "Prüfe Autostart-Konfiguration..." 
+    if [ ! -f "/etc/skel/.config/autostart/first-login-setup.desktop" ]; then
+        log "FEHLER: Autostart-Eintrag für First-Login-Setup fehlt!"
+        ((errors++))
+    else
+        log "OK: Autostart-Eintrag wurde korrekt erstellt."
+    fi
+    
+    # 4. GNOME-spezifische Prüfungen
+    if [ "$DESKTOP_ENV" = "gnome" ]; then
+        # Prüfen, ob die GNOME-Shell-Erweiterungen installiert wurden
+        log "Prüfe GNOME-Shell-Erweiterungen..." 
+        extensions=("dash-to-panel@jderose9.github.com" "user-theme@gnome-shell-extensions.gcampax.github.com")
+        for ext in "${extensions[@]}"; do
+            if [ ! -d "/usr/share/gnome-shell/extensions/$ext" ]; then
+                log "FEHLER: GNOME-Erweiterung $ext fehlt!"
+                ((errors++))
+            else
+                if [ -f "/usr/share/gnome-shell/extensions/$ext/extension.js" ]; then
+                    log "OK: Erweiterung $ext wurde korrekt installiert."
+                else
+                    log "FEHLER: Erweiterung $ext fehlt wesentliche Dateien!"
+                    ((errors++))
+                fi
+            fi
+        done
+        
+        # Prüfen, ob die Schemas kompiliert wurden
+        log "Prüfe, ob Schemas kompiliert wurden..." 
+        if [ ! -f "/usr/share/glib-2.0/schemas/gschemas.compiled" ]; then
+            log "FEHLER: Schema-Kompilierung fehlgeschlagen!"
+            ((errors++))
+        else
+            schema_time=$(stat -c %Y "/usr/share/glib-2.0/schemas/gschemas.compiled")
+            current_time=$(date +%s)
+            if [ $((current_time - schema_time)) -gt 300 ]; then
+                log "WARNUNG: Schema-Kompilierung könnte veraltet sein."
+            else
+                log "OK: Schemas wurden kürzlich kompiliert."
+            fi
+        fi
+    fi
+    
+    # Ausgabe des Ergebnisses
+    log "===== Validierungszusammenfassung ====="
+    if [ $errors -eq 0 ]; then
+        log "ERFOLG: Alle Systemeinstellungen wurden korrekt implementiert."
+        return 0
+    else
+        log "FEHLER: $errors Probleme bei der Systemkonfiguration gefunden."
+        return 1
+    fi
+}
 
-# Autostart für die Bereinigung
-cat > /etc/xdg/autostart/cleanup-settings.desktop <<EOCLEANUP
-[Desktop Entry]
-Type=Application
-Name=Cleanup Settings
-Comment=Removes temporary settings files
-Exec=/usr/local/bin/cleanup_settings.sh
-Terminal=false
-Hidden=false
-X-GNOME-Autostart-Phase=Applications
-EOCLEANUP
-
-echo "Konfiguration abgeschlossen."
-
-exit 0
+# Am Ende des Skripts die Prüfung durchführen und basierend darauf entscheiden
+if check_system_setup; then
+    log "Selbstzerstörung des systemd-Dienstes wird eingeleitet..."
+    
+    # Dienst als einmalig markieren und nicht beim nächsten Start ausführen
+    if [ -f "/etc/systemd/system/multi-user.target.wants/post-install-setup.service" ]; then
+        rm -f "/etc/systemd/system/multi-user.target.wants/post-install-setup.service"
+    fi
+    
+    # Skript selbst löschen (mit Verzögerung)
+    (sleep 2 && rm -f "$0") &
+    
+    log "Post-installation setup erfolgreich abgeschlossen."
+    exit 0
+else
+    log "Selbstzerstörung abgebrochen aufgrund von Validierungsfehlern."
+    log "Das Skript bleibt erhalten für eine manuelle Behebung."
+    exit 1
+fi
 EOPOSTSCRIPT
 
     # Skript ausführbar machen
-    chmod 755 /mnt/ubuntu/usr/local/bin/post_install_settings.sh
+    chmod 755 /mnt/ubuntu/usr/local/bin/post_install_setup.sh
 
-    # Setze Variablen für das Post-Install-Skript
-    sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${DESKTOP_NAME}/$DESKTOP_NAME/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${DESKTOP_VERSION}/$DESKTOP_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${DESKTOP_MAJOR_VERSION}/$DESKTOP_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${GNOME_VERSION}/$GNOME_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${GNOME_MAJOR_VERSION}/$GNOME_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${KDE_VERSION}/$KDE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${KDE_MAJOR_VERSION}/$KDE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${XFCE_VERSION}/$XFCE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    sed -i "s/\${XFCE_MAJOR_VERSION}/$XFCE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_settings.sh
-    
-# Systemd-Service erstellen, der das Skript beim ersten Start mit Root-Rechten ausführt
-mkdir -p /mnt/ubuntu/etc/systemd/system/
-cat > /mnt/ubuntu/etc/systemd/system/post-install-settings.service <<EOPOSTSERVICE
-[Unit]
-Description=Post-Installation Settings
-# Diese Zeile hinzufügen, damit es vor dem Display-Manager (Login-Bildschirm) läuft
-Before=display-manager.service
-After=network.target
-# Diese Option sicherstellen, dass GDM erst startet, wenn dieses Skript fertig ist
-Conflicts=rescue.service rescue.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/post_install_settings.sh
-RemainAfterExit=yes
-TimeoutStartSec=30
-
-[Install]
-WantedBy=multi-user.target
-# Auch hier sicherstellen, dass es vor GDM läuft
-WantedBy=display-manager.service
-EOPOSTSERVICE
-    
-    # Service aktivieren
-    mkdir -p /mnt/ubuntu/etc/systemd/system/multi-user.target.wants/
-    ln -sf /etc/systemd/system/post-install-settings.service /mnt/ubuntu/etc/systemd/system/multi-user.target.wants/post-install-settings.service
+    # Variablen für das Post-Install-Skript setzen
+    sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${DESKTOP_NAME}/$DESKTOP_NAME/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${DESKTOP_VERSION}/$DESKTOP_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${DESKTOP_MAJOR_VERSION}/$DESKTOP_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${GNOME_VERSION}/$GNOME_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${GNOME_MAJOR_VERSION}/$GNOME_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${KDE_VERSION}/$KDE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${KDE_MAJOR_VERSION}/$KDE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${XFCE_VERSION}/$XFCE_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
+    sed -i "s/\${XFCE_MAJOR_VERSION}/$XFCE_MAJOR_VERSION/g" /mnt/ubuntu/usr/local/bin/post_install_setup.sh
     
     log_info "Systemeinstellungen-Skript erfolgreich erstellt."
     show_progress 90
 }
+
+
+
+
 #  SYSTEMEINSTELLUNGEN  #
 #########################
 
