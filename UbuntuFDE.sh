@@ -1022,8 +1022,6 @@ mount_filesystems() {
     mount ${DEVP}3 /mnt/ubuntu/boot/efi
     mkdir -p /mnt/ubuntu/media/data
     mount /dev/mapper/${VGNAME}-data /mnt/ubuntu/media/data
-    
-    show_progress 45
 }
 
 install_base_system() {
