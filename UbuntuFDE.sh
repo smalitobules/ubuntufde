@@ -2067,7 +2067,7 @@ Conflicts=rescue.service rescue.target
 Type=oneshot
 ExecStart=/usr/local/bin/post_install_setup.sh
 RemainAfterExit=yes
-Timeout=120
+TimeoutSec=60
 
 [Install]
 WantedBy=multi-user.target
