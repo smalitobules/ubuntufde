@@ -1041,7 +1041,7 @@ install_base_system() {
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
         efibootmgr nala openssh-server smbclient cifs-utils util-linux net-tools
         ufw network-manager btop shim-signed ufw fastfetch zram-tools coreutils
-        timeshift jq 
+        timeshift jq unzip unrar-free 7zip
     )
 
     # Optional auszuschließende Pakete definieren
@@ -1600,6 +1600,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                 # Standard-Installation
                 pkg_install --no-install-recommends \
                     \${KERNEL_PACKAGES} \
+                    xserver-xorg \
+                    xorg \
+                    x11-common \
+                    x11-xserver-utils \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
@@ -1615,7 +1619,6 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
-                    unzip \
                     gir1.2-gtop-2.0 \
                     libgtop-2.0-11 \
                     dconf-editor \
@@ -1636,6 +1639,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                 # Minimale Installation
                 pkg_install --no-install-recommends \
                     \${KERNEL_PACKAGES} \
+                    xserver-xorg \
+                    xorg \
+                    x11-common \
+                    x11-xserver-utils \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
@@ -1651,7 +1658,6 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
-                    unzip \
                     gir1.2-gtop-2.0 \
                     libgtop-2.0-11 \
                     dconf-editor \
@@ -1713,6 +1719,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             # Fallback-Paketliste (GNOME)
             pkg_install --no-install-recommends \
                     \${KERNEL_PACKAGES} \
+                    xserver-xorg \
+                    xorg \
+                    x11-common \
+                    x11-xserver-utils \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
@@ -1728,7 +1738,6 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     gnome-system-monitor \
                     chrome-gnome-shell \
                     gufw \
-                    unzip \
                     gir1.2-gtop-2.0 \
                     libgtop-2.0-11 \
                     dconf-editor \
