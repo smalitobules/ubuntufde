@@ -1606,7 +1606,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation mit Sprachpaketen
                 pkg_install --no-install-recommends \
-                    ${KERNEL_PACKAGES} \
+                    \${KERNEL_PACKAGES} \
+                    \${BASE_LANGUAGE_PACKAGES} \
+                    \${GNOME_LANGUAGE_PACKAGES} \
                     xserver-xorg \
                     xorg \
                     x11-common \
@@ -1642,16 +1644,14 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     deluge \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
-                    virtualbox-guest-x11 \
-                    ${BASE_LANGUAGE_PACKAGES} \
-                    ${GNOME_LANGUAGE_PACKAGES}
+                    virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 # Minimale Installation mit Sprachpaketen
                 pkg_install --no-install-recommends \
-                    ${KERNEL_PACKAGES} \
-                    ${BASE_LANGUAGE_PACKAGES} \
-                    ${GNOME_LANGUAGE_PACKAGES} \
+                    \${KERNEL_PACKAGES} \
+                    \${BASE_LANGUAGE_PACKAGES} \
+                    \${GNOME_LANGUAGE_PACKAGES} \
                     xserver-xorg \
                     xorg \
                     x11-common \
@@ -1705,18 +1705,18 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 pkg_install --no-install-recommends \
-                    ${KERNEL_PACKAGES} \
-                    ${BASE_LANGUAGE_PACKAGES} \
-                    ${KDE_LANGUAGE_PACKAGES} \
+                    \${KERNEL_PACKAGES} \
+                    \${BASE_LANGUAGE_PACKAGES} \
+                    \${KDE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 pkg_install --no-install-recommends \
-                    ${KERNEL_PACKAGES} \
-                    ${BASE_LANGUAGE_PACKAGES} \
-                    ${KDE_LANGUAGE_PACKAGES} \
+                    \${KERNEL_PACKAGES} \
+                    \${BASE_LANGUAGE_PACKAGES} \
+                    \${KDE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11                
@@ -1737,18 +1737,18 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 pkg_install --no-install-recommends \
-                    ${KERNEL_PACKAGES} \
-                    ${BASE_LANGUAGE_PACKAGES} \
-                    ${XFCE_LANGUAGE_PACKAGES} \
+                    \${KERNEL_PACKAGES} \
+                    \${BASE_LANGUAGE_PACKAGES} \
+                    \${XFCE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 pkg_install --no-install-recommends \
-                    ${KERNEL_PACKAGES} \
-                    ${BASE_LANGUAGE_PACKAGES} \
-                    ${XFCE_LANGUAGE_PACKAGES} \
+                    \${KERNEL_PACKAGES} \
+                    \${BASE_LANGUAGE_PACKAGES} \
+                    \${XFCE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
@@ -1763,9 +1763,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             GNOME_LANGUAGE_PACKAGES="language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome"
             
             pkg_install --no-install-recommends \
-                    ${KERNEL_PACKAGES} \
-                    ${BASE_LANGUAGE_PACKAGES} \
-                    ${GNOME_LANGUAGE_PACKAGES} \
+                    \${KERNEL_PACKAGES} \
+                    \${BASE_LANGUAGE_PACKAGES} \
+                    \${GNOME_LANGUAGE_PACKAGES} \
                     xserver-xorg \
                     xorg \
                     x11-common \
