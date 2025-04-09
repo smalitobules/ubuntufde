@@ -2621,6 +2621,9 @@ EOGDM
 #!/bin/bash
 # First-Login-Setup für benutzerspezifische Einstellungen
 
+# Theme für YAD-Dialoge setzen
+export GTK_THEME=Adwaita:dark
+
 # Protokollierung aktivieren
 LOG_FILE="$HOME/.first-login-setup.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -2991,13 +2994,15 @@ if [ "$validation_exit_code" -eq 0 ]; then
     # Erfolgsmeldung
     yad --info \
         --title="Setup abgeschlossen" \
-        --text="<b><big>System-Setup erfolgreich!</big></b>\n\nAlle Einstellungen wurden korrekt angewendet." \
+        --text="<b><big><span font_family='DejaVu Sans'>System-Setup erfolgreich!</span></big></b>\n\n\nAlle Einstellungen wurden korrekt angewendet.\n\n" \
         --button="OK":0 \
         --center --width=400 \
         --borders=20 \
         --text-align=center \
         --fixed \
-        --on-top
+        --on-top \
+        --buttons-layout=center \
+        --undecorated
         
     # Entferne dieses Skript aus dem Autostart
     rm -f "$HOME/.config/autostart/first-login-setup.desktop"
@@ -3008,13 +3013,15 @@ elif [ "$validation_exit_code" -eq 1 ]; then
     # Teilweise erfolgreich mit Warnungen
     yad --warning \
         --title="Setup mit Warnungen abgeschlossen" \
-        --text="<b><big>System-Setup teilweise abgeschlossen!</big></b>\n\nEinige Einstellungen konnten nicht vollständig angewendet werden.\nDas System ist aber funktionsfähig.\n\nSiehe: $HOME/.first-login-validation.log" \
+        --text="<b><big><span font_family='DejaVu Sans'>System-Setup teilweise abgeschlossen!</span></big></b>\n\n\nEinige Einstellungen konnten nicht vollständig angewendet werden.\nDas System ist aber funktionsfähig.\n\nSiehe: $HOME/.first-login-validation.log\n\n" \
         --button="OK":0 \
         --center --width=450 \
         --borders=20 \
         --text-align=center \
         --fixed \
-        --on-top
+        --on-top \
+        --buttons-layout=center \
+        --undecorated
         
     # Entferne dieses Skript aus dem Autostart
     rm -f "$HOME/.config/autostart/first-login-setup.desktop"
@@ -3025,13 +3032,15 @@ else
     # Fehlgeschlagen
     yad --error \
         --title="Setup unvollständig" \
-        --text="<b><big>System-Setup unvollständig!</big></b>\n\nKritische Einstellungen konnten nicht angewendet werden.\n\nBitte prüfen Sie die Logdatei: $HOME/.first-login-validation.log\n\nDas Setup wird beim nächsten Login erneut versucht." \
+        --text="<b><big><span font_family='DejaVu Sans'>System-Setup unvollständig!</span></big></b>\n\n\nKritische Einstellungen konnten nicht angewendet werden.\n\nBitte prüfe die Logdatei: $HOME/.first-login-validation.log\n\nDas Setup wird beim nächsten Login erneut versucht.\n\n" \
         --button="OK":0 \
         --center --width=450 \
         --borders=20 \
         --text-align=center \
         --fixed \
-        --on-top
+        --on-top \
+        --buttons-layout=center \
+        --undecorated
     
     # Skript bleibt für einen weiteren Versuch erhalten
     echo "Setup unvollständig. Das Skript bleibt für einen weiteren Versuch erhalten."
