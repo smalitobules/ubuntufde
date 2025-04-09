@@ -1602,6 +1602,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     xorg \
                     x11-common \
                     x11-xserver-utils \
+                    xdotool \
+                    dbus-x11 \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
@@ -1641,6 +1643,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     xorg \
                     x11-common \
                     x11-xserver-utils \
+                    xdotool \
+                    dbus-x11 \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
@@ -1721,6 +1725,8 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     xorg \
                     x11-common \
                     x11-xserver-utils \
+                    xdotool \
+                    dbus-x11 \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
