@@ -1040,7 +1040,8 @@ install_base_system() {
         apt-transport-https console-setup bash-completion systemd-resolved
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
         efibootmgr nala openssh-server smbclient cifs-utils util-linux net-tools
-        ufw network-manager btop
+        ufw network-manager btop shim-signed ufw fastfetch zram-tools coreutils
+        timeshift jq 
     )
 
     # Optional auszuschließende Pakete definieren
@@ -1063,6 +1064,7 @@ install_base_system() {
             --exclude="$EXCLUDED_PACKAGELIST" \
             --variant=minbase \
             --components=main,restricted,universe,multiverse \
+            --no-install-recommends \
             --arch=amd64 \
             oracular \
             /mnt/ubuntu \
@@ -1072,6 +1074,7 @@ install_base_system() {
             --include="$INCLUDED_PACKAGELIST" \
             --exclude="$EXCLUDED_PACKAGELIST" \
             --components=main,restricted,universe,multiverse \
+            --no-install-recommends \
             --arch=amd64 \
             oracular \
             /mnt/ubuntu \
@@ -1357,18 +1360,11 @@ elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
     KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
 fi
 
-# Grundlegende Programme und Kernel installieren
-pkg_install --no-install-recommends \
-    \${KERNEL_PACKAGES} \
-    shim-signed \
-    zram-tools \
-    coreutils \
-    timeshift \
-    bleachbit \
-    fastfetch \
-    gparted \
-    ufw \
-    jq
+# Grundlegende Programme für Desktopfreie-Umgebung installieren
+if [ "${INSTALL_DESKTOP}" != "1" ]; then
+    pkg_install --no-install-recommends \
+        \${KERNEL_PACKAGES}
+fi
 
 
 # Thorium Browser installieren
@@ -1603,11 +1599,13 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 # Standard-Installation
                 pkg_install --no-install-recommends \
+                    \${KERNEL_PACKAGES} \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
                     libpam-gnome-keyring \
                     gsettings-desktop-schemas \
+                    gparted \
                     gnome-disk-utility \
                     gnome-text-editor \
                     gnome-terminal \
@@ -1626,6 +1624,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
                     yad \
+                    bleachbit \
                     stacer \
                     vlc \
                     deluge \
@@ -1636,11 +1635,13 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             else
                 # Minimale Installation
                 pkg_install --no-install-recommends \
+                    \${KERNEL_PACKAGES} \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
                     libpam-gnome-keyring \
                     gsettings-desktop-schemas \
+                    gparted \
                     gnome-disk-utility \
                     gnome-text-editor \
                     gnome-terminal \
@@ -1659,6 +1660,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
                     yad \
+                    bleachbit \
                     stacer \
                     vlc \
                     deluge \
@@ -1710,11 +1712,13 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
             # Fallback-Paketliste (GNOME)
             pkg_install --no-install-recommends \
+                    \${KERNEL_PACKAGES} \
                     gnome-session \
                     gnome-shell \
                     gdm3 \
                     libpam-gnome-keyring \
                     gsettings-desktop-schemas \
+                    gparted \
                     gnome-disk-utility \
                     gnome-text-editor \
                     gnome-terminal \
@@ -1733,6 +1737,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     ubuntu-gnome-wallpapers \
                     yad \
+                    bleachbit \
                     stacer \
                     vlc \
                     deluge \
