@@ -1576,28 +1576,37 @@ update-grub
 ##################
 
 
-## Zram für Swap konfigurieren
-#cat > /etc/default/zramswap <<EOZ
-## Konfiguration für zramswap
-#PERCENT=200
-#ALLOCATION=lz4
-#EOZ
+# Zram für Swap konfigurieren
+cat > /etc/default/zramswap <<EOZ
+# Konfiguration für zramswap
+PERCENT=200
+ALLOCATION=lz4
+EOZ
 
 # Benutzer anlegen
 useradd -m -s /bin/bash -G sudo ${USERNAME}
 echo "${USERNAME}:${USER_PASSWORD}" | chpasswd
 
-# Desktop-Umgebung installieren
+
+#########################
+#  DESKTOPINSTALLATION  #
+# Desktop-Umgebung mit Sprachpaketen installieren
 echo "INSTALL_DESKTOP=${INSTALL_DESKTOP}, DESKTOP_ENV=${DESKTOP_ENV}, DESKTOP_SCOPE=${DESKTOP_SCOPE}" >> /var/log/install.log
 if [ "${INSTALL_DESKTOP}" = "1" ]; then
+    # Basis-Sprachpakete für alle Desktop-Umgebungen
+    BASE_LANGUAGE_PACKAGES="language-pack-${UI_LANGUAGE%_*} language-selector-common"
+    
     case "${DESKTOP_ENV}" in
         # GNOME Desktop
         1)
-            echo "Installiere GNOME-Desktop-Umgebung..."
+            echo "Installiere GNOME Desktop mit Sprachpaketen für ${UI_LANGUAGE}..."
+            # GNOME-spezifische Sprachpakete
+            GNOME_LANGUAGE_PACKAGES="language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome"
+            
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
-                # Standard-Installation
+                # Standard-Installation mit Sprachpaketen
                 pkg_install --no-install-recommends \
-                    \${KERNEL_PACKAGES} \
+                    ${KERNEL_PACKAGES} \
                     xserver-xorg \
                     xorg \
                     x11-common \
@@ -1633,12 +1642,16 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     deluge \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
-                    virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                    virtualbox-guest-x11 \
+                    ${BASE_LANGUAGE_PACKAGES} \
+                    ${GNOME_LANGUAGE_PACKAGES}
+                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
-                # Minimale Installation
+                # Minimale Installation mit Sprachpaketen
                 pkg_install --no-install-recommends \
-                    \${KERNEL_PACKAGES} \
+                    ${KERNEL_PACKAGES} \
+                    ${BASE_LANGUAGE_PACKAGES} \
+                    ${GNOME_LANGUAGE_PACKAGES} \
                     xserver-xorg \
                     xorg \
                     x11-common \
@@ -1675,43 +1688,71 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
-        # KDE Plasma Desktop (momentan nur Platzhalter)
+        # KDE Plasma Desktop
         2)
             echo "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
+            # KDE-spezifische Sprachpakete
+            KDE_LANGUAGE_PACKAGES="language-pack-kde-${UI_LANGUAGE%_*}"
+            
+            # Füge kde-l10n nur hinzu wenn verfügbar (ist in neueren Versionen nicht mehr vorhanden)
+            if apt-cache show kde-l10n-${UI_LANGUAGE%_*} >/dev/null 2>&1; then
+                KDE_LANGUAGE_PACKAGES+=" kde-l10n-${UI_LANGUAGE%_*}"
+            fi
+            
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 pkg_install --no-install-recommends \
+                    ${KERNEL_PACKAGES} \
+                    ${BASE_LANGUAGE_PACKAGES} \
+                    ${KDE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 pkg_install --no-install-recommends \
+                    ${KERNEL_PACKAGES} \
+                    ${BASE_LANGUAGE_PACKAGES} \
+                    ${KDE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11                
-                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
-        # Xfce Desktop (momentan nur Platzhalter)
+        # Xfce Desktop
         3)
             echo "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
+            # Xfce-spezifische Sprachpakete
+            XFCE_LANGUAGE_PACKAGES="language-pack-${UI_LANGUAGE%_*}-base"
+            
+            # Füge xfce4-session-l10n nur hinzu wenn verfügbar
+            if apt-cache show xfce4-session-l10n >/dev/null 2>&1; then
+                XFCE_LANGUAGE_PACKAGES+=" xfce4-session-l10n"
+            fi
+            
             if [ "${DESKTOP_SCOPE}" = "1" ]; then
                 pkg_install --no-install-recommends \
+                    ${KERNEL_PACKAGES} \
+                    ${BASE_LANGUAGE_PACKAGES} \
+                    ${XFCE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             else
                 pkg_install --no-install-recommends \
+                    ${KERNEL_PACKAGES} \
+                    ${BASE_LANGUAGE_PACKAGES} \
+                    ${XFCE_LANGUAGE_PACKAGES} \
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
             ;;
             
@@ -1719,8 +1760,12 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
         *)
             echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
             # Fallback-Paketliste (GNOME)
+            GNOME_LANGUAGE_PACKAGES="language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome"
+            
             pkg_install --no-install-recommends \
-                    \${KERNEL_PACKAGES} \
+                    ${KERNEL_PACKAGES} \
+                    ${BASE_LANGUAGE_PACKAGES} \
+                    ${GNOME_LANGUAGE_PACKAGES} \
                     xserver-xorg \
                     xorg \
                     x11-common \
@@ -1757,31 +1802,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-            echo "DEBUG: Desktop-Installation abgeschlossen, exit code: $?" >> /var/log/install-debug.log
-            ;;
-    esac
-fi
-
-# Desktop-Sprachpakete installieren
-if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    echo "Installiere Sprachpakete für ${UI_LANGUAGE}..."
-    
-    # Gemeinsame Sprachpakete für alle Desktop-Umgebungen
-    pkg_install language-pack-${UI_LANGUAGE%_*} language-selector-common
-    
-    # Desktop-spezifische Sprachpakete
-    case "${DESKTOP_ENV}" in
-        # GNOME Desktop
-        1)
-            pkg_install language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome
-            ;;
-        # KDE Plasma Desktop
-        2)
-            pkg_install language-pack-kde-${UI_LANGUAGE%_*} kde-l10n-${UI_LANGUAGE%_*} || true
-            ;;
-        # Xfce Desktop
-        3)
-            pkg_install language-pack-${UI_LANGUAGE%_*}-base xfce4-session-l10n || true
+            echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
     
@@ -1804,34 +1825,31 @@ LOCALE
         done
     fi
 fi
-
-
+#  DESKTOPINSTALLATION  #
 #########################
-#   SYSTEMANPASSUNGEN   #
 
-# Deaktiviere unnötige systemd-Dienste
-systemctl disable --now \
-    gnome-remote-desktop.service \
-    gnome-remote-desktop-configuration.service \
-    apport.service \
-    apport-autoreport.service \
-    avahi-daemon.service \
-    bluetooth.service \
-    cups.service \
-    ModemManager.service \
-    upower.service \
+
+# Deaktiviere unerwünschte Systemd-Dienste
+echo "Deaktiviere unerwünschte Systemd-Dienste..."
+SERVICES_TO_DISABLE=(
+    gnome-remote-desktop.service
+    gnome-remote-desktop-configuration.service
+    apport.service
+    apport-autoreport.service
+    avahi-daemon.service
+    bluetooth.service
+    cups.service
+    ModemManager.service
+    upower.service
     rsyslog.service
+    whoopsie.service
+    kerneloops.service
+    NetworkManager-wait-online.service
+)
 
-# Optional: Zusätzliche Bereinigung für Desktop-Systeme
-if [ "${INSTALL_DESKTOP}" = "1" ]; then
-    systemctl disable --now \
-        whoopsie.service \
-        kerneloops.service \
-        NetworkManager-wait-online.service
-fi
-#   SYSTEMANPASSUNGEN   #
-#########################
-
+for service in "${SERVICES_TO_DISABLE[@]}"; do
+    systemctl disable $service >/dev/null 2>&1 || true
+done
 
 # Aufräumen
 echo "Bereinige temporäre Dateien..."
@@ -1962,9 +1980,8 @@ desktop_version_detect() {
     fi
 }
 
-# Autologin für erstellen Benutzer aktivieren
+# Autologin für erstellten Benutzer einrichten
 configure_autologin() {
-    # Wird nur ausgeführt, wenn Desktop-Installation aktiviert ist
     if [ "$INSTALL_DESKTOP" != "1" ]; then
         log_info "Kein Desktop gewählt, überspringe Autologin-Konfiguration"
         return 0
