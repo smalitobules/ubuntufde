@@ -100,7 +100,7 @@ confirm() {
 # Wrapper-Funktion für Paketinstallationen
 pkg_install() {
     if command -v nala &> /dev/null; then
-        nala install --dpkg-option="--force-unsafe-io" --dpkg-option="Dpkg::Parallelize=true" -y "$@"
+        nala install -y "$@"
     else
         apt-get install -y "$@"
     fi
@@ -1199,10 +1199,10 @@ else
     ln -sf /usr/share/zoneinfo/Europe/Zurich /etc/localtime
 fi
 
-# Wrapper-Funktion für Paketinstallationen
+# Wrapper-Funktionen für Paketoperationen
 pkg_install() {
     if command -v nala &> /dev/null; then
-        nala install --dpkg-option="--force-unsafe-io" --dpkg-option="Dpkg::Parallelize=true" -y "\$@"
+        nala install -y "\$@"
     else
         apt-get install -y "\$@"
     fi
