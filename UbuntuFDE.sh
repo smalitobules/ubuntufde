@@ -2831,6 +2831,36 @@ HEIGHT=200
             gsettings set org.gnome.nautilus.list-view use-tree-view false
         fi
 
+        # Nautilus-Favoriten konfigurieren
+        if command -v nautilus &>/dev/null; then
+            log "Konfiguriere Nautilus-Seitenleiste..."
+            
+            # Lesezeichen-Datei leeren, um benutzerdefinierte Lesezeichen zu entfernen
+            mkdir -p $HOME/.config/gtk-3.0
+            touch $HOME/.config/gtk-3.0/bookmarks
+            
+            # Nautilus-Einstellungen für Seitenleiste anpassen
+            gsettings set org.gnome.nautilus.window-state sidebar-width 180
+            gsettings set org.gnome.nautilus.window-state start-with-sidebar true
+            
+            # Zeige Standard-Orte in der Seitenleiste
+            gsettings set org.gnome.nautilus.sidebar-panels.places show-places-list true
+            
+            # Versuche, die Kategorie "Favoriten" auszublenden
+            dconf write /org/gnome/nautilus/window-state/sidebar-bookmark-breakpoint false
+            
+            # Optional: Aktiviere die Anzeige von Verzeichnissen unter "Persönlicher Ordner"
+            gsettings set org.gnome.nautilus.preferences show-directory-item-counts 'always'
+            
+            # Berechtigungen setzen
+            chown -R $USER:$USER $HOME/.config/gtk-3.0
+            
+            # Aktualisierung der Nautilus-Einstellungen erzwingen
+            if pgrep nautilus >/dev/null; then
+                killall -HUP nautilus || true
+            fi
+        fi
+
         show_progress 65
         
         # Übersicht der aktivierten Erweiterungen ausgeben
