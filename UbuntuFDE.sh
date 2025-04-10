@@ -2813,6 +2813,8 @@ HEIGHT=200
         gsettings set org.gnome.desktop.privacy show-full-name-in-top-bar false
         gsettings set org.gnome.desktop.interface clock-show-seconds true
         gsettings set org.gnome.desktop.interface clock-show-weekday true
+        gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer', 'kms-modifiers', 'variable-refresh-rate', 'autoclose-xwayland']"
+
         
         # Media Keys und Shortcuts
         gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']"
