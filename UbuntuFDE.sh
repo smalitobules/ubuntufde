@@ -2611,6 +2611,39 @@ EOGDM
     log "Installiere System Monitor..."
     install_extension "$SYSTEM_MONITOR_UUID" || true  # Fortsetzung auch bei Fehler
 
+    # Einstellungen der Extensions Systemweit einrichten
+        # Impatience Standardkonfiguration
+        mkdir -p /etc/skel/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/
+        echo '{
+        "speed-factor": 0.3
+        }' > /etc/skel/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/prefs.json
+
+        # Burn My Windows Standardkonfiguration
+        mkdir -p /etc/skel/.local/share/gnome-shell/extensions/burn-my-windows@schneegans.github.com/
+        echo '{
+        "close-effect": "pixelwipe",
+        "open-effect": "pixelwipe",
+        "animation-time": 300,
+        "pixelwipe-pixel-size": 7
+        }' > /etc/skel/.local/share/gnome-shell/extensions/burn-my-windows@schneegans.github.com/prefs.json
+
+        # Dash to Panel Standardkonfiguration
+        mkdir -p /etc/skel/.local/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com/
+        echo '{
+        "panel-size": 48,
+        "animate-show-apps": true,
+        "appicon-margin": 4,
+        "appicon-padding": 4,
+        "dot-position": "BOTTOM",
+        "dot-style-focused": "DOTS",
+        "dot-style-unfocused": "DOTS",
+        "focus-highlight": true,
+        "isolate-workspaces": true
+        }' > /etc/skel/.local/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com/prefs.json
+
+        # Berechtigungen setzen
+        chmod -R 755 /etc/skel/.local/share/gnome-shell/extensions/*
+
     # Erstelle das first_login_setup.sh Skript für Benutzereinstellungen
     log "Erstelle first_login_setup.sh für benutzerspezifische Einstellungen..."
     mkdir -p /usr/local/bin/
@@ -2775,34 +2808,43 @@ HEIGHT=200
         # Erweiterungseinstellungen konfigurieren
         echo "Konfiguriere Erweiterungen..."
         
-        # Impatience (schnellere Animationen)
-        if gsettings list-schemas | grep -q "org.gnome.shell.extensions.impatience"; then
-            gsettings set org.gnome.shell.extensions.impatience speed-factor 0.3
-        fi
-        
-        # Burn My Windows
-        if gsettings list-schemas | grep -q "org.gnome.shell.extensions.burn-my-windows"; then
-            gsettings set org.gnome.shell.extensions.burn-my-windows close-effect 'pixelwipe'
-            gsettings set org.gnome.shell.extensions.burn-my-windows open-effect 'pixelwipe'
-            gsettings set org.gnome.shell.extensions.burn-my-windows animation-time 300
-            gsettings set org.gnome.shell.extensions.burn-my-windows pixelwipe-pixel-size 7
-        fi
-        
+            # Impatience (schnellere Animationen)
+            log "Konfiguriere Impatience Extension..."
+            mkdir -p $HOME/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/
+            echo '{
+            "speed-factor": 0.3
+            }' > $HOME/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/prefs.json
+            
+            # Burn My Windows
+            log "Konfiguriere Burn My Windows Extension..."
+            mkdir -p $HOME/.local/share/gnome-shell/extensions/burn-my-windows@schneegans.github.com/
+            echo '{
+            "close-effect": "pixelwipe",
+            "open-effect": "pixelwipe",
+            "animation-time": 300,
+            "pixelwipe-pixel-size": 7
+            }' > $HOME/.local/share/gnome-shell/extensions/burn-my-windows@schneegans.github.com/prefs.json
+            
         show_progress 40
-        
-        # Dash to Panel
-        if gsettings list-schemas | grep -q "org.gnome.shell.extensions.dash-to-panel"; then
-            gsettings set org.gnome.shell.extensions.dash-to-panel panel-size 48
-            gsettings set org.gnome.shell.extensions.dash-to-panel animate-show-apps true
-            gsettings set org.gnome.shell.extensions.dash-to-panel appicon-margin 4
-            gsettings set org.gnome.shell.extensions.dash-to-panel appicon-padding 4
-            gsettings set org.gnome.shell.extensions.dash-to-panel dot-position 'BOTTOM'
-            gsettings set org.gnome.shell.extensions.dash-to-panel dot-style-focused 'DOTS'
-            gsettings set org.gnome.shell.extensions.dash-to-panel dot-style-unfocused 'DOTS'
-            gsettings set org.gnome.shell.extensions.dash-to-panel focus-highlight true
-            gsettings set org.gnome.shell.extensions.dash-to-panel isolate-workspaces true
-        fi
-        
+            
+            # Dash to Panel
+            log "Konfiguriere Dash to Panel Extension..."
+            mkdir -p $HOME/.local/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com/
+            echo '{
+            "panel-size": 48,
+            "animate-show-apps": true,
+            "appicon-margin": 4,
+            "appicon-padding": 4,
+            "dot-position": "BOTTOM",
+            "dot-style-focused": "DOTS",
+            "dot-style-unfocused": "DOTS",
+            "focus-highlight": true,
+            "isolate-workspaces": true
+            }' > $HOME/.local/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com/prefs.json
+
+            # Setze Berechtigungen
+            chown -R $USER:$USER $HOME/.local/share/gnome-shell/
+            
         show_progress 45
         
         # Weitere GNOME-spezifische Einstellungen
