@@ -2317,7 +2317,7 @@ select-all='<Primary>a'
 always-show-log-out=true
 disable-user-extensions=false
 enabled-extensions=['user-theme@gnome-shell-extensions.gcampax.github.com']
-favorite-apps=['org.gnome.Nautilus.desktop', 'firefox.desktop', 'gnome-control-center.desktop', 'org.gnome.Terminal.desktop']
+favorite-apps=['org.gnome.Nautilus.desktop', 'thorium-browser.desktop', 'org.gnome.Terminal.desktop']
 welcome-dialog-last-shown-version='42.0'
 
 [org.gnome.shell.app-switcher]
@@ -2830,7 +2830,7 @@ HEIGHT=200
             gsettings set org.gnome.nautilus.list-view default-zoom-level 'small'
             gsettings set org.gnome.nautilus.list-view use-tree-view false
         fi
-        
+
         show_progress 65
         
         # Übersicht der aktivierten Erweiterungen ausgeben
