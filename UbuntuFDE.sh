@@ -1039,7 +1039,7 @@ install_base_system() {
         initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
         efibootmgr nala openssh-server smbclient cifs-utils util-linux net-tools
         ufw network-manager btop shim-signed ufw fastfetch zram-tools coreutils
-        timeshift jq unzip unrar-free 7zip
+        timeshift jq unzip unrar-free 7zip mesa-utils vulkan-tools
     )
 
     # Optional auszuschließende Pakete definieren
