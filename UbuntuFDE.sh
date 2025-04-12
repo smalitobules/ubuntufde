@@ -164,6 +164,20 @@ SOURCES
         log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
         mkdir -p /etc/apt/trusted.gpg.d/
         curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
+
+        # APT Einstellungen definieren
+        cat > /etc/apt/preferences.d/local-mirror <<EOL
+Package: *
+Pin: origin 192.168.56.120
+Pin-Priority: 1001
+EOL
+
+        # Andere Quellen deaktivieren
+        for file in /etc/apt/sources.list.d/*.list; do
+            if [ -f "$file" ]; then
+                mv "$file" "$file.bak"
+            fi
+        done
     
     local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
     local missing_deps=()
@@ -176,7 +190,7 @@ SOURCES
     
     if [ ${#missing_deps[@]} -ne 0 ]; then
         log_info "Aktualisiere Paketquellen..."
-        export DEBIAN_FRONTEND=noninteractive
+        echo "nala nala/configure_files boolean false" | debconf-set-selections
         pkg_update
         log_info "Installiere fehlende Abhängigkeiten: ${missing_deps[*]}..."
         pkg_install "${missing_deps[@]}"
