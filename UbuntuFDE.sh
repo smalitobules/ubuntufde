@@ -152,7 +152,14 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
 
-    # Andere Quellen deaktivieren
+    # Entferne vorherige APT Quellen
+    for file in /etc/apt/*.list; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
+
+    # Und deaktiviere Andere
     for file in /etc/apt/sources.list.d/*.list; do
         if [ -f "$file" ]; then
             rm -f "$file"
