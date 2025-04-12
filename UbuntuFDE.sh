@@ -176,6 +176,7 @@ SOURCES
     
     if [ ${#missing_deps[@]} -ne 0 ]; then
         log_info "Aktualisiere Paketquellen..."
+        export DEBIAN_FRONTEND=noninteractive
         pkg_update
         log_info "Installiere fehlende Abhängigkeiten: ${missing_deps[*]}..."
         pkg_install "${missing_deps[@]}"
