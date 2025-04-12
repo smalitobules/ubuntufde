@@ -1726,6 +1726,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     dconf-cli \
                     nautilus \
                     nautilus-hide \
+                    nautilus-admin \
                     ubuntu-gnome-wallpapers \
                     yad \
                     bleachbit \
@@ -1769,6 +1770,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     dconf-cli \
                     nautilus \
                     nautilus-hide \
+                    nautilus-admin \
                     ubuntu-gnome-wallpapers \
                     yad \
                     bleachbit \
@@ -1883,6 +1885,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     dconf-cli \
                     nautilus \
                     nautilus-hide \
+                    nautilus-admin \
                     ubuntu-gnome-wallpapers \
                     yad \
                     bleachbit \
