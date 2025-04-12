@@ -1,4 +1,3 @@
-cat > init << 'EOF'
 #!/bin/sh
 
 # Grundlegende Systemdateisysteme mounten
@@ -117,4 +116,3 @@ else
   sleep 5
   exec /bin/sh
 fi
-EOF
