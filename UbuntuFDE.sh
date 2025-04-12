@@ -2381,7 +2381,7 @@ EOGDM
 
 # GNOME-Animationsgeschwindigkeit systemweit erhöhen
 log "Konfiguriere GNOME-Shell Animationsgeschwindigkeit systemweit..."
-echo "GNOME_SHELL_SLOWDOWN_FACTOR=0.4" >> /etc/environment
+echo "GNOME_SHELL_SLOWDOWN_FACTOR=0.33" >> /etc/environment
 
 # Installiere GNOME Shell Erweiterungen
     log "Installiere GNOME Shell Erweiterungen..."
