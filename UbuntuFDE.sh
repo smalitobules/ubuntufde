@@ -152,19 +152,18 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
 
-    # Lokalen Mirror für apt einrichten
-    if [ ! -f "/etc/apt/sources.list.backup" ]; then
-        # Backup erstellen
-        cp /etc/apt/sources.list /etc/apt/sources.list.backup
-        
-        # Lokalen Mirror konfigurieren
-        cat > /etc/apt/sources.list <<-SOURCES
+    # Lokalen Mirror einrichten
+    cat > /etc/apt/sources.list <<-SOURCES
 deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
-    fi
+
+        # GPG-Schlüssel importieren
+        log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
+        mkdir -p /etc/apt/trusted.gpg.d/
+        curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
     
     local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
     local missing_deps=()
@@ -3428,8 +3427,8 @@ main() {
         # Systemcheck
         check_root
         check_system
-        check_dependencies
         configure_local_mirror
+        check_dependencies
         # find_fastest_mirrors
     fi
     
