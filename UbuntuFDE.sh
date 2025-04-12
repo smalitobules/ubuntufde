@@ -2379,9 +2379,10 @@ EOGDM
     log "Kompiliere glib-Schemas..."
     glib-compile-schemas /usr/share/glib-2.0/schemas/
 
-# GNOME-Animationsgeschwindigkeit systemweit erhöhen
-log "Konfiguriere GNOME-Shell Animationsgeschwindigkeit systemweit..."
+# GNOME-Umgebungsvariablen konfigurieren
+log "Konfiguriere GNOME-Umgebungsvariablen für bessere Performance"
 echo "GNOME_SHELL_SLOWDOWN_FACTOR=0.33" >> /etc/environment
+echo "NO_AT_BRIDGE=1" >> /etc/environment
 
 # Installiere GNOME Shell Erweiterungen
     log "Installiere GNOME Shell Erweiterungen..."
