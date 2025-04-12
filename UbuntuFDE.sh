@@ -914,7 +914,7 @@ prepare_disk() {
 
     # Bestätigung nur einholen, wenn sie nicht bereits erfolgt ist
     if [ "${DISK_CONFIRMED:-false}" != "true" ]; then
-        if ! confirm "ALLE DATEN AUF $DEV WERDEN GELÖSCHT!"; then
+        if ! confirm "${YELLOW}ALLE DATEN AUF${NC} $DEV ${YELLOW}WERDEN${NC} ${RED}GELÖSCHT!${NC}"; then
             log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
             unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
             gather_disk_input
@@ -3374,12 +3374,12 @@ main() {
     gather_disk_input
 
     # Warnung vor der Partitionierung
-    if ! confirm "${YELLOW}ALLE DATEN AUF $DEV WERDEN GELÖSCHT!${NC}"; then
+    if ! confirm "${YELLOW}ALLE DATEN AUF${NC} $DEV ${YELLOW}WERDEN${NC} ${RED}GELÖSCHT!${NC}"; then
         log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
         unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
         gather_disk_input
         # Erneute Bestätigung, bis der Benutzer ja sagt
-        while ! confirm "${YELLOW}ALLE DATEN AUF $DEV WERDEN GELÖSCHT!${NC}"; do
+        while ! confirm "${YELLOW}ALLE DATEN AUF${NC} $DEV ${YELLOW}WERDEN${NC} ${RED}GELÖSCHT!${NC}"; do
             log_warn "Partitionierung abgebrochen. Beginne erneut mit der Auswahl der Festplatte..."
             unset DEV SWAP_SIZE ROOT_SIZE DATA_SIZE
             gather_disk_input
