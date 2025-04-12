@@ -151,6 +151,20 @@ check_root() {
 # Abhängigkeiten prüfen und installieren
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
+
+    # Lokalen Mirror für apt einrichten
+    if [ ! -f "/etc/apt/sources.list.backup" ]; then
+        # Backup erstellen
+        cp /etc/apt/sources.list /etc/apt/sources.list.backup
+        
+        # Lokalen Mirror konfigurieren
+        cat > /etc/apt/sources.list <<-SOURCES
+deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+SOURCES
+    fi
     
     local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
     local missing_deps=()
@@ -1256,9 +1270,9 @@ fi
 # Wrapper-Funktion für Paketoperationen
 pkg_install() {
     if command -v nala &> /dev/null; then
-        nala install --dpkg-option="--force-unsafe-io" --dpkg-option="Dpkg::Parallelize=true" -y "$@"
+        nala install -y "\$@"
     else
-        apt-get install -y "$@"
+        apt-get install -y "\$@"
     fi
 }
 
