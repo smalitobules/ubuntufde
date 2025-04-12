@@ -2147,7 +2147,7 @@ if [ ! -e "/run/user/0/bus" ]; then
     export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus
 fi
 
-# Systemweite GNOME-Einstellungen - wird VOR der Benutzeranmeldung ausgeführt
+# Systemweite GNOME-Einstellungen
 log "Verwende erkannte Desktop-Umgebung: ${DESKTOP_NAME} ${DESKTOP_VERSION}"
 
 if [ -z "$DESKTOP_ENV" ]; then
@@ -2379,6 +2379,11 @@ EOGDM
     log "Kompiliere glib-Schemas..."
     glib-compile-schemas /usr/share/glib-2.0/schemas/
 
+# GNOME-Animationsgeschwindigkeit systemweit erhöhen
+log "Konfiguriere GNOME-Shell Animationsgeschwindigkeit systemweit..."
+echo "GNOME_SHELL_SLOWDOWN_FACTOR=0.4" >> /etc/environment
+
+
 # Installiere GNOME Shell Erweiterungen
     log "Installiere GNOME Shell Erweiterungen..."
     
@@ -2416,17 +2421,6 @@ EOGDM
     USER_THEME_VERSIONS[42]=49
     USER_THEME_VERSIONS[41]=48
     USER_THEME_VERSIONS[40]=46
-    
-    declare -A IMPATIENCE_VERSIONS
-    IMPATIENCE_VERSIONS[48]=28
-    IMPATIENCE_VERSIONS[47]=28
-    IMPATIENCE_VERSIONS[46]=28
-    IMPATIENCE_VERSIONS[45]=28
-    IMPATIENCE_VERSIONS[44]=22
-    IMPATIENCE_VERSIONS[43]=22
-    IMPATIENCE_VERSIONS[42]=22
-    IMPATIENCE_VERSIONS[41]=22
-    IMPATIENCE_VERSIONS[40]=22
     
     declare -A BURN_MY_WINDOWS_VERSIONS
     BURN_MY_WINDOWS_VERSIONS[48]=46
@@ -2473,15 +2467,6 @@ EOGDM
                 log "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
             fi
             echo "https://extensions.gnome.org/extension-data/user-themegnome-shell-extensions.gcampax.github.com.v${extension_version}.shell-extension.zip"
-        
-        elif [[ "$uuid" == "$IMPATIENCE_UUID" ]]; then
-            if [[ -n "${IMPATIENCE_VERSIONS[$gnome_version]}" ]]; then
-                extension_version="${IMPATIENCE_VERSIONS[$gnome_version]}"
-            else
-                extension_version="28"
-                log "Keine spezifische Version für GNOME $gnome_version gefunden, verwende Version $extension_version als Fallback"
-            fi
-            echo "https://extensions.gnome.org/extension-data/impatiencegfxmonk.net.v${extension_version}.shell-extension.zip"
         
         elif [[ "$uuid" == "$BURN_MY_WINDOWS_UUID" ]]; then
             if [[ -n "${BURN_MY_WINDOWS_VERSIONS[$gnome_version]}" ]]; then
@@ -2602,9 +2587,6 @@ EOGDM
     log "Installiere User Theme..."
     install_extension "$USER_THEME_UUID"
     
-    log "Installiere Impatience..."
-    install_extension "$IMPATIENCE_UUID"
-    
     log "Installiere Burn My Windows..."
     install_extension "$BURN_MY_WINDOWS_UUID"
     
@@ -2612,11 +2594,6 @@ EOGDM
     install_extension "$SYSTEM_MONITOR_UUID" || true  # Fortsetzung auch bei Fehler
 
     # Einstellungen der Extensions Systemweit einrichten
-        # Impatience Standardkonfiguration
-        mkdir -p /etc/skel/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/
-        echo '{
-        "speed-factor": 0.3
-        }' > /etc/skel/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/prefs.json
 
         # Burn My Windows Standardkonfiguration
         mkdir -p /etc/skel/.local/share/gnome-shell/extensions/burn-my-windows@schneegans.github.com/
@@ -2769,7 +2746,6 @@ HEIGHT=200
         extensions=(
             'dash-to-panel@jderose9.github.com' 
             'user-theme@gnome-shell-extensions.gcampax.github.com'
-            'impatience@gfxmonk.net'
             'burn-my-windows@schneegans.github.com'
             'system-monitor@gnome-shell-extensions.gcampax.github.com'
         )
@@ -2807,13 +2783,6 @@ HEIGHT=200
         
         # Erweiterungseinstellungen konfigurieren
         echo "Konfiguriere Erweiterungen..."
-        
-            # Impatience (schnellere Animationen)
-            log "Konfiguriere Impatience Extension..."
-            mkdir -p $HOME/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/
-            echo '{
-            "speed-factor": 0.3
-            }' > $HOME/.local/share/gnome-shell/extensions/impatience@gfxmonk.net/prefs.json
             
             # Burn My Windows
             log "Konfiguriere Burn My Windows Extension..."
