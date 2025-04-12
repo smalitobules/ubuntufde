@@ -152,6 +152,13 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
 
+    # Andere Quellen deaktivieren
+    for file in /etc/apt/sources.list.d/*.list; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
+
     # Lokalen Mirror einrichten
     cat > /etc/apt/sources.list <<-SOURCES
 deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
@@ -171,13 +178,6 @@ Package: *
 Pin: origin 192.168.56.120
 Pin-Priority: 1001
 EOL
-
-        # Andere Quellen deaktivieren
-        for file in /etc/apt/sources.list.d/*.list; do
-            if [ -f "$file" ]; then
-                mv "$file" "$file.bak"
-            fi
-        done
     
     local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
     local missing_deps=()
@@ -190,7 +190,7 @@ EOL
     
     if [ ${#missing_deps[@]} -ne 0 ]; then
         log_info "Aktualisiere Paketquellen..."
-        echo "nala nala/configure_files boolean false" | debconf-set-selections
+        # echo "nala nala/configure_files boolean false" | debconf-set-selections
         pkg_update
         log_info "Installiere fehlende Abhängigkeiten: ${missing_deps[*]}..."
         pkg_install "${missing_deps[@]}"
