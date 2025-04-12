@@ -152,21 +152,12 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
 
-    # Entferne vorherige APT-Quellen
-    for file in /etc/apt/*.list; do
-        if [ -f "$file" ]; then
-            rm -f "$file"
-        fi
-    done
+    # Bereinige APT-Quellendateien
+    rm -f /etc/apt/sources.list*
+    rm -f /etc/apt/sources.list.d/*.list*
+    find /etc/apt/ -name "*.save" -delete
 
-    # Deaktiviere Andere
-    for file in /etc/apt/sources.list.d/*.list; do
-        if [ -f "$file" ]; then
-            rm -f "$file"
-        fi
-    done
-
-    # Und lösche den APT-Cache
+    # Lösche den Cache
     pkg_clean
 
     # Lokalen Mirror einrichten
@@ -222,19 +213,28 @@ check_system() {
 configure_local_mirror() {
     log_info "Konfiguriere Nala für lokalen Mirror..."
     
-    # Erstelle Verzeichnisse
-    mkdir -p /etc/nala
-    mkdir -p /etc/apt/sources.list.d
+    # Bereinige APT-Quellendateien
+    rm -f /etc/apt/sources.list*
+    rm -f /etc/apt/sources.list.d/*.list*
+    find /etc/apt/ -name "*.save" -delete
+
+    # Lösche den Cache
+    pkg_clean
     
-    # Erstelle nala.list mit lokalem Mirror
-    cat > /etc/nala/nala.list <<EOL
+    # Erstelle Nala-Quellendatei
+    mkdir -p /etc/apt/sources.list.d
+    cat > /etc/apt/sources.list.d/nala-sources.list <<EOL
 deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse 
 deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse 
 deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse 
 deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
 EOL
 
-    # Konfiguriere nala.conf
+    # Erstelle eine leere APT-Quellendatei als Platzhalter
+    touch /etc/apt/sources.list
+    
+    # Konfiguriere Nala
+    mkdir -p /etc/nala
     cat > /etc/nala/nala.conf <<EOL
 # Nala Configuration File
 aptlist = False
@@ -251,15 +251,6 @@ throttle = 0
 color = True
 EOL
 
-    # Erstelle auch die sources.list.d Datei für Nala
-    cat > /etc/apt/sources.list.d/nala-sources.list <<EOL
-deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
-EOL
-
-    # Setze Variable damit copy_nala_config weiß, dass Mirrors konfiguriert wurden
     MIRRORS_OPTIMIZED="true"
     export MIRRORS_OPTIMIZED
     
@@ -336,16 +327,20 @@ find_fastest_mirrors() {
 }
 
 copy_nala_config() {
-    if [ "${MIRRORS_OPTIMIZED}" = "true" ] && [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-        log_info "Kopiere optimierte Nala-Konfiguration in die chroot-Umgebung..."
-        mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
-        cp /etc/apt/sources.list.d/nala-sources.list /mnt/ubuntu/etc/apt/sources.list.d/
-        
-        if [ -f /etc/nala/nala.list ]; then
-            mkdir -p /mnt/ubuntu/etc/nala/
-            cp /etc/nala/nala.list /mnt/ubuntu/etc/nala/
-        fi
-    fi
+  if [ "${MIRRORS_OPTIMIZED}" = "true" ]; then
+    # Bereite das Zielverzeichnis vor
+    mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
+    
+    # Entferne vorhandene APT-Quellendateien
+    rm -f /mnt/ubuntu/etc/apt/sources.list
+    rm -f /mnt/ubuntu/etc/apt/sources.list.d/*.list
+    
+    # Kopiere Nala-Quellendatei aus dem Installationsystem
+    cp -f /etc/apt/sources.list.d/nala-sources.list /mnt/ubuntu/etc/apt/sources.list.d/
+    
+    # Erstelle leere APT-Quellendatei als Platzhalter
+    touch /mnt/ubuntu/etc/apt/sources.list
+  fi
 }
 
 setup_ssh_access() {
@@ -1366,22 +1361,9 @@ if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
     curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
 fi
 
-# Paketquellen und Repositories einrichten
+# Repositories für Anwendugen einrichten
 
     mkdir -p /etc/apt/keyrings
-
-    # Ubuntu Paketquellen
-    cat > /etc/apt/sources.list <<-SOURCES
-deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
-
-# deb https://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
-# deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted  universe multiverse
-# deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
-# deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
-SOURCES
 
     # Liquorix-Kernel Repository
     if [ "${KERNEL_TYPE}" = "liquorix" ]; then
