@@ -3442,8 +3442,8 @@ main() {
         # Systemcheck
         check_root
         check_system
-        configure_local_mirror
         check_dependencies
+        configure_local_mirror
         # find_fastest_mirrors
     fi
     
