@@ -100,7 +100,7 @@ confirm() {
 # Wrapper-Funktion für Paketinstallationen
 pkg_install() {
     if command -v nala &> /dev/null; then
-        nala install -y "$@"
+        nala install --dpkg-option="--force-unsafe-io" --dpkg-option="Dpkg::Parallelize=true" -y "$@"
     else
         apt-get install -y "$@"
     fi
