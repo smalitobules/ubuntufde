@@ -181,6 +181,53 @@ check_system() {
 ###################
 
 
+configure_local_mirror() {
+    log_info "Konfiguriere Nala für lokalen Mirror..."
+    
+    # Erstelle Verzeichnisse
+    mkdir -p /etc/nala
+    mkdir -p /etc/apt/sources.list.d
+    
+    # Erstelle nala.list mit lokalem Mirror
+    cat > /etc/nala/nala.list <<EOL
+deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+EOL
+
+    # Konfiguriere nala.conf
+    cat > /etc/nala/nala.conf <<EOL
+# Nala Configuration File
+aptlist = False
+auto_remove = True
+auto_update = True
+would_like_to_enable_nala_madness = False
+update_all = False
+update_reboot = False
+plain = False
+progress_bar = on
+spinner = on
+fancy_bar = True
+throttle = 0
+color = True
+EOL
+
+    # Erstelle auch die sources.list.d Datei für Nala
+    cat > /etc/apt/sources.list.d/nala-sources.list <<EOL
+deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+EOL
+
+    # Setze Variable damit copy_nala_config weiß, dass Mirrors konfiguriert wurden
+    MIRRORS_OPTIMIZED="true"
+    export MIRRORS_OPTIMIZED
+    
+    log_info "Nala für lokalen Mirror konfiguriert"
+}
+
 find_fastest_mirrors() {
     log_info "Suche nach den schnellsten Paketquellen..."
     
@@ -1160,6 +1207,13 @@ UUID=${DATA_UUID} /media/data     ext4    defaults        0       2
 # Swap-Partition
 UUID=${SWAP_UUID} none            swap    sw              0       0
 EOF
+
+# Konfiguriere dpkg-Optimierungen in der chroot-Umgebung
+mkdir -p /mnt/ubuntu/etc/dpkg/dpkg.cfg.d/
+echo "force-unsafe-io" > /mnt/ubuntu/etc/dpkg/dpkg.cfg.d/unsafe-io
+
+mkdir -p /mnt/ubuntu/etc/apt/apt.conf.d/
+echo "Dpkg::Parallelize=true;" > /mnt/ubuntu/etc/apt/apt.conf.d/70parallelize
 #   BASISSYSTEM   #
 ###################
 
@@ -1280,15 +1334,15 @@ fi
 
     # Ubuntu Paketquellen
     cat > /etc/apt/sources.list <<-SOURCES
-#deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
-#deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
-#deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
-#deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
 
-deb https://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
-deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted  universe multiverse
-deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
-deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
+# deb https://archive.ubuntu.com/ubuntu/ oracular main restricted universe multiverse
+# deb https://archive.ubuntu.com/ubuntu/ oracular-updates main restricted  universe multiverse
+# deb https://archive.ubuntu.com/ubuntu/ oracular-security main restricted universe multiverse
+# deb https://archive.ubuntu.com/ubuntu/ oracular-backports main restricted universe multiverse
 SOURCES
 
     # Liquorix-Kernel Repository
@@ -3361,7 +3415,8 @@ main() {
         check_root
         check_system
         check_dependencies
-        find_fastest_mirrors
+        configure_local_mirror
+        # find_fastest_mirrors
     fi
     
     # Installation
