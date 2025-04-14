@@ -1,7 +1,8 @@
 #!/bin/bash
-# UbuntuFDE ISO-Erstellungsskript
-# Dieses Skript erstellt eine TinyCore-basierte ISO für die UbuntuFDE-Installation
+# UbuntuFDE ISO-Erstellungsskript (Ubuntu-basiert)
+# Dieses Skript erstellt eine minimale Ubuntu-basierte ISO für die UbuntuFDE-Installation
 # Version: 0.1
+# Es verwendet live-build, um eine angepasste Ubuntu-Live-ISO zu erstellen
 
 # Farben für Ausgabe
 RED='\033[0;31m'
@@ -12,14 +13,21 @@ NC='\033[0m' # No Color
 
 # Verzeichnisse
 WORK_DIR="$(pwd)/ubuntufde_build"
-EXTRACT_DIR="${WORK_DIR}/extract"
-ISO_DIR="${WORK_DIR}/iso"
-NEW_ISO="${WORK_DIR}/ubuntufde.iso"
-INITRD_DIR="${WORK_DIR}/initrd"
+BUILD_DIR="${WORK_DIR}/live-build"
+CONFIG_DIR="${BUILD_DIR}/config"
+CHROOT_HOOKS="${CONFIG_DIR}/hooks/live"
+BINARY_HOOKS="${CONFIG_DIR}/hooks/binary"
+PACKAGE_LISTS="${CONFIG_DIR}/package-lists"
+INCLUDES_CHROOT="${CONFIG_DIR}/includes.chroot"
+INCLUDES_BINARY="${CONFIG_DIR}/includes.binary"
+OUTPUT_DIR="${WORK_DIR}/output"
+LOG_FILE="${WORK_DIR}/build.log"
 
-# URLs und Pfade
-TINYCORE_URL="http://tinycorelinux.net/16.x/x86_64/release/CorePure64-16.0.iso"
-TINYCORE_ISO="${WORK_DIR}/CorePure64-16.0.iso"
+# ISO-Metadaten
+ISO_TITLE="UbuntuFDE"
+ISO_PUBLISHER="UbuntuFDE"
+ISO_APPLICATION="UbuntuFDE Installation"
+INSTALLATION_URL="https://indianfire.ch/fde"
 
 # --------------------------------
 # Hilfsfunktionen
@@ -30,19 +38,24 @@ log() {
   local level=$1
   shift
   local message="$@"
+  local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   
   case $level in
     "info")
       echo -e "${GREEN}[INFO]${NC} $message"
+      echo "[INFO] $timestamp - $message" >> "$LOG_FILE"
       ;;
     "warn")
       echo -e "${YELLOW}[WARN]${NC} $message"
+      echo "[WARN] $timestamp - $message" >> "$LOG_FILE"
       ;;
     "error")
       echo -e "${RED}[ERROR]${NC} $message"
+      echo "[ERROR] $timestamp - $message" >> "$LOG_FILE"
       ;;
     *)
       echo -e "${BLUE}[DEBUG]${NC} $message"
+      echo "[DEBUG] $timestamp - $message" >> "$LOG_FILE"
       ;;
   esac
 }
@@ -50,23 +63,32 @@ log() {
 # Abhängigkeiten prüfen
 check_dependencies() {
   log info "Prüfe Abhängigkeiten..."
-  local deps=("wget" "xorriso" "gzip" "cpio" "mkisofs" "squashfs-tools")
-  local missing=()
+  local commands=("lb" "debootstrap" "xorriso" "mksquashfs")
+  local packages=("live-build" "debootstrap" "xorriso" "squashfs-tools")
+  local missing_packages=()
   
-  for dep in "${deps[@]}"; do
-    if ! command -v "$dep" &> /dev/null; then
-      missing+=("$dep")
+  for i in "${!commands[@]}"; do
+    if ! command -v "${commands[$i]}" &> /dev/null; then
+      missing_packages+=("${packages[$i]}")
     fi
   done
   
-  if [ ${#missing[@]} -ne 0 ]; then
-    log warn "Folgende Abhängigkeiten fehlen: ${missing[*]}"
+  if [ ${#missing_packages[@]} -ne 0 ]; then
+    log warn "Folgende Abhängigkeiten fehlen: ${missing_packages[*]}"
     log info "Installiere fehlende Abhängigkeiten..."
-    apt-get update
-    apt-get install -y "${missing[@]}"
-  else
-    log info "Alle Abhängigkeiten sind installiert."
+    nala update
+    nala install -y "${missing_packages[@]}"
+    
+    # Erneut prüfen
+    for i in "${!commands[@]}"; do
+      if ! command -v "${commands[$i]}" &> /dev/null; then
+        log error "Abhängigkeit konnte nicht installiert werden: ${packages[$i]}"
+        exit 1
+      fi
+    done
   fi
+  
+  log info "Alle Abhängigkeiten sind installiert."
 }
 
 # Arbeitsverzeichnisse erstellen
@@ -74,9 +96,16 @@ setup_directories() {
   log info "Erstelle Arbeitsverzeichnisse..."
   
   mkdir -p "$WORK_DIR"
-  mkdir -p "$EXTRACT_DIR"
-  mkdir -p "$ISO_DIR"
-  mkdir -p "$INITRD_DIR"
+  mkdir -p "$BUILD_DIR"
+  mkdir -p "$OUTPUT_DIR"
+  mkdir -p "$CHROOT_HOOKS"
+  mkdir -p "$BINARY_HOOKS"
+  mkdir -p "$PACKAGE_LISTS"
+  mkdir -p "$INCLUDES_CHROOT/etc/systemd/system"
+  mkdir -p "$INCLUDES_CHROOT/opt/ubuntufde"
+  
+  # Logdatei initialisieren
+  touch "$LOG_FILE"
   
   log info "Arbeitsverzeichnisse bereit."
 }
@@ -85,137 +114,228 @@ setup_directories() {
 # Hauptfunktionen
 # --------------------------------
 
-# TinyCore herunterladen
-download_tinycore() {
-  log info "Lade TinyCore herunter..."
+# Erstelle live-build Konfiguration
+configure_live_build() {
+  log info "Konfiguriere live-build..."
   
-  if [ -f "$TINYCORE_ISO" ]; then
-    log info "TinyCore ISO bereits heruntergeladen."
-  else
-    log info "Lade TinyCore ISO von $TINYCORE_URL herunter..."
-    wget -q --show-progress "$TINYCORE_URL" -O "$TINYCORE_ISO"
-    
-    if [ $? -ne 0 ]; then
-      log error "Download von TinyCore ISO fehlgeschlagen."
-      exit 1
-    fi
-    
-    log info "TinyCore ISO erfolgreich heruntergeladen."
-  fi
+  cd "$BUILD_DIR"
+
+  # Cache leeren
+  rm -rf "${BUILD_DIR}/cache"
+  lb clean --purge
+
+  # Verzeichnis erstellen
+  mkdir -p /etc/live
+  
+  # Minimale Konfigurationsdatei anlegen
+  cat > /etc/live/build.conf << EOF
+# Live-build Standardkonfiguration
+LIVE_DISTRIBUTION="oracular"
+LIVE_MIRROR_BOOTSTRAP="http://192.168.56.120/ubuntu/"
+LIVE_MIRROR_BINARY="http://192.168.56.120/ubuntu/"
+LIVE_MIRROR_CHROOT="http://192.168.56.120/ubuntu/"
+LIVE_MIRROR_CHROOT_SECURITY="http://192.168.56.120/ubuntu/"
+LIVE_ARCHITECTURE="amd64"
+EOF
+
+  # Bootstrap-Konfiguration
+  mkdir -p /etc/live/build.d
+  cat > /etc/live/build.d/bootstrap.conf << EOF
+# Bootstrap-Konfiguration
+DEBOOTSTRAP_OPTIONS="--variant=minbase"
+LB_DISTRIBUTION="oracular"
+LB_PARENT_DISTRIBUTION="oracular"
+EOF
+
+  # Erstelle config/bootstrap_debootstrap
+  mkdir -p "${CONFIG_DIR}/bootstrap"
+  echo 'DEBOOTSTRAP_OPTIONS="--variant=minbase"' > "${CONFIG_DIR}/bootstrap_debootstrap"
+  
+  # Live-Build Konfiguration
+  lb config \
+    --mirror-bootstrap "http://192.168.56.120/ubuntu/" \
+    --mirror-binary "http://192.168.56.120/ubuntu/" \
+    --mirror-chroot "http://192.168.56.120/ubuntu/" \
+    --mirror-chroot-security "http://192.168.56.120/ubuntu/" \
+    --distribution oracular \
+    --architectures amd64 \
+    --binary-images iso-hybrid \
+    --mode ubuntu \
+    --security false \
+    --apt-recommends false \
+    --debian-installer false \
+    --memtest none \
+    --firmware-binary false \
+    --firmware-chroot false \
+    --backports false \
+    --cache-packages false \
+    --cache-stages false \
+    --interactive false \
+    --compression xz \
+    --apt-indices false \
+    --apt-source-archives false \
+    --iso-volume "$ISO_TITLE" \
+    --iso-publisher "$ISO_PUBLISHER" \
+    --iso-application "$ISO_APPLICATION"
+
+  log info "Live-build Konfiguration abgeschlossen."
 }
 
-# ISO extrahieren
-extract_iso() {
-  log info "Extrahiere TinyCore ISO..."
-  
-  if [ -d "${EXTRACT_DIR}" ] && [ "$(ls -A ${EXTRACT_DIR})" ]; then
-    log warn "Extraktionsverzeichnis existiert bereits und ist nicht leer."
-    read -p "Möchtest du das Verzeichnis leeren? (j/n): " -n 1 -r
-    echo
-    
-    if [[ $REPLY =~ ^[Jj]$ ]]; then
-      log info "Lösche Inhalt des Extraktionsverzeichnisses..."
-      rm -rf "${EXTRACT_DIR:?}/"*
-    else
-      log info "Verzeichnis wird nicht geleert."
-      return
-    fi
-  fi
-  
-  log info "Mounten der ISO und Kopieren der Dateien..."
-  xorriso -osirrox on -indev "$TINYCORE_ISO" -extract / "$EXTRACT_DIR"
-  
-  if [ $? -ne 0 ]; then
-    log error "Extraktion der ISO fehlgeschlagen."
-    exit 1
-  fi
-  
-  log info "ISO-Extraktion abgeschlossen."
-  
-  # Kopieren für weitere Modifikationen
-  log info "Kopiere Dateien für ISO-Neuerstellung..."
-  cp -r "$EXTRACT_DIR"/* "$ISO_DIR"
-  
-  log info "Extraktion und Kopieren erfolgreich abgeschlossen."
+# Erstelle Paketlisten
+create_package_lists() {
+  log info "Erstelle minimale Paketliste..."
+
+  # Minimale Pakete für das Live-System
+  cat > "${PACKAGE_LISTS}/minimal.list.chroot" << EOF
+# Minimale Systempakete
+#live-boot
+systemd-sysv
+linux-image-generic
+busybox-static
+
+# Netzwerkunterstützung
+iproute2
+iputils-ping
+network-manager
+dhcpcd-base
+wget
+curl
+
+# Tastatur- und Sprachunterstützung
+console-setup
+kbd
+locales
+
+# Extras für UbuntuFDE
+bash
+#dialog
+EOF
+
+  log info "Paketliste erstellt."
 }
 
-# Modifiziere die Boot-Konfiguration
-modify_boot_config() {
-  log info "Modifiziere Boot-Konfiguration..."
+# Erstelle einen Hook für die Kernel-Verknüpfungen
+create_symlinks_hook() {
+  log info "Erstelle Hook für Kernel-Symlinks..."
   
-  # GRUB-Konfiguration anpassen
-  GRUB_CFG="${ISO_DIR}/boot/grub/grub.cfg"
-  
-  if [ -f "$GRUB_CFG" ]; then
-    log info "Passe GRUB-Timeout an (1 Sekunde)..."
-    sed -i 's/timeout=.*/timeout=1/' "$GRUB_CFG"
-    
-    log info "Ändere GRUB-Titel zu UbuntuFDE..."
-    sed -i 's/Core Pure 64/UbuntuFDE/g' "$GRUB_CFG"
-    sed -i 's/Core Linux/UbuntuFDE/g' "$GRUB_CFG"
-    sed -i 's/menuentry .*/menuentry "UbuntuFDE Installation" {/' "$GRUB_CFG"
-  else
-    log warn "GRUB-Konfigurationsdatei nicht gefunden: $GRUB_CFG"
-  fi
-  
-  # Isolinux-Konfiguration anpassen, falls vorhanden
-  ISOLINUX_CFG="${ISO_DIR}/boot/isolinux/isolinux.cfg"
-  
-  if [ -f "$ISOLINUX_CFG" ]; then
-    log info "Passe ISOLINUX-Konfiguration an..."
-    sed -i 's/timeout .*/timeout 10/' "$ISOLINUX_CFG"
-    sed -i 's/MENU TITLE .*/MENU TITLE UbuntuFDE Installation/' "$ISOLINUX_CFG"
-    sed -i 's/LABEL .*/LABEL ubuntufde/' "$ISOLINUX_CFG"
-    sed -i 's/MENU LABEL .*/MENU LABEL UbuntuFDE Installation/' "$ISOLINUX_CFG"
-  else
-    log warn "ISOLINUX-Konfigurationsdatei nicht gefunden: $ISOLINUX_CFG"
-  fi
-  
-  log info "Boot-Konfiguration wurde angepasst."
-}
+  cat > "${CHROOT_HOOKS}/0075-fix-kernel-symlinks.hook.chroot" << 'EOF'
+#!/bin/bash
+set -e
 
-# Initrd extrahieren und modifizieren
-extract_modify_initrd() {
-  log info "Extrahiere initrd.gz..."
-  
-  # Finde initrd.gz
-  INITRD_PATH=$(find "$ISO_DIR" -name "initrd.gz" | head -n 1)
-  
-  if [ -z "$INITRD_PATH" ]; then
-    log error "initrd.gz nicht gefunden."
-    exit 1
+echo "Korrigiere Kernel-Verknüpfungen..."
+
+# Stelle sicher, dass das Boot-Verzeichnis existiert
+mkdir -p /boot
+
+# Erstelle Platzhalter-Dateien für die symbolischen Verknüpfungen
+touch /boot/initrd.img
+touch /boot/initrd.img.old
+touch /boot/vmlinuz
+touch /boot/vmlinuz.old
+
+# Setze korrekte Berechtigungen
+chmod 644 /boot/initrd.img /boot/initrd.img.old /boot/vmlinuz /boot/vmlinuz.old
+EOF
+
+chmod +x "${CHROOT_HOOKS}/0075-fix-kernel-symlinks.hook.chroot"
+
+  log info "Kernel-Symlinks Hook erstellt."
+} 
+
+# Erstelle Hook zum Entfernen unnötiger Dateien
+create_cleanup_hook() {
+  log info "Erstelle Hook zum Bereinigen des Systems..."
+
+  cat > "${CHROOT_HOOKS}/0100-cleanup-system.hook.chroot" << 'EOF'
+#!/bin/bash
+set -e
+
+echo "Entferne unnötige Dokumentation..."
+rm -rf /usr/share/doc/*
+rm -rf /usr/share/man/*
+rm -rf /usr/share/info/*
+
+echo "Entferne alle Lokalisierungsdateien außer Deutsch und Englisch..."
+# Sichere de_DE und en_US
+mkdir -p /tmp/locales-backup/de_DE
+mkdir -p /tmp/locales-backup/en_US
+
+if [ -d /usr/share/locale/de_DE ]; then
+  cp -r /usr/share/locale/de_DE/* /tmp/locales-backup/de_DE/
+elif [ -d /usr/share/locale/de ]; then
+  cp -r /usr/share/locale/de/* /tmp/locales-backup/de_DE/
+fi
+
+if [ -d /usr/share/locale/en_US ]; then
+  cp -r /usr/share/locale/en_US/* /tmp/locales-backup/en_US/
+elif [ -d /usr/share/locale/en ]; then
+  cp -r /usr/share/locale/en/* /tmp/locales-backup/en_US/
+fi
+
+# Lösche alle Lokalisierungsdateien
+rm -rf /usr/share/locale/*
+
+# Stelle de_DE und en_US wieder her
+mkdir -p /usr/share/locale/de_DE
+mkdir -p /usr/share/locale/de
+mkdir -p /usr/share/locale/en_US
+mkdir -p /usr/share/locale/en
+
+if [ -d /tmp/locales-backup/de_DE ]; then
+  cp -r /tmp/locales-backup/de_DE/* /usr/share/locale/de_DE/
+  cp -r /tmp/locales-backup/de_DE/* /usr/share/locale/de/
+fi
+
+if [ -d /tmp/locales-backup/en_US ]; then
+  cp -r /tmp/locales-backup/en_US/* /usr/share/locale/en_US/
+  cp -r /tmp/locales-backup/en_US/* /usr/share/locale/en/
+fi
+
+rm -rf /tmp/locales-backup
+
+echo "Bereinige APT Caches..."
+nala clean
+rm -rf /var/lib/apt/lists/*
+rm -rf /var/cache/apt/archives/*
+
+echo "Entferne temporäre Dateien..."
+rm -rf /var/tmp/*
+rm -rf /tmp/*
+rm -f /var/crash/*
+
+echo "Entferne unnötige Kernel-Module..."
+# Behalte nur essentielle Module für Netzwerk und Dateisysteme
+KEEP_MODULES="e1000 e1000e r8169 igb ixgbe virtio_net 8021q ext4 vfat isofs nls_iso8859_1 nls_cp437 nls_utf8 usbhid xhci_hcd ehci_hcd uhci_hcd"
+
+cd /lib/modules/$(uname -r)
+for MODULE_DIR in kernel/drivers/net/ethernet kernel/fs; do
+  if [ -d "$MODULE_DIR" ]; then
+    cd "$MODULE_DIR"
+    for MODULE in $KEEP_MODULES; do
+      # Suche nicht nach exaktem Modulnamen, sondern nach Teilstrings
+      find . -name "*.ko" | grep -i "$MODULE" | while read -r MODULE_FILE; do
+        echo "Behalte Modul: $MODULE_FILE"
+      done
+    done
+    cd /lib/modules/$(uname -r)
   fi
-  
-  log info "Gefundene initrd: $INITRD_PATH"
-  
-  # Erstelle ein Sicherungskopie
-  cp "$INITRD_PATH" "${INITRD_PATH}.orig"
-  
-  # Entpacke initrd
-  cd "$INITRD_DIR" || exit 1
-  gzip -dc "$INITRD_PATH" | cpio -id
-  
-  if [ $? -ne 0 ]; then
-    log error "Extraktion von initrd.gz fehlgeschlagen."
-    exit 1
-  fi
-  
-  log info "initrd.gz erfolgreich extrahiert."
+done
+
+echo "System erfolgreich bereinigt."
+EOF
+
+  chmod +x "${CHROOT_HOOKS}/0100-cleanup-system.hook.chroot"
+  log info "Bereinigungs-Hook erstellt."
 }
 
 # Erstelle Netzwerk-Setup-Skript
 create_network_setup() {
   log info "Erstelle Netzwerk-Setup-Skript..."
   
-  # Pfad zum Netzwerk-Skript
-  NETWORK_SCRIPT="${INITRD_DIR}/opt/network_setup.sh"
+  mkdir -p "${INCLUDES_CHROOT}/opt/ubuntufde"
   
-  # Verzeichnis erstellen falls es noch nicht existiert
-  mkdir -p "${INITRD_DIR}/opt"
-  
-  # Netzwerk-Setup-Skript erstellen
-  cat > "$NETWORK_SCRIPT" << 'EOF'
-#!/bin/sh
+  cat > "${INCLUDES_CHROOT}/opt/ubuntufde/network_setup.sh" << 'EOF'
+#!/bin/bash
 # Netzwerk-Setup-Skript für UbuntuFDE
 # Dieses Skript richtet die Netzwerkverbindung intelligent ein
 
@@ -266,18 +386,53 @@ check_internet() {
   fi
 }
 
+# Versuche NetworkManager für eine Schnittstelle
+try_networkmanager() {
+  log info "Versuche NetworkManager für automatische Konfiguration..."
+  
+  # Prüfen, ob NetworkManager läuft
+  if ! systemctl is-active NetworkManager >/dev/null 2>&1; then
+    systemctl start NetworkManager
+    sleep 3
+  fi
+  
+  # Warte auf automatische Verbindung
+  for i in {1..10}; do
+    if check_internet; then
+      log info "NetworkManager hat erfolgreich eine Verbindung hergestellt."
+      return 0
+    fi
+    log info "Warte auf NetworkManager Verbindung... ($i/10)"
+    sleep 2
+  done
+  
+  log warn "NetworkManager konnte keine automatische Verbindung herstellen."
+  return 1
+}
+
 # Versuche DHCP für eine Schnittstelle
 try_dhcp() {
   local iface=$1
   log info "Versuche DHCP auf Schnittstelle $iface..."
+  
   ip link set $iface up
-  udhcpc -i $iface -q -n -t 5
+  
+  # Versuche dhclient, falls verfügbar
+  if command -v dhclient >/dev/null 2>&1; then
+    dhclient -v -1 $iface
+  else
+    # Versuche dhcpcd als Alternative
+    dhcpcd -t 10 $iface
+  fi
+  
+  # Warte kurz und prüfe die Verbindung
+  sleep 3
   
   if check_internet; then
     log info "DHCP erfolgreich für $iface, Internetverbindung hergestellt."
     return 0
   else
-    log warn "DHCP für $iface erfolgreich, aber keine Internetverbindung."
+    log warn "DHCP für $iface war nicht erfolgreich."
     return 1
   fi
 }
@@ -374,7 +529,11 @@ manual_network_setup() {
   
   case $config_choice in
     1)
-      udhcpc -i "$selected_iface" -q
+      if command -v dhclient >/dev/null 2>&1; then
+        dhclient -v "$selected_iface"
+      else
+        dhcpcd -t 15 "$selected_iface"
+      fi
       ;;
     2)
       read -p "IP-Adresse (z.B. 192.168.1.100): " ip_addr
@@ -406,7 +565,14 @@ manual_network_setup() {
 setup_network() {
   log info "Starte Netzwerkkonfiguration..."
   
-  # Alle Netzwerkschnittstellen aktivieren
+  # Versuche erst NetworkManager (wenn verfügbar)
+  if command -v nmcli >/dev/null 2>&1; then
+    if try_networkmanager; then
+      return 0
+    fi
+  fi
+  
+  # Alle Netzwerkschnittstellen ermitteln
   interfaces=($(get_network_interfaces))
   
   if [ ${#interfaces[@]} -eq 0 ]; then
@@ -414,7 +580,7 @@ setup_network() {
     return 1
   fi
   
-  # Versuche erst DHCP auf allen Schnittstellen
+  # Versuche DHCP auf allen Schnittstellen
   for iface in "${interfaces[@]}"; do
     if try_dhcp "$iface"; then
       return 0
@@ -440,18 +606,17 @@ setup_network() {
 setup_network
 EOF
   
-  # Skript ausführbar machen
-  chmod +x "$NETWORK_SCRIPT"
+  chmod +x "${INCLUDES_CHROOT}/opt/ubuntufde/network_setup.sh"
   
   log info "Netzwerk-Setup-Skript erstellt."
 }
 
-# Sprachunterstützung erstellen
+# Erstelle Sprachunterstützungsdateien
 create_language_support() {
   log info "Erstelle Sprachunterstützungsdateien..."
   
   # Verzeichnis für Sprachdateien
-  LANG_DIR="${INITRD_DIR}/opt/lang"
+  LANG_DIR="${INCLUDES_CHROOT}/opt/ubuntufde/lang"
   mkdir -p "$LANG_DIR"
   
   # Erstelle deutsche Sprachdatei
@@ -492,16 +657,12 @@ EOF
 }
 
 # Tastaturlayouts hinzufügen
-add_keyboard_layouts() {
-  log info "Füge Tastaturlayouts hinzu..."
+create_keyboard_layouts() {
+  log info "Erstelle Tastaturlayout-Konfiguration..."
   
-  # Verzeichnis für Tastaturlayouts in TinyCore
-  KEYBOARD_DIR="${INITRD_DIR}/opt/kbd"
+  # Verzeichnis für Tastaturlayouts
+  KEYBOARD_DIR="${INCLUDES_CHROOT}/opt/ubuntufde/kbd"
   mkdir -p "$KEYBOARD_DIR"
-  
-  # Verzeichnis für XKB-Layouts
-  XKB_DIR="${KEYBOARD_DIR}/xkb/symbols"
-  mkdir -p "$XKB_DIR"
   
   # Konfigurationsdatei für die Tastaturlayouts erstellen
   cat > "${KEYBOARD_DIR}/keyboard.conf" << 'EOF'
@@ -513,41 +674,9 @@ de_at,at,
 en_us,us,
 EOF
   
-  # Kopiere die XKB-Layouts aus dem Host-System
-  if [ -d "/usr/share/X11/xkb/symbols" ]; then
-    log info "Kopiere XKB-Layout-Dateien aus dem Host-System..."
-    
-    # Kopiere die benötigten Layoutdateien
-    cp -f "/usr/share/X11/xkb/symbols/de" "$XKB_DIR/" || log warn "Konnte deutsche Tastaturlayout-Datei nicht kopieren."
-    cp -f "/usr/share/X11/xkb/symbols/ch" "$XKB_DIR/" || log warn "Konnte schweizer Tastaturlayout-Datei nicht kopieren."
-    cp -f "/usr/share/X11/xkb/symbols/at" "$XKB_DIR/" || log warn "Konnte österreichische Tastaturlayout-Datei nicht kopieren."
-    cp -f "/usr/share/X11/xkb/symbols/us" "$XKB_DIR/" || log warn "Konnte US-Tastaturlayout-Datei nicht kopieren."
-    
-    # Kopiere notwendige gemeinsame Dateien
-    cp -f "/usr/share/X11/xkb/symbols/inet" "$XKB_DIR/" || log warn "Konnte inet-Symboldatei nicht kopieren."
-    cp -f "/usr/share/X11/xkb/symbols/level3" "$XKB_DIR/" || log warn "Konnte level3-Symboldatei nicht kopieren."
-    cp -f "/usr/share/X11/xkb/symbols/level5" "$XKB_DIR/" || log warn "Konnte level5-Symboldatei nicht kopieren."
-    cp -f "/usr/share/X11/xkb/symbols/compose" "$XKB_DIR/" || log warn "Konnte compose-Symboldatei nicht kopieren."
-    
-    log info "XKB-Layout-Dateien erfolgreich kopiert."
-  else
-    log warn "XKB-Layoutverzeichnis nicht gefunden. Fallback zu traditionellen Keymaps."
-    
-    # Fallback: Verwende traditionelle Console-Keymaps, falls XKB nicht verfügbar ist
-    if [ -d "/usr/share/kbd/keymaps" ]; then
-      log info "Kopiere traditionelle Keymap-Dateien aus dem Host-System..."
-      mkdir -p "${KEYBOARD_DIR}/keymaps"
-      cp -f /usr/share/kbd/keymaps/i386/qwertz/de-latin1.map.gz "${KEYBOARD_DIR}/keymaps/" || true
-      cp -f /usr/share/kbd/keymaps/i386/qwertz/de_CH-latin1.map.gz "${KEYBOARD_DIR}/keymaps/" || true
-      cp -f /usr/share/kbd/keymaps/i386/qwerty/us.map.gz "${KEYBOARD_DIR}/keymaps/" || true
-    else
-      log warn "Keine Keymap-Verzeichnisse gefunden. Tastaturlayouts werden möglicherweise nicht korrekt funktionieren."
-    fi
-  fi
-  
   # Erstelle ein einfaches Skript zum Setzen des XKB-Layouts
   cat > "${KEYBOARD_DIR}/set-xkb-layout.sh" << 'EOF'
-#!/bin/sh
+#!/bin/bash
 # Skript zum Setzen des XKB-Layouts
 
 if [ $# -lt 1 ]; then
@@ -573,10 +702,10 @@ else
       loadkeys de-latin1 || echo "Fehler beim Setzen des Konsolen-Layouts"
       ;;
     "ch")
-      loadkeys de_CH-latin1 || echo "Fehler beim Setzen des Konsolen-Layouts"
+      loadkeys ch-de || loadkeys ch || echo "Fehler beim Setzen des Konsolen-Layouts"
       ;;
     "at")
-      loadkeys de-latin1 || echo "Fehler beim Setzen des Konsolen-Layouts"
+      loadkeys de-latin1 || loadkeys at || echo "Fehler beim Setzen des Konsolen-Layouts"
       ;;
     "us")
       loadkeys us || echo "Fehler beim Setzen des Konsolen-Layouts"
@@ -590,20 +719,16 @@ EOF
 
   chmod +x "${KEYBOARD_DIR}/set-xkb-layout.sh"
   
-  log info "Tastaturlayouts und Konfigurationsskript hinzugefügt."
+  log info "Tastaturlayout-Konfiguration erstellt."
 }
 
-# Erstelle Haupt-Startskript
+# Erstelle Hauptskript für die Installation
 create_main_script() {
-  log info "Erstelle Hauptstartskript..."
+  log info "Erstelle Hauptinstallationsskript..."
   
-  # Pfad zum Hauptskript
-  MAIN_SCRIPT="${INITRD_DIR}/opt/start_installation.sh"
-  
-  # Erstelle das Skript
-  cat > "$MAIN_SCRIPT" << 'EOF'
-#!/bin/sh
-# UbuntuFDE Hauptstartskript
+  cat > "${INCLUDES_CHROOT}/opt/ubuntufde/start_installation.sh" << EOF
+#!/bin/bash
+# UbuntuFDE Hauptinstallationsskript
 # Dieses Skript steuert den Installationsprozess
 
 # Farben für Ausgabe
@@ -616,45 +741,45 @@ NC='\033[0m' # No Color
 # Standardwerte
 SELECTED_LANGUAGE="de_DE"
 SELECTED_KEYBOARD="de_de"
-INSTALLATION_URL="https://indianfire.ch/fde"
+INSTALLATION_URL="${INSTALLATION_URL}"
 
 # Pfade
-LANG_DIR="/opt/lang"
-KEYBOARD_DIR="/opt/kbd"
+LANG_DIR="/opt/ubuntufde/lang"
+KEYBOARD_DIR="/opt/ubuntufde/kbd"
 
 # Logging-Funktion
 log() {
-  local level=$1
+  local level=\$1
   shift
-  local message="$@"
+  local message="\$@"
   
-  case $level in
+  case \$level in
     "info")
-      echo -e "${GREEN}[INFO]${NC} $message"
+      echo -e "\${GREEN}[INFO]\${NC} \$message"
       ;;
     "warn")
-      echo -e "${YELLOW}[WARN]${NC} $message"
+      echo -e "\${YELLOW}[WARN]\${NC} \$message"
       ;;
     "error")
-      echo -e "${RED}[ERROR]${NC} $message"
+      echo -e "\${RED}[ERROR]\${NC} \$message"
       ;;
     *)
-      echo -e "${BLUE}[DEBUG]${NC} $message"
+      echo -e "\${BLUE}[DEBUG]\${NC} \$message"
       ;;
   esac
 }
 
 # Lade Sprachdefinitionen
 load_language() {
-  local lang_file="$LANG_DIR/$SELECTED_LANGUAGE.conf"
-  if [ -f "$lang_file" ]; then
-    source "$lang_file"
-    log info "Sprache geladen: $LANGUAGE_NAME"
+  local lang_file="\$LANG_DIR/\$SELECTED_LANGUAGE.conf"
+  if [ -f "\$lang_file" ]; then
+    source "\$lang_file"
+    log info "Sprache geladen: \$LANGUAGE_NAME"
   else
-    log error "Sprachdatei nicht gefunden: $lang_file"
+    log error "Sprachdatei nicht gefunden: \$lang_file"
     # Fallback zu Englisch
     SELECTED_LANGUAGE="en_US"
-    source "$LANG_DIR/en_US.conf"
+    source "\$LANG_DIR/en_US.conf"
   fi
 }
 
@@ -672,7 +797,7 @@ select_language() {
   echo ""
   read -p "Auswahl/Selection [1]: " choice
   
-  case ${choice:-1} in
+  case \${choice:-1} in
     1|"")
       SELECTED_LANGUAGE="de_DE"
       ;;
@@ -696,16 +821,16 @@ select_keyboard() {
   echo "           UbuntuFDE Installation"
   echo "==============================================="
   echo ""
-  echo "$KEYBOARD_PROMPT"
+  echo "\$KEYBOARD_PROMPT"
   echo ""
-  echo "1) $KEYBOARD_DE_DE [Standard/Default]"
-  echo "2) $KEYBOARD_DE_CH"
-  echo "3) $KEYBOARD_DE_AT"
-  echo "4) $KEYBOARD_EN_US"
+  echo "1) \$KEYBOARD_DE_DE [Standard/Default]"
+  echo "2) \$KEYBOARD_DE_CH"
+  echo "3) \$KEYBOARD_DE_AT"
+  echo "4) \$KEYBOARD_EN_US"
   echo ""
   read -p "Auswahl/Selection [1]: " choice
   
-  case ${choice:-1} in
+  case \${choice:-1} in
     1|"")
       SELECTED_KEYBOARD="de_de"
       ;;
@@ -730,60 +855,25 @@ select_keyboard() {
 
 # Tastaturlayout aktivieren
 set_keyboard() {
-  local kbd_conf="$KEYBOARD_DIR/keyboard.conf"
-  if [ -f "$kbd_conf" ]; then
-    local xkb_layout=$(grep "^$SELECTED_KEYBOARD," "$kbd_conf" | cut -d, -f2)
-    local xkb_variant=$(grep "^$SELECTED_KEYBOARD," "$kbd_conf" | cut -d, -f3)
+  local kbd_conf="\$KEYBOARD_DIR/keyboard.conf"
+  if [ -f "\$kbd_conf" ]; then
+    local xkb_layout=\$(grep "^\$SELECTED_KEYBOARD," "\$kbd_conf" | cut -d, -f2)
+    local xkb_variant=\$(grep "^\$SELECTED_KEYBOARD," "\$kbd_conf" | cut -d, -f3)
     
-    if [ -n "$xkb_layout" ]; then
-      log info "Setze Tastaturlayout: $xkb_layout $([ -n "$xkb_variant" ] && echo "Variante: $xkb_variant")"
+    if [ -n "\$xkb_layout" ]; then
+      log info "Setze Tastaturlayout: \$xkb_layout \$([ -n "\$xkb_variant" ] && echo "Variante: \$xkb_variant")"
       
       # Verwende das Skript, um das Tastaturlayout zu setzen
-      if [ -f "$KEYBOARD_DIR/set-xkb-layout.sh" ]; then
-        "$KEYBOARD_DIR/set-xkb-layout.sh" "$xkb_layout" "$xkb_variant"
+      if [ -f "\$KEYBOARD_DIR/set-xkb-layout.sh" ]; then
+        "\$KEYBOARD_DIR/set-xkb-layout.sh" "\$xkb_layout" "\$xkb_variant"
       else
-        # Fallback: Versuche direkt die Befehle auszuführen
-        if command -v setxkbmap >/dev/null 2>&1 && [ -n "$DISPLAY" ]; then
-          # Grafische Umgebung mit X11
-          if [ -n "$xkb_variant" ]; then
-            setxkbmap -layout "$xkb_layout" -variant "$xkb_variant" 2>/dev/null || 
-              log warn "Konnte X-Tastaturlayout nicht setzen: $xkb_layout ($xkb_variant)"
-          else
-            setxkbmap -layout "$xkb_layout" 2>/dev/null || 
-              log warn "Konnte X-Tastaturlayout nicht setzen: $xkb_layout"
-          fi
-        elif command -v loadkeys >/dev/null 2>&1; then
-          # Konsole/Textmodus
-          case "$xkb_layout" in
-            "de")
-              loadkeys de-latin1 2>/dev/null || loadkeys de 2>/dev/null || 
-                log warn "Konnte Konsolen-Tastaturlayout nicht setzen: de"
-              ;;
-            "ch")
-              loadkeys de_CH-latin1 2>/dev/null || loadkeys ch 2>/dev/null || 
-                log warn "Konnte Konsolen-Tastaturlayout nicht setzen: ch"
-              ;;
-            "at")
-              loadkeys de-latin1 2>/dev/null || loadkeys at 2>/dev/null || 
-                log warn "Konnte Konsolen-Tastaturlayout nicht setzen: at"
-              ;;
-            "us")
-              loadkeys us 2>/dev/null || 
-                log warn "Konnte Konsolen-Tastaturlayout nicht setzen: us"
-              ;;
-            *)
-              log warn "Unbekanntes Layout: $xkb_layout"
-              ;;
-          esac
-        else
-          log warn "Weder loadkeys noch setxkbmap gefunden. Tastaturlayout konnte nicht gesetzt werden."
-        fi
+        log warn "Tastaturlayout-Skript nicht gefunden. Tastaturlayout konnte nicht gesetzt werden."
       fi
     else
-      log error "Tastaturlayout nicht gefunden: $SELECTED_KEYBOARD"
+      log error "Tastaturlayout nicht gefunden: \$SELECTED_KEYBOARD"
     fi
   else
-    log error "Tastaturkonfiguration nicht gefunden: $kbd_conf"
+    log error "Tastaturkonfiguration nicht gefunden: \$kbd_conf"
   fi
 }
 
@@ -794,19 +884,19 @@ setup_network() {
   echo "           UbuntuFDE Installation"
   echo "==============================================="
   echo ""
-  echo "$NETWORK_SETUP"
+  echo "\$NETWORK_SETUP"
   echo ""
   
   # Führe das Netzwerk-Setup-Skript aus
-  sh /opt/network_setup.sh
+  bash /opt/ubuntufde/network_setup.sh
 }
 
 # Installationsskript herunterladen und ausführen
 download_and_run() {
   # Installationsskript direkt herunterladen ohne weitere Benachrichtigungen
-  wget -O /tmp/install.sh "$INSTALLATION_URL"
+  wget -O /tmp/install.sh "\$INSTALLATION_URL"
   
-  if [ $? -eq 0 ]; then
+  if [ \$? -eq 0 ]; then
     chmod +x /tmp/install.sh
     # Skript sofort ausführen ohne weitere Interaktion
     /tmp/install.sh
@@ -831,148 +921,91 @@ main() {
 main
 EOF
   
-  # Skript ausführbar machen
-  chmod +x "$MAIN_SCRIPT"
+  chmod +x "${INCLUDES_CHROOT}/opt/ubuntufde/start_installation.sh"
   
-  log info "Hauptstartskript erstellt."
+  log info "Hauptinstallationsskript erstellt."
 }
 
-# Modifiziere das Init-Skript in initrd
-modify_init() {
-  log info "Modifiziere Init-Skript..."
+# Erstelle Autostart für das Installationsskript
+create_autostart() {
+  log info "Erstelle Autostart für die Installation..."
   
-  # Pfad zum Init-Skript
-  INIT_SCRIPT="${INITRD_DIR}/init"
-  
-  if [ ! -f "$INIT_SCRIPT" ]; then
-    log error "Init-Skript nicht gefunden: $INIT_SCRIPT"
-    exit 1
-  fi
-  
-  # Sicherungskopie erstellen
-  cp "$INIT_SCRIPT" "${INIT_SCRIPT}.orig"
-  
-  # Finde die richtige Stelle zum Einfügen unseres Skriptes (vor 'exec')
-  EXEC_LINE=$(grep -n "exec" "$INIT_SCRIPT" | head -1 | cut -d: -f1)
-  
-  if [ -z "$EXEC_LINE" ]; then
-    log warn "Konnte 'exec' nicht im Init-Skript finden. Füge am Ende ein."
-    # Füge Aufruf am Ende des Skripts ein
-    echo -e "\n# UbuntuFDE Installation starten\n/opt/start_installation.sh\n" >> "$INIT_SCRIPT"
-  else
-    # Teile das Skript
-    head -n $((EXEC_LINE-1)) "$INIT_SCRIPT" > "${INIT_SCRIPT}.tmp"
-    echo -e "\n# UbuntuFDE Installation starten\n/opt/start_installation.sh\n" >> "${INIT_SCRIPT}.tmp"
-    tail -n +$EXEC_LINE "$INIT_SCRIPT" >> "${INIT_SCRIPT}.tmp"
-    mv "${INIT_SCRIPT}.tmp" "$INIT_SCRIPT"
-  fi
-  
-  # Stelle sicher, dass das Skript ausführbar ist
-  chmod +x "$INIT_SCRIPT"
-  
-  log info "Init-Skript erfolgreich modifiziert."
-}
+  # Systemd-Service erstellen
+  cat > "${INCLUDES_CHROOT}/etc/systemd/system/ubuntufde-installer.service" << EOF
+[Unit]
+Description=UbuntuFDE Installer
+After=network.target
 
-# Aktualisiere initrd
-update_initrd() {
-  log info "Erstelle neue initrd.gz..."
-  
-  # Finde initrd.gz
-  INITRD_PATH=$(find "$ISO_DIR" -name "initrd.gz" | head -n 1)
-  
-  if [ -z "$INITRD_PATH" ]; then
-    log error "initrd.gz nicht gefunden."
-    exit 1
-  fi
-  
-  # Erstelle neue initrd
-  cd "$INITRD_DIR" || exit 1
-  find . | cpio -o -H newc | gzip -9 > "$INITRD_PATH"
-  
-  if [ $? -ne 0 ]; then
-    log error "Erstellung der neuen initrd.gz fehlgeschlagen."
-    exit 1
-  fi
-  
-  log info "Neue initrd.gz erfolgreich erstellt."
-}
+[Service]
+Type=simple
+ExecStart=/bin/bash /opt/ubuntufde/start_installation.sh
+StandardInput=tty
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
 
-# UbuntuFDE Branding
-apply_branding() {
-  log info "Wende UbuntuFDE Branding an..."
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  # Boot-Konfiguration anpassen
+  mkdir -p "${CONFIG_DIR}/includes.binary/boot/grub/grub.cfg.d"
+  cat > "${CONFIG_DIR}/includes.binary/boot/grub/grub.cfg.d/ubuntufde.cfg" << EOF
+set timeout=1
+set default=0
+set menu_color_normal=white/black
+set menu_color_highlight=black/light-gray
+EOF
+
+  # Systemd-Service aktivieren
+  mkdir -p "${INCLUDES_CHROOT}/etc/systemd/system/multi-user.target.wants"
+  ln -sf "/etc/systemd/system/ubuntufde-installer.service" "${INCLUDES_CHROOT}/etc/systemd/system/multi-user.target.wants/ubuntufde-installer.service"
   
-  # Ersetzen von TinyCore-Branding in Textdateien
-  find "$ISO_DIR" -type f -name "*.txt" -o -name "*.cfg" -o -name "*.menu" | \
-  while read file; do
-    sed -i 's/Tiny Core/UbuntuFDE/g' "$file"
-    sed -i 's/TinyCore/UbuntuFDE/g' "$file"
-    sed -i 's/CorePure/UbuntuFDE/g' "$file"
-  done
-  
-  # Wenn ein Logo vorhanden ist, könnte es ersetzt werden
-  # Dies würde zusätzliche Grafikbearbeitung erfordern
-  
-  log info "UbuntuFDE Branding angewendet."
+  log info "Autostart für die Installation erstellt."
 }
 
 # ISO erstellen
-create_iso() {
-  log info "Erstelle neue ISO..."
+build_iso() {
+  log info "Erstelle ISO-Image..."
   
-  # ISO-Optionen
-  ISO_LABEL="UbuntuFDE"
+  cd "$BUILD_DIR"
   
-  # Erstelle ISO mit xorriso oder genisoimage/mkisofs
-  if command -v xorriso &> /dev/null; then
-    xorriso -as mkisofs \
-      -l -J -R \
-      -V "$ISO_LABEL" \
-      -no-emul-boot -boot-load-size 4 -boot-info-table \
-      -b boot/isolinux/isolinux.bin \
-      -c boot/isolinux/boot.cat \
-      -isohybrid-mbr "$ISO_DIR/boot/isolinux/isohdpfx.bin" \
-      -o "$NEW_ISO" \
-      "$ISO_DIR"
-  elif command -v mkisofs &> /dev/null; then
-    mkisofs -l -J -R \
-      -V "$ISO_LABEL" \
-      -no-emul-boot -boot-load-size 4 -boot-info-table \
-      -b boot/isolinux/isolinux.bin \
-      -c boot/isolinux/boot.cat \
-      -o "$NEW_ISO" \
-      "$ISO_DIR"
-    
-    # Mache ISO hybrid, falls isohybrid verfügbar
-    if command -v isohybrid &> /dev/null; then
-      isohybrid "$NEW_ISO"
-    fi
-  else
-    log error "Weder xorriso noch mkisofs gefunden. ISO-Erstellung fehlgeschlagen."
-    exit 1
-  fi
+  # ISO bauen
+  lb build 2>&1 | tee -a "$LOG_FILE"
   
   if [ $? -ne 0 ]; then
-    log error "ISO-Erstellung fehlgeschlagen."
+    log error "ISO-Erstellung fehlgeschlagen. Siehe $LOG_FILE für Details."
     exit 1
   fi
   
-  log info "Neue ISO erfolgreich erstellt: $NEW_ISO"
-  log info "ISO-Größe: $(du -h "$NEW_ISO" | cut -f1)"
+  # Verschiebe die erstellte ISO in das Ausgabeverzeichnis
+  if [ -f "${BUILD_DIR}/live-image-amd64.hybrid.iso" ]; then
+    mkdir -p "$OUTPUT_DIR"
+    mv "${BUILD_DIR}/live-image-amd64.hybrid.iso" "${OUTPUT_DIR}/ubuntufde.iso"
+    
+    # ISO-Größe anzeigen
+    ISO_SIZE=$(du -h "${OUTPUT_DIR}/ubuntufde.iso" | cut -f1)
+    log info "ISO erfolgreich erstellt: ${OUTPUT_DIR}/ubuntufde.iso (Größe: $ISO_SIZE)"
+  else
+    log error "ISO-Datei wurde nicht gefunden. Build fehlgeschlagen."
+    exit 1
+  fi
 }
 
 # Aufräumen
 cleanup() {
   log info "Räume temporäre Dateien auf..."
   
-  read -p "Möchtest du die temporären Dateien aufräumen? (j/n): " -n 1 -r
+  read -p "Möchtest du die temporären Build-Dateien aufräumen? (j/n): " -n 1 -r
   echo
   
   if [[ $REPLY =~ ^[Jj]$ ]]; then
-    log info "Lösche temporäre Dateien..."
-    rm -rf "$EXTRACT_DIR" "$INITRD_DIR"
-    log info "Temporäre Dateien gelöscht."
+    # Lösche nur bestimmte Verzeichnisse, behalte die Konfiguration
+    rm -rf "${BUILD_DIR}/.build"
+    rm -rf "${BUILD_DIR}/cache"
+    log info "Temporäre Build-Dateien gelöscht."
   else
-    log info "Temporäre Dateien wurden beibehalten."
+    log info "Temporäre Build-Dateien wurden beibehalten."
   fi
 }
 
@@ -980,7 +1013,8 @@ cleanup() {
 # Hauptprogramm
 # --------------------------------
 main() {
-  log info "Starte UbuntuFDE ISO-Erstellung..."
+  echo -e "${BLUE}===== UbuntuFDE ISO-Erstellung (Ubuntu-basiert) =====${NC}"
+  echo
   
   # Prüfe Root-Rechte
   if [ "$(id -u)" -ne 0 ]; then
@@ -991,22 +1025,20 @@ main() {
   # Schritte ausführen
   check_dependencies
   setup_directories
-  download_tinycore
-  extract_iso
-  modify_boot_config
-  extract_modify_initrd
+  configure_live_build
+  create_package_lists
+  create_symlinks_hook
+  create_cleanup_hook
   create_network_setup
   create_language_support
-  add_keyboard_layouts
+  create_keyboard_layouts
   create_main_script
-  modify_init
-  update_initrd
-  apply_branding
-  create_iso
+  create_autostart
+  build_iso
   cleanup
   
   log info "UbuntuFDE ISO-Erstellung abgeschlossen!"
-  log info "Die neue ISO befindet sich hier: $NEW_ISO"
+  log info "Die neue ISO befindet sich hier: ${OUTPUT_DIR}/ubuntufde.iso"
 }
 
 # Starte das Hauptprogramm

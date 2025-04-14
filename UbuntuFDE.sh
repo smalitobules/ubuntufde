@@ -2863,13 +2863,15 @@ HEIGHT=200
             
             # Burn My Windows
             log "Konfiguriere Burn My Windows Extension..."
-            mkdir -p $HOME/.local/share/gnome-shell/extensions/burn-my-windows@schneegans.github.com/
-            echo '{
-            "close-effect": "pixelwipe",
-            "open-effect": "pixelwipe",
-            "animation-time": 300,
-            "pixelwipe-pixel-size": 7
-            }' > $HOME/.local/share/gnome-shell/extensions/burn-my-windows@schneegans.github.com/prefs.json
+            mkdir -p $HOME/.config/burn-my-windows/profiles/
+            cat > $HOME/.config/burn-my-windows/profiles/1744486167399235.conf <<EOBURN
+[burn-my-windows-profile]
+fire-enable-effect=false
+pixel-wipe-enable-effect=true
+pixel-wipe-animation-time=300
+pixel-wipe-pixel-size=7
+EOBURN
+
             
         show_progress 40
             
