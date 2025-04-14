@@ -123,13 +123,12 @@ configure_live_build() {
   # Cache leeren
   rm -rf "${BUILD_DIR}/cache"
   lb clean --purge
-
-  # Verzeichnis erstellen
-  mkdir -p /etc/live
+  rm -rf config
   
   # Minimale Konfigurationsdatei anlegen
+  mkdir -p /etc/live
   cat > /etc/live/build.conf << EOF
-# Live-build Standardkonfiguration
+# Live-Build Standardkonfiguration
 LIVE_DISTRIBUTION="oracular"
 LIVE_MIRROR_BOOTSTRAP="http://192.168.56.120/ubuntu/"
 LIVE_MIRROR_BINARY="http://192.168.56.120/ubuntu/"
@@ -147,9 +146,9 @@ LB_DISTRIBUTION="oracular"
 LB_PARENT_DISTRIBUTION="oracular"
 EOF
 
-  # Erstelle config/bootstrap_debootstrap
- # mkdir -p "${CONFIG_DIR}/bootstrap"
- # echo 'DEBOOTSTRAP_OPTIONS="--variant=minbase"' > "${CONFIG_DIR}/bootstrap_debootstrap"
+  # Erstelle debootstrap Konfiguration
+  mkdir -p "${CONFIG_DIR}"  # Nur das config-Verzeichnis erstellen
+  echo 'DEBOOTSTRAP_OPTIONS="--variant=minbase"' > "${CONFIG_DIR}/bootstrap_debootstrap"
   
   # Live-Build Konfiguration
   lb config \
@@ -188,9 +187,9 @@ create_package_lists() {
   # Paketliste des Live-Systems
   cat > "${PACKAGE_LISTS}/minimal.list.chroot" << EOF
 # Minimale Systempakete
-#live-boot
+live-boot
 systemd-sysv
-linux-image-generic
+#linux-image-generic
 busybox-static
 
 # Netzwerkunterstützung
@@ -1036,7 +1035,7 @@ main() {
   setup_directories
   configure_live_build
   create_package_lists
-  # create_symlinks_hook
+  create_symlinks_hook
   create_cleanup_hook
   create_network_setup
   create_language_support
