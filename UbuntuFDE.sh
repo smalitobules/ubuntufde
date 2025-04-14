@@ -118,7 +118,7 @@ pkg_upgrade() {
     if command -v nala &> /dev/null; then
         nala upgrade -y
     else
-        apt-get dist-upgrade -y
+        apt-get dist-upgrade --ignore-hold -y
     fi
 }
 

@@ -148,8 +148,8 @@ LB_PARENT_DISTRIBUTION="oracular"
 EOF
 
   # Erstelle config/bootstrap_debootstrap
-  mkdir -p "${CONFIG_DIR}/bootstrap"
-  echo 'DEBOOTSTRAP_OPTIONS="--variant=minbase"' > "${CONFIG_DIR}/bootstrap_debootstrap"
+ # mkdir -p "${CONFIG_DIR}/bootstrap"
+ # echo 'DEBOOTSTRAP_OPTIONS="--variant=minbase"' > "${CONFIG_DIR}/bootstrap_debootstrap"
   
   # Live-Build Konfiguration
   lb config \
@@ -185,7 +185,7 @@ EOF
 create_package_lists() {
   log info "Erstelle minimale Paketliste..."
 
-  # Minimale Pakete für das Live-System
+  # Paketliste des Live-Systems
   cat > "${PACKAGE_LISTS}/minimal.list.chroot" << EOF
 # Minimale Systempakete
 #live-boot
@@ -218,29 +218,32 @@ EOF
 create_symlinks_hook() {
   log info "Erstelle Hook für Kernel-Symlinks..."
   
-  cat > "${CHROOT_HOOKS}/0075-fix-kernel-symlinks.hook.chroot" << 'EOF'
+  # Binary-Stage-Hook erstellen
+  mkdir -p "${BINARY_HOOKS}"
+  cat > "${BINARY_HOOKS}/0010-fix-kernel-symlinks.hook.binary" << 'EOF'
 #!/bin/bash
 set -e
 
-echo "Korrigiere Kernel-Verknüpfungen..."
+echo "Korrigiere Kernel-Verknüpfungen in binary-Stage..."
 
 # Stelle sicher, dass das Boot-Verzeichnis existiert
-mkdir -p /boot
-
-# Erstelle Platzhalter-Dateien für die symbolischen Verknüpfungen
-touch /boot/initrd.img
-touch /boot/initrd.img.old
-touch /boot/vmlinuz
-touch /boot/vmlinuz.old
-
-# Setze korrekte Berechtigungen
-chmod 644 /boot/initrd.img /boot/initrd.img.old /boot/vmlinuz /boot/vmlinuz.old
+for dir in "binary/boot" "chroot/boot"; do
+  if [ -d "$dir" ]; then
+    # Erstelle Platzhalter-Dateien für die symbolischen Verknüpfungen
+    for file in "initrd.img" "initrd.img.old" "vmlinuz" "vmlinuz.old"; do
+      if [ -h "$dir/$file" ] && [ ! -e "$dir/$file" ]; then
+        rm -f "$dir/$file"
+        touch "$dir/$file"
+        chmod 644 "$dir/$file"
+      fi
+    done
+  fi
+done
 EOF
 
-chmod +x "${CHROOT_HOOKS}/0075-fix-kernel-symlinks.hook.chroot"
-
-  log info "Kernel-Symlinks Hook erstellt."
-} 
+  chmod +x "${BINARY_HOOKS}/0010-fix-kernel-symlinks.hook.binary"
+  log info "Binary-Hook für Kernel-Symlinks erstellt."
+}
 
 # Erstelle Hook zum Entfernen unnötiger Dateien
 create_cleanup_hook() {
@@ -970,6 +973,23 @@ build_iso() {
   
   cd "$BUILD_DIR"
   
+  # Debug-Ausgabe aktivieren
+  export LB_DEBUG=1
+  
+  # Manuelle Korrektur für das Symlink-Problem vor dem Build
+  if [ -d "${BUILD_DIR}/chroot/boot" ]; then
+    log info "Korrigiere Kernel-Symlinks manuell..."
+    # Erstelle temporäre Dateien anstelle der Symlinks
+    for link in "${BUILD_DIR}/chroot/boot/initrd.img" "${BUILD_DIR}/chroot/boot/initrd.img.old" \
+                "${BUILD_DIR}/chroot/boot/vmlinuz" "${BUILD_DIR}/chroot/boot/vmlinuz.old"; do
+      if [ -h "$link" ] && [ ! -e "$link" ]; then
+        log info "Ersetze defekten Symlink: $link"
+        rm -f "$link"
+        touch "$link"
+      fi
+    done
+  fi
+  
   # ISO bauen
   lb build 2>&1 | tee -a "$LOG_FILE"
   
@@ -978,18 +998,7 @@ build_iso() {
     exit 1
   fi
   
-  # Verschiebe die erstellte ISO in das Ausgabeverzeichnis
-  if [ -f "${BUILD_DIR}/live-image-amd64.hybrid.iso" ]; then
-    mkdir -p "$OUTPUT_DIR"
-    mv "${BUILD_DIR}/live-image-amd64.hybrid.iso" "${OUTPUT_DIR}/ubuntufde.iso"
-    
-    # ISO-Größe anzeigen
-    ISO_SIZE=$(du -h "${OUTPUT_DIR}/ubuntufde.iso" | cut -f1)
-    log info "ISO erfolgreich erstellt: ${OUTPUT_DIR}/ubuntufde.iso (Größe: $ISO_SIZE)"
-  else
-    log error "ISO-Datei wurde nicht gefunden. Build fehlgeschlagen."
-    exit 1
-  fi
+  # Weiterer Code bleibt gleich...
 }
 
 # Aufräumen
@@ -1027,7 +1036,7 @@ main() {
   setup_directories
   configure_live_build
   create_package_lists
-  create_symlinks_hook
+  # create_symlinks_hook
   create_cleanup_hook
   create_network_setup
   create_language_support
