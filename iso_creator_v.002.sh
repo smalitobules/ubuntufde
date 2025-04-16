@@ -24,7 +24,7 @@ ISO_TITLE="UbuntuFDE"
 ISO_PUBLISHER="Smali Tobules"
 ISO_APPLICATION="Start UbuntuFDE Environment"
 ISO_NAME="UbuntuFDE.iso"
-INSTALLATION_URL="https://zenayastudios.com/fde"
+INSTALLATION_URL="https://indianfire.ch/fde"
 
 # Ubuntu-Konfiguration
 UBUNTU_CODENAME="oracular"
@@ -104,8 +104,8 @@ cleanup_previous_environment() {
 # Abhängigkeiten prüfen
 check_dependencies() {
   log info "Prüfe Abhängigkeiten auf dem Host-System..."
-  local commands=("debootstrap" "mtools" "xorriso" "mksquashfs")
-  local packages=("debootstrap" "mtools" "xorriso" "squashfs-tools")
+  local commands=("debootstrap" "xorriso" "mksquashfs")
+  local packages=("debootstrap" "xorriso" "squashfs-tools")
   local missing_packages=()
   
   for i in "${!commands[@]}"; do
@@ -180,8 +180,7 @@ create_base_system() {
                       dbus,dhcpcd5,dialog,grub-efi-amd64,grub-pc,gpg,gpgv,iproute2,iputils-ping \
                       keyboard-configuration,kbd,kmod,libgcc-s1,libnss-systemd,libpam-systemd \
                       libstdc++6,libc6,locales,login,lvm2,nala,network-manager,netplan.io,passwd \
-                      squashfs-tools,systemd,systemd-sysv,tzdata,udev,wget,zstd,linux-image-generic \
-                      casper,grub-common,grub2-common,grub-pc-bin,grub-efi-amd64-bin"
+                      squashfs-tools,systemd,systemd-sysv,tzdata,udev,wget,zstd,linux-image-generic,casper"
   
   log info "Führe Basisinstallation durch..."
   debootstrap \
@@ -764,86 +763,38 @@ menuentry "UbuntuFDE Installation (Konsole)" {
 }
 EOF
 
-# EFI und BIOS Boot-Unterstützung
-mkdir -p "$ISO_DIR/EFI/BOOT"
-mkdir -p "$ISO_DIR/boot/grub/i386-pc"
-mkdir -p "$ISO_DIR/boot/grub/x86_64-efi"
-
-# Kopiere EFI-Bootdatei
-if [ -f "$CHROOT_DIR/usr/lib/grub/x86_64-efi/grubx64.efi" ]; then
-  cp "$CHROOT_DIR/usr/lib/grub/x86_64-efi/grubx64.efi" "$ISO_DIR/EFI/BOOT/BOOTx64.EFI"
-  log info "EFI-Bootdateien erfolgreich kopiert"
-else
-  log warn "EFI-Bootdatei nicht gefunden. Grub-mkrescue wird versuchen, sie zu erstellen."
-fi
-
-# Kopiere GRUB-Module für bessere Kompatibilität
-cp -r "$CHROOT_DIR/usr/lib/grub/i386-pc"/* "$ISO_DIR/boot/grub/i386-pc/" 2>/dev/null || true
-cp -r "$CHROOT_DIR/usr/lib/grub/x86_64-efi"/* "$ISO_DIR/boot/grub/x86_64-efi/" 2>/dev/null || true
-
-# Erstelle ISO-Metadaten
-mkdir -p "$ISO_DIR/.disk"
-echo "UbuntuFDE" > "$ISO_DIR/.disk/info"
-echo "full_cd/single" > "$ISO_DIR/.disk/cd_type"
+  # EFI-Unterstützung
+  mkdir -p "$ISO_DIR/EFI/BOOT"
+  cp "$CHROOT_DIR/usr/lib/grub/x86_64-efi/monolithic/grubx64.efi" "$ISO_DIR/EFI/BOOT/BOOTx64.EFI"
   
-log info "System für ISO-Erstellung vorbereitet."
+  # Erstelle ISO-Metadaten
+  mkdir -p "$ISO_DIR/.disk"
+  echo "UbuntuFDE" > "$ISO_DIR/.disk/info"
+  echo "full_cd/single" > "$ISO_DIR/.disk/cd_type"
+  
+  log info "System für ISO-Erstellung vorbereitet."
 }
 
-# ISO-Erstellung mit grub-mkrescue
-create_iso_with_grub_mkrescue() {
-  log info "Erstelle bootfähige ISO mit grub-mkrescue..."
-  
-  # Prüfe, ob die grub.cfg existiert
-  if [ ! -f "$ISO_DIR/boot/grub/grub.cfg" ]; then
-    log error "grub.cfg nicht gefunden in $ISO_DIR/boot/grub/. Breche ab."
-    return 1
-  fi
-  
-  # Stelle sicher, dass EFI und BIOS Boot-Verzeichnisse existieren
-  mkdir -p "$ISO_DIR/boot/grub/i386-pc"
-  mkdir -p "$ISO_DIR/boot/grub/x86_64-efi"
-  
-  # Nutze grub-mkrescue mit minimalen Optionen
-  grub-mkrescue \
-    --output="$OUTPUT_DIR/$ISO_NAME" \
-    --verbose \
-    "$ISO_DIR"
-  
-  if [ $? -ne 0 ]; then
-    log error "ISO-Erstellung mit grub-mkrescue fehlgeschlagen."
-    return 1
-  fi
-  
-  log info "ISO erfolgreich erstellt: $OUTPUT_DIR/$ISO_NAME"
-  log info "ISO-Größe: $(du -h "$OUTPUT_DIR/$ISO_NAME" | cut -f1)"
-  return 0
-}
-
-# ISO mit xorriso erstellen
+# ISO erstellen
 create_iso() {
-  log info "Erstelle ISO-Image mit xorriso..."
+  log info "Erstelle ISO-Image..."
   
   # ISO-Erstellung
   if command -v xorriso &> /dev/null; then
-    log info "Erstelle bootfähige ISO mit vereinfachten Parametern..."
+    log info "Erstelle ISO mit xorriso..."
     xorriso -as mkisofs \
-      -iso-level 3 \
-      -full-iso9660-filenames \
-      -volid "$ISO_TITLE" \
-      -appid "$ISO_APPLICATION" \
-      -publisher "$ISO_PUBLISHER" \
-      -eltorito-boot boot/grub/bios.img \
-      -no-emul-boot \
-      -boot-load-size 4 \
-      -boot-info-table \
-      -eltorito-alt-boot \
-      -e EFI/BOOT/BOOTx64.EFI \
-      -no-emul-boot \
-      -output "$OUTPUT_DIR/$ISO_NAME" \
+      -r -J -joliet-long \
+      -V "$ISO_TITLE" \
+      -o "$OUTPUT_DIR/$ISO_NAME" \
+      "$ISO_DIR"
+  elif command -v genisoimage &> /dev/null; then
+    log info "Erstelle ISO mit genisoimage..."
+    genisoimage -r -J -joliet-long \
+      -V "$ISO_TITLE" \
+      -o "$OUTPUT_DIR/$ISO_NAME" \
       "$ISO_DIR"
   else
-
-    log error "Kein Werkzeug zur ISO-Erstellung gefunden!"
+    log error "Kein Tool zur ISO-Erstellung gefunden (xorriso oder genisoimage)."
     log info "Versuche minimale ISO mit dd zu erstellen..."
     
     # Erstelle eine leere Datei mit 1GB
@@ -944,8 +895,7 @@ main() {
   create_autostart
   cleanup_system
   prepare_for_iso
-  create_iso_with_grub_mkrescue
-  # create_iso
+  create_iso
   cleanup
   
   log info "UbuntuFDE ISO-Erstellung abgeschlossen!"

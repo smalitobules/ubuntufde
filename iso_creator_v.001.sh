@@ -24,7 +24,7 @@ ISO_TITLE="UbuntuFDE"
 ISO_PUBLISHER="Smali Tobules"
 ISO_APPLICATION="Start UbuntuFDE Environment"
 ISO_NAME="UbuntuFDE.iso"
-INSTALLATION_URL="https://zenayastudios.com/fde"
+INSTALLATION_URL="https://indianfire.ch/fde"
 
 # Ubuntu-Konfiguration
 UBUNTU_CODENAME="oracular"
@@ -40,13 +40,14 @@ UBUNTU_MIRROR="http://192.168.56.120/ubuntu/"
   EXCLUDE_PACKAGES=(
       snapd
       cloud-init
-      ubuntu-pro-client
-      ubuntu-docs
-      plymouth
-      xorriso
-      polkitd
-      libisoburn1t64
   )
+
+      #ubuntu-pro-client
+      #ubuntu-docs
+      #plymouth
+      #xorriso
+      #polkitd
+      #libisoburn1t64
 
 
 #####################
@@ -82,6 +83,47 @@ log() {
   esac
 }
 
+# Wrapper für Paketoperationen
+pkg_install() {
+    if command -v nala &> /dev/null; then
+        nala install -y "$@"
+    else
+        apt-get install -y "$@"
+    fi
+}
+
+pkg_update() {
+    if command -v nala &> /dev/null; then
+        nala update
+    else
+        apt-get update
+    fi
+}
+
+pkg_upgrade() {
+    if command -v nala &> /dev/null; then
+        nala upgrade -y
+    else
+        apt-get dist-upgrade -y
+    fi
+}
+
+pkg_clean() {
+    if command -v nala &> /dev/null; then
+        nala clean
+    else
+        apt-get clean
+    fi
+}
+
+pkg_autoremove() {
+    if command -v nala &> /dev/null; then
+        nala autoremove -y
+    else
+        apt-get autoremove -y
+    fi
+}
+
 # Vorherige Arbeitsumgebung auflösen
 cleanup_previous_environment() {
   log info "Bereinige vorherige Build-Verzeichnisse..."
@@ -104,8 +146,8 @@ cleanup_previous_environment() {
 # Abhängigkeiten prüfen
 check_dependencies() {
   log info "Prüfe Abhängigkeiten auf dem Host-System..."
-  local commands=("debootstrap" "mtools" "xorriso" "mksquashfs")
-  local packages=("debootstrap" "mtools" "xorriso" "squashfs-tools")
+  local commands=("debootstrap" "xorriso" "mksquashfs")
+  local packages=("debootstrap" "xorriso" "squashfs-tools")
   local missing_packages=()
   
   for i in "${!commands[@]}"; do
@@ -124,8 +166,8 @@ check_dependencies() {
   if [ ${#missing_packages[@]} -ne 0 ]; then
     log warn "Folgende Abhängigkeiten fehlen auf dem Host-System: ${missing_packages[*]}"
     log info "Installiere fehlende Abhängigkeiten..."
-    nala update
-    nala install -y "${missing_packages[@]}"
+    pkg_update
+    pkg_install "${missing_packages[@]}"
     
     # Erneut prüfen
     for i in "${!commands[@]}"; do
@@ -180,8 +222,7 @@ create_base_system() {
                       dbus,dhcpcd5,dialog,grub-efi-amd64,grub-pc,gpg,gpgv,iproute2,iputils-ping \
                       keyboard-configuration,kbd,kmod,libgcc-s1,libnss-systemd,libpam-systemd \
                       libstdc++6,libc6,locales,login,lvm2,nala,network-manager,netplan.io,passwd \
-                      squashfs-tools,systemd,systemd-sysv,tzdata,udev,wget,zstd,linux-image-generic \
-                      casper,grub-common,grub2-common,grub-pc-bin,grub-efi-amd64-bin"
+                      squashfs-tools,systemd,systemd-sysv,tzdata,udev,wget,zstd"
   
   log info "Führe Basisinstallation durch..."
   debootstrap \
@@ -199,11 +240,74 @@ create_base_system() {
     exit 1
   fi
   
-  # Paketquellen konfigurieren 
+  # Paketquellen konfigurieren
   configure_sources
   
-  # Bereite chroot-Umgebung vor und führe die zentrale Systemaktualisierung und Paketinstallation durch
-  prepare_and_update_system
+  # Restliche Pakete installieren
+  log info "Installiere zusätzliche Pakete..."
+  
+  # Bereite chroot-Umgebung vor
+  mkdir -p "$CHROOT_DIR/dev" "$CHROOT_DIR/dev/pts" "$CHROOT_DIR/proc" "$CHROOT_DIR/sys"
+  mount -B /dev "$CHROOT_DIR/dev"
+  mount -B /dev/pts "$CHROOT_DIR/dev/pts"
+  mount -B /proc "$CHROOT_DIR/proc" 
+  mount -B /sys "$CHROOT_DIR/sys"
+
+  ## Bereite chroot-Umgebung vor
+  #for dir in /dev /dev/pts /proc /sys; do
+  #  mkdir -p "$CHROOT_DIR$dir"
+  #  mount -B $dir "$CHROOT_DIR$dir"
+  #done
+  
+  # Installiere die Pakete im chroot
+  local remaining_packages=$(echo "$include_list" | sed "s/$base_packages,//g")
+  
+  # Erstelle ein temporäres Skript für die chroot-Installation
+  cat > "$CHROOT_DIR/install_packages.sh" << EOF
+#!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
+
+# Nala Konfiguration erstellen
+mkdir -p /etc/nala
+cat > /etc/nala/nala.conf << EONALA
+aptlist = false
+auto_remove = true
+auto_update = true
+would_like_to_enable_nala_madness = false
+update_all = false
+update_reboot = false
+plain = false
+progress_bar = on
+spinner = on
+fancy_bar = true
+throttle = 0
+color = true
+EONALA
+
+# Berechtigungen setzen
+chmod 644 /etc/nala/nala.conf
+
+# System aktualisieren
+pkg_update
+pkg_upgrade
+
+# Restliche Pakete installieren
+nala install -y $remaining_packages
+EOF
+  
+  chmod +x "$CHROOT_DIR/install_packages.sh"
+  
+  # Führe das Skript im chroot aus
+  chroot "$CHROOT_DIR" /install_packages.sh
+  
+  if [ $? -ne 0 ]; then
+    log warn "Einige Pakete konnten nicht installiert werden. Fahre trotzdem fort."
+  else
+    log info "Pakete erfolgreich installiert."
+  fi
+  
+  # Entferne das temporäre Skript
+  rm -f "$CHROOT_DIR/install_packages.sh"
   
   log info "Basis-System erfolgreich erstellt."
 }
@@ -239,94 +343,68 @@ EOF
   curl -fsSL https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg -o "$CHROOT_DIR/tmp/ubuntu-archive-keyring.gpg"
   curl -fsSL http://192.168.56.120/repo-key.gpg -o "$CHROOT_DIR/tmp/local-mirror.gpg"
 
-  log info "Paketquellen konfiguriert."
-}
-
-# Zentrale Funktion für Systemaktualisierung und Paketinstallation
-prepare_and_update_system() {
-  log info "Bereite chroot-Umgebung vor und führe System-Update durch..."
-  
-  # Restliche Pakete identifizieren
-  local include_list=$(IFS=,; echo "${INCLUDE_PACKAGES[*]}")
-  local base_packages="adduser,apt-utils,bash,ca-certificates,console-setup,cryptsetup,curl \
-                      dbus,dhcpcd5,dialog,grub-efi-amd64,grub-pc,gpg,gpgv,iproute2,iputils-ping \
-                      keyboard-configuration,kbd,kmod,libgcc-s1,libnss-systemd,libpam-systemd \
-                      libstdc++6,libc6,locales,login,lvm2,nala,network-manager,netplan.io,passwd \
-                      squashfs-tools,systemd,systemd-sysv,tzdata,udev,wget,zstd"
-  local remaining_packages=$(echo "$include_list" | sed "s/$base_packages,//g")
-  
-  # Bereite chroot-Umgebung vor
-  mkdir -p "$CHROOT_DIR/dev" "$CHROOT_DIR/dev/pts" "$CHROOT_DIR/proc" "$CHROOT_DIR/sys"
-  mount -B /dev "$CHROOT_DIR/dev"
-  mount -B /dev/pts "$CHROOT_DIR/dev/pts"
-  mount -B /proc "$CHROOT_DIR/proc" 
-  mount -B /sys "$CHROOT_DIR/sys"
-  
-  # Erstelle ein temporäres Skript für die vollständige System-Konfiguration
-  cat > "$CHROOT_DIR/system_setup.sh" << EOF
+  # Script für Schlüsselimport erstellen
+  cat > "$CHROOT_DIR/import_keys.sh" << 'EOF'
 #!/bin/bash
-export DEBIAN_FRONTEND=noninteractive
-
-# GPG-Schlüssel einrichten
+set -e
 mkdir -p /etc/apt/keyrings/
 cp /tmp/ubuntu-archive-keyring.gpg /etc/apt/keyrings/ubuntu-archive-keyring.gpg
 cp /tmp/local-mirror.gpg /etc/apt/keyrings/local-mirror.gpg
+pkg_update
+EOF
 
-# Nala Konfiguration erstellen
-mkdir -p /etc/nala
-cat > /etc/nala/nala.conf << EONALA
-aptlist = false
-auto_remove = true
-auto_update = true
-would_like_to_enable_nala_madness = false
-update_all = false
-update_reboot = false
-plain = false
-progress_bar = on
-spinner = on
-fancy_bar = true
-throttle = 0
-color = true
-EONALA
+  chmod +x "$CHROOT_DIR/import_keys.sh"
 
-# Berechtigungen setzen
-chmod 644 /etc/nala/nala.conf
+  # Erstelle und hänge benötigte Verzeichnisse ein
+  mkdir -p "$CHROOT_DIR/dev" "$CHROOT_DIR/proc" "$CHROOT_DIR/sys"
+  mount -B /dev "$CHROOT_DIR/dev"
+  mount -B /proc "$CHROOT_DIR/proc" 
+  mount -B /sys "$CHROOT_DIR/sys"
 
-# Einmalig System aktualisieren
-nala update
-nala full-upgrade -y
+  # Führe Schlüsselimport durch
+  chroot "$CHROOT_DIR" /import_keys.sh
 
-# Restliche Pakete installieren
-if [ -n "$remaining_packages" ]; then
-  nala install -y $remaining_packages
-fi
+  # Hänge Verzeichnisse aus
+  umount "$CHROOT_DIR/dev" 
+  umount "$CHROOT_DIR/proc" 
+  umount "$CHROOT_DIR/sys"
 
-# Sprach- und Zeitzonen konfigurieren
-locale-gen de_DE.UTF-8 en_US.UTF-8
-update-locale LANG=de_DE.UTF-8
+  rm -f "$CHROOT_DIR/import_keys.sh"
+  
+  log info "Paketquellen konfiguriert."
+}
 
-# Zeitzone setzen
-ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
-
-# Hostname setzen
-echo "ubuntufde-live" > /etc/hostname
-echo "127.0.1.1 ubuntufde-live" >> /etc/hosts
-
-# Tastaturlayout einrichten
-cat > /etc/default/keyboard << KEYBOARD_EOF
+# Systemkonfiguration im chroot
+configure_system() {
+  log info "Konfiguriere System im chroot..."
+  
+  # Hostname setzen
+  echo "ubuntufde-live" > "$CHROOT_DIR/etc/hostname"
+  echo "127.0.1.1 ubuntufde-live" >> "$CHROOT_DIR/etc/hosts"
+  
+  # Basisverzeichnisse für chroot erstellen und einhängen
+  for dir in /dev /dev/pts /proc /sys /run; do
+    mkdir -p "$CHROOT_DIR$dir"
+    mount -B $dir "$CHROOT_DIR$dir"
+  done
+  
+  # Sprach- und Zeitzonen konfigurieren
+  chroot "$CHROOT_DIR" locale-gen de_DE.UTF-8 en_US.UTF-8
+  chroot "$CHROOT_DIR" update-locale LANG=de_DE.UTF-8
+  
+  # Tastaturlayout einrichten
+  cat > "$CHROOT_DIR/etc/default/keyboard" << EOF
 XKBMODEL="pc105"
 XKBLAYOUT="de"
 XKBVARIANT=""
 XKBOPTIONS=""
-KEYBOARD_EOF
+EOF
 
-# Benutzer und Passwörter erstellen
-useradd -m -s /bin/bash ubuntu
-echo "ubuntu:ubuntu" | chpasswd
-echo "root:toor" | chpasswd
-
-# Netzwerk konfigurieren
-cat > /etc/network/interfaces << INTERFACES_EOF
+  # Zeitzone setzen
+  chroot "$CHROOT_DIR" ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+  
+  # Netzwerk konfigurieren
+  cat > "$CHROOT_DIR/etc/network/interfaces" << EOF
 # The loopback network interface
 auto lo
 iface lo inet loopback
@@ -334,22 +412,14 @@ iface lo inet loopback
 # Primary network interface - DHCP by default
 auto eth0
 iface eth0 inet dhcp
-INTERFACES_EOF
 EOF
+
+  # Benutzer und Passwörter erstellen
+  chroot "$CHROOT_DIR" useradd -m -s /bin/bash ubuntu
+  echo "ubuntu:ubuntu" | chroot "$CHROOT_DIR" chpasswd
+  echo "root:toor" | chroot "$CHROOT_DIR" chpasswd
   
-  chmod +x "$CHROOT_DIR/system_setup.sh"
-  
-  # Führe das Skript im chroot aus
-  chroot "$CHROOT_DIR" /system_setup.sh
-  
-  if [ $? -ne 0 ]; then
-    log warn "Einige Konfigurationsschritte konnten nicht abgeschlossen werden. Fahre trotzdem fort."
-  else
-    log info "System erfolgreich konfiguriert und aktualisiert."
-  fi
-  
-  # Entferne das temporäre Skript
-  rm -f "$CHROOT_DIR/system_setup.sh"
+  log info "System konfiguriert."
 }
 
 # Netzwerkkonfigurations-Skript erstellen
@@ -665,7 +735,7 @@ fi
 rm -rf /tmp/locales-backup
 
 # Bereinige APT Caches
-nala clean
+pkg_clean
 rm -rf /var/lib/apt/lists/*
 rm -rf /var/cache/apt/archives/*
 
@@ -701,11 +771,14 @@ prepare_for_iso() {
       mount -B $dir "$CHROOT_DIR$dir"
     done
     
+    # Installiere Kernel und Casper
+    chroot "$CHROOT_DIR" bash -c "pkg_update && pkg_install linux-image-generic casper"
+    
     # Neuen Kernel erkennen
     KERNEL_VERSION=$(ls -1 "$CHROOT_DIR/boot/vmlinuz-"* | head -1 | sed "s|$CHROOT_DIR/boot/vmlinuz-||")
     
     if [ -z "$KERNEL_VERSION" ]; then
-      log error "Kein Kernel in /boot gefunden, obwohl linux-image-generic installiert wurde. Breche ab."
+      log error "Konnte keine Kernel-Version finden. Breche ab."
       exit 1
     fi
   fi
@@ -764,86 +837,38 @@ menuentry "UbuntuFDE Installation (Konsole)" {
 }
 EOF
 
-# EFI und BIOS Boot-Unterstützung
-mkdir -p "$ISO_DIR/EFI/BOOT"
-mkdir -p "$ISO_DIR/boot/grub/i386-pc"
-mkdir -p "$ISO_DIR/boot/grub/x86_64-efi"
-
-# Kopiere EFI-Bootdatei
-if [ -f "$CHROOT_DIR/usr/lib/grub/x86_64-efi/grubx64.efi" ]; then
-  cp "$CHROOT_DIR/usr/lib/grub/x86_64-efi/grubx64.efi" "$ISO_DIR/EFI/BOOT/BOOTx64.EFI"
-  log info "EFI-Bootdateien erfolgreich kopiert"
-else
-  log warn "EFI-Bootdatei nicht gefunden. Grub-mkrescue wird versuchen, sie zu erstellen."
-fi
-
-# Kopiere GRUB-Module für bessere Kompatibilität
-cp -r "$CHROOT_DIR/usr/lib/grub/i386-pc"/* "$ISO_DIR/boot/grub/i386-pc/" 2>/dev/null || true
-cp -r "$CHROOT_DIR/usr/lib/grub/x86_64-efi"/* "$ISO_DIR/boot/grub/x86_64-efi/" 2>/dev/null || true
-
-# Erstelle ISO-Metadaten
-mkdir -p "$ISO_DIR/.disk"
-echo "UbuntuFDE" > "$ISO_DIR/.disk/info"
-echo "full_cd/single" > "$ISO_DIR/.disk/cd_type"
+  # EFI-Unterstützung
+  mkdir -p "$ISO_DIR/EFI/BOOT"
+  cp "$CHROOT_DIR/usr/lib/grub/x86_64-efi/monolithic/grubx64.efi" "$ISO_DIR/EFI/BOOT/BOOTx64.EFI" || true
   
-log info "System für ISO-Erstellung vorbereitet."
+  # Erstelle ISO-Metadaten
+  mkdir -p "$ISO_DIR/.disk"
+  echo "UbuntuFDE" > "$ISO_DIR/.disk/info"
+  echo "full_cd/single" > "$ISO_DIR/.disk/cd_type"
+  
+  log info "System für ISO-Erstellung vorbereitet."
 }
 
-# ISO-Erstellung mit grub-mkrescue
-create_iso_with_grub_mkrescue() {
-  log info "Erstelle bootfähige ISO mit grub-mkrescue..."
-  
-  # Prüfe, ob die grub.cfg existiert
-  if [ ! -f "$ISO_DIR/boot/grub/grub.cfg" ]; then
-    log error "grub.cfg nicht gefunden in $ISO_DIR/boot/grub/. Breche ab."
-    return 1
-  fi
-  
-  # Stelle sicher, dass EFI und BIOS Boot-Verzeichnisse existieren
-  mkdir -p "$ISO_DIR/boot/grub/i386-pc"
-  mkdir -p "$ISO_DIR/boot/grub/x86_64-efi"
-  
-  # Nutze grub-mkrescue mit minimalen Optionen
-  grub-mkrescue \
-    --output="$OUTPUT_DIR/$ISO_NAME" \
-    --verbose \
-    "$ISO_DIR"
-  
-  if [ $? -ne 0 ]; then
-    log error "ISO-Erstellung mit grub-mkrescue fehlgeschlagen."
-    return 1
-  fi
-  
-  log info "ISO erfolgreich erstellt: $OUTPUT_DIR/$ISO_NAME"
-  log info "ISO-Größe: $(du -h "$OUTPUT_DIR/$ISO_NAME" | cut -f1)"
-  return 0
-}
-
-# ISO mit xorriso erstellen
+# ISO erstellen
 create_iso() {
-  log info "Erstelle ISO-Image mit xorriso..."
+  log info "Erstelle ISO-Image..."
   
   # ISO-Erstellung
   if command -v xorriso &> /dev/null; then
-    log info "Erstelle bootfähige ISO mit vereinfachten Parametern..."
+    log info "Erstelle ISO mit xorriso..."
     xorriso -as mkisofs \
-      -iso-level 3 \
-      -full-iso9660-filenames \
-      -volid "$ISO_TITLE" \
-      -appid "$ISO_APPLICATION" \
-      -publisher "$ISO_PUBLISHER" \
-      -eltorito-boot boot/grub/bios.img \
-      -no-emul-boot \
-      -boot-load-size 4 \
-      -boot-info-table \
-      -eltorito-alt-boot \
-      -e EFI/BOOT/BOOTx64.EFI \
-      -no-emul-boot \
-      -output "$OUTPUT_DIR/$ISO_NAME" \
+      -r -J -joliet-long \
+      -V "$ISO_TITLE" \
+      -o "$OUTPUT_DIR/$ISO_NAME" \
+      "$ISO_DIR"
+  elif command -v genisoimage &> /dev/null; then
+    log info "Erstelle ISO mit genisoimage..."
+    genisoimage -r -J -joliet-long \
+      -V "$ISO_TITLE" \
+      -o "$OUTPUT_DIR/$ISO_NAME" \
       "$ISO_DIR"
   else
-
-    log error "Kein Werkzeug zur ISO-Erstellung gefunden!"
+    log error "Kein Tool zur ISO-Erstellung gefunden (xorriso oder genisoimage)."
     log info "Versuche minimale ISO mit dd zu erstellen..."
     
     # Erstelle eine leere Datei mit 1GB
@@ -939,13 +964,14 @@ main() {
   check_dependencies
   setup_directories
   create_base_system
+  configure_sources
+  configure_system
   create_network_setup
   create_main_script
   create_autostart
   cleanup_system
   prepare_for_iso
-  create_iso_with_grub_mkrescue
-  # create_iso
+  create_iso
   cleanup
   
   log info "UbuntuFDE ISO-Erstellung abgeschlossen!"
