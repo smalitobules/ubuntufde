@@ -3414,7 +3414,6 @@ main() {
         check_root
         check_system
         check_dependencies
-        configure_local_mirror
         # find_fastest_mirrors
     fi
     
