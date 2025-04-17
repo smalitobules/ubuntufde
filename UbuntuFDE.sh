@@ -152,15 +152,30 @@ check_root() {
 check_dependencies() {
     log_info "Prüfe Abhängigkeiten..."
 
-    # Bereinige APT-Quellendateien
-    rm -f /etc/apt/sources.list*
-    rm -f /etc/apt/sources.list.d/*.list*
-    find /etc/apt/ -name "*.save" -delete
+    # Bereinige bestehende APT-Quellendateien
+    for file in /etc/apt/*.list; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
+
+    for file in /etc/apt/sources.list.d/*.list; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
+
+    for file in /etc/apt/*.save /etc/apt/*/*.save; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
 
     # Lösche den Cache
     pkg_clean
 
-    # Lokalen Mirror einrichten
+    # Lokalen Spiegelserver einrichten
+    mkdir -p /etc/apt/sources.list.d
     cat > /etc/apt/sources.list <<-SOURCES
 deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
@@ -173,7 +188,7 @@ SOURCES
         mkdir -p /etc/apt/trusted.gpg.d/
         curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
 
-        # APT Einstellungen definieren
+        # Lokalen Spiegelserver als bevorzugt festlegen
         cat > /etc/apt/preferences.d/local-mirror <<EOL
 Package: *
 Pin: origin 192.168.56.120
@@ -247,23 +262,25 @@ EOL
     # Erstelle eine leere APT-Quellendatei als Platzhalter
     touch /etc/apt/sources.list
     
-    # Konfiguriere Nala
-    mkdir -p /etc/nala
-    cat > /etc/nala/nala.conf <<EOL
-# Nala Configuration File
-aptlist = False
-auto_remove = True
-auto_update = True
-would_like_to_enable_nala_madness = False
-update_all = False
-update_reboot = False
-plain = False
-progress_bar = on
-spinner = on
-fancy_bar = True
-throttle = 0
-color = True
-EOL
+#    # Konfiguriere Nala
+#    mkdir -p /etc/nala
+#    cat > /etc/nala/nala.conf <<EOL
+## Nala Configuration File
+#[Nala]
+#full_upgrade = true
+#aptlist = false
+#auto_remove = true
+#auto_update = true
+#would_like_to_enable_nala_madness = false
+#update_all = false
+#update_reboot = false
+#plain = false
+#progress_bar = on
+#spinner = on
+#fancy_bar = true
+#throttle = 0
+#color = true
+#EOL
 
     MIRRORS_OPTIMIZED="true"
     export MIRRORS_OPTIMIZED
