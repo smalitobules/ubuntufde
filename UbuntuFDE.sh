@@ -213,10 +213,24 @@ check_system() {
 configure_local_mirror() {
     log_info "Konfiguriere Nala für lokalen Mirror..."
     
-    # Bereinige APT-Quellendateien
-    rm -f /etc/apt/sources.list*
-    rm -f /etc/apt/sources.list.d/*.list*
-    find /etc/apt/ -name "*.save" -delete
+    # Bereinige bestehende APT-Quellendateien
+    for file in /etc/apt/*.list; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
+
+    for file in /etc/apt/sources.list.d/*.list; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
+
+    for file in /etc/apt/*.save /etc/apt/*/*.save; do
+        if [ -f "$file" ]; then
+            rm -f "$file"
+        fi
+    done
 
     # Lösche den Cache
     pkg_clean
