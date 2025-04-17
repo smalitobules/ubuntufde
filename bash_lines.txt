@@ -1,0 +1,14 @@
+cp -f /media/sf_ubuntufde/iso_creator.sh /root
+./iso_creator.sh | tee ausgabe
+
+
+cp -f /media/sf_ubuntufde/start_environment.sh /root/
+cp -f /media/sf_ubuntufde/network_setup.sh /opt/ubuntufde/
+chmod +x /opt/ubuntufde/network_setup.sh
+chmod +x start_environment.sh
+./start_environment.sh | tee ausgabe
+
+
+mv -f ausgabe /media/sf_Downloads/
+mv -f iso-build.log /media/sf_Downloads/
+mv -f UbuntuFDE.iso /media/sf_Downloads/
