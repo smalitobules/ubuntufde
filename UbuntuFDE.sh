@@ -162,10 +162,10 @@ check_dependencies() {
 
     # Lokalen Mirror einrichten
     cat > /etc/apt/sources.list <<-SOURCES
-deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
 SOURCES
 
         # GPG-Schlüssel importieren
@@ -224,10 +224,10 @@ configure_local_mirror() {
     # Erstelle Nala-Quellendatei
     mkdir -p /etc/apt/sources.list.d
     cat > /etc/apt/sources.list.d/nala-sources.list <<EOL
-deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse 
+deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
 EOL
 
     # Erstelle eine leere APT-Quellendatei als Platzhalter
@@ -945,26 +945,26 @@ gather_user_input() {
         
         # Falls automatische Erkennung fehlschlägt
         if [ -z "$UBUNTU_VERSION" ]; then
-            UBUNTU_CODENAME="oracular"  # Ubuntu 24.10 (Oracular Oriole)
+            UBUNTU_CODENAME="plucky"  # Ubuntu 25.04 (Plucky Puffin)
         fi
-    elif [ "$UBUNTU_INSTALL_OPTION" = "2" ]; then
+elif [ "$UBUNTU_INSTALL_OPTION" = "2" ]; then
         echo -e "\nVerfügbare Ubuntu-Versionen:"
-        echo "1) 24.10 (Oracular Oriole) - aktuell"
-        echo "2) 24.04 LTS (Noble Numbat) - langzeitunterstützt"
-        echo "3) 23.10 (Mantic Minotaur)"
+        echo "1) 25.04 (Plucky Puffin) - aktuell"
+        echo "2) 24.10 (Oracular Oriole)"
+        echo "3) 24.04 LTS (Noble Numbat) - langzeitunterstützt"
         echo "4) 22.04 LTS (Jammy Jellyfish) - langzeitunterstützt"
         read -p "Wähle eine Version [1]: " UBUNTU_VERSION_OPTION
         
         case ${UBUNTU_VERSION_OPTION:-1} in
-            1) UBUNTU_CODENAME="oracular" ;;
-            2) UBUNTU_CODENAME="noble" ;;
-            3) UBUNTU_CODENAME="mantic" ;;
+            1) UBUNTU_CODENAME="plucky" ;;
+            2) UBUNTU_CODENAME="oracular" ;;
+            3) UBUNTU_CODENAME="noble" ;;
             4) UBUNTU_CODENAME="jammy" ;;
-            *) UBUNTU_CODENAME="oracular" ;;
+            *) UBUNTU_CODENAME="plucky" ;;
         esac
     else
         # Minimale Installation
-        UBUNTU_CODENAME="oracular"
+        UBUNTU_CODENAME="plucky"
     fi
     
     # Aktualisierungseinstellungen
@@ -1143,7 +1143,7 @@ install_base_system() {
             --variant=minbase \
             --components=main,restricted,universe,multiverse \
             --arch=amd64 \
-            oracular \
+            plucky \
             /mnt/ubuntu \
             http://192.168.56.120/ubuntu
     else
@@ -1152,7 +1152,7 @@ install_base_system() {
             --exclude="$EXCLUDED_PACKAGELIST" \
             --components=main,restricted,universe,multiverse \
             --arch=amd64 \
-            oracular \
+            plucky \
             /mnt/ubuntu \
             http://192.168.56.120/ubuntu
     fi

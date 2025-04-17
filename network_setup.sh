@@ -2,6 +2,18 @@
 # Netzwerk-Setup-Skript für UbuntuFDE
 # Dieses Skript richtet die Netzwerkverbindung intelligent ein
 
+# Shell-Konfiguration vereinheitlichen
+set -o posix       # POSIX-Kompatibilitätsmodus
+set -u             # Behandle nicht gesetzte Variablen als Fehler
+set -e             # Beende Skript bei Fehlern
+shopt -s nocaseglob  # Case-insensitive Globbing
+shopt -s extglob     # Erweiterte Globbing-Funktionen
+
+# Explizite Locale-Einstellungen
+export LC_ALL=de_DE.UTF-8
+export LANG=de_DE.UTF-8
+export LANGUAGE=de_DE.UTF-8
+
 # Farben für Ausgabe
 RED='\033[0;31m'
 GREEN='\033[0;32m'

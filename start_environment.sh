@@ -2,6 +2,36 @@
 # UbuntuFDE Umgebung
 # Dieses Skript startet die UbuntuFDE Umgebung
 
+# Erweiterte Debug-Konfiguration
+set -x  # Tracing aktivieren
+set -euo pipefail  # Strikte Fehlerbehandlung
+
+# Explizite Locale-Konfiguration
+export LC_ALL=de_DE.UTF-8
+export LANG=de_DE.UTF-8
+export LANGUAGE=de_DE.UTF-8
+
+# Debug-Logging-Funktion
+debug_log() {
+    local message="$1"
+    echo "[DEBUG] $(date '+%Y-%m-%d %H:%M:%S') - $message" >&2
+}
+
+# Erweiterte Fehlerbehandlung
+trap 'debug_log "Fehler in Zeile $LINENO"' ERR
+
+# Shell-Konfiguration vereinheitlichen
+set -o posix       # POSIX-Kompatibilitätsmodus
+set -u             # Behandle nicht gesetzte Variablen als Fehler
+set -e             # Beende Skript bei Fehlern
+shopt -s nocaseglob  # Case-insensitive Globbing
+shopt -s extglob     # Erweiterte Globbing-Funktionen
+
+# Explizite Locale-Einstellungen
+export LC_ALL=de_DE.UTF-8
+export LANG=de_DE.UTF-8
+export LANGUAGE=de_DE.UTF-8
+
 # Farben für Ausgabe
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -11,7 +41,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Standardwerte
-INSTALLATION_URL="${INSTALLATION_URL}"
+INSTALLATION_URL="https://zenayastudios.com/fde"
 SELECTED_LANGUAGE="de_DE.UTF-8"
 SELECTED_KEYBOARD="de"
 

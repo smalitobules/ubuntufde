@@ -27,7 +27,7 @@ ISO_NAME="UbuntuFDE.iso"
 INSTALLATION_URL="https://zenayastudios.com/fde"
 
 # Ubuntu-Konfiguration
-UBUNTU_CODENAME="oracular"
+UBUNTU_CODENAME="plucky"
 UBUNTU_MIRROR="http://192.168.56.120/ubuntu/"
 
 # Paket-Listen
@@ -182,7 +182,7 @@ create_base_system() {
                       kbd,kmod,language-pack-de,language-pack-de-base,language-pack-en \
                       language-pack-en-base,libgcc-s1,libnss-systemd,libpam-systemd,libstdc++6 \
                       libc6,linux-image-generic,locales,login,lvm2,nala,netplan.io,network-manager \
-                      passwd,squashfs-tools,systemd,systemd-sysv,tzdata,udev,wget,zstd"
+                      passwd,squashfs-tools,systemd,systemd-sysv,tzdata,udev,wget,zstd,bash-completion"
   
   log info "Führe Basisinstallation durch..."
   debootstrap \
@@ -215,10 +215,10 @@ configure_sources() {
   
   # Paketquellen definieren
   cat > "$CHROOT_DIR/etc/apt/sources.list.d/nala-sources.list" << EOF
-deb http://192.168.56.120/ubuntu/ oracular main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-updates main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-security main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ oracular-backports main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
 EOF
 
   # Einstellungen für schnellere Paketinstallation
@@ -248,8 +248,11 @@ prepare_and_update_system() {
   log info "Bereite chroot-Umgebung vor und führe Systemaktualisierung durch..."
   chroot "$CHROOT_DIR" /bin/bash -c "echo 'Bash wird systemweit als Standard-Shell eingerichtet'"
   chroot "$CHROOT_DIR" /bin/bash -c "update-alternatives --install /bin/sh sh /bin/bash 100"
+  chroot "$CHROOT_DIR" /bin/bash -c "locale-gen --purge"
   chroot "$CHROOT_DIR" /bin/bash -c "locale-gen de_DE.UTF-8 en_US.UTF-8"
+  chroot "$CHROOT_DIR" /bin/bash -c "dpkg-reconfigure -f noninteractive locales"
   chroot "$CHROOT_DIR" /bin/bash -c "update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8"
+  chroot "$CHROOT_DIR" /bin/bash -c "update-locale LANG=de_DE.UTF-8 LC_ALL=de_DE.UTF-8"
   
   # Restliche Pakete identifizieren
   local include_list=$(IFS=,; echo "${INCLUDE_PACKAGES[*]}")
@@ -364,6 +367,18 @@ create_network_setup() {
 #!/bin/bash
 # Netzwerk-Setup-Skript für UbuntuFDE
 # Dieses Skript richtet die Netzwerkverbindung intelligent ein
+
+# Shell-Konfiguration vereinheitlichen
+set -o posix       # POSIX-Kompatibilitätsmodus
+set -u             # Behandle nicht gesetzte Variablen als Fehler
+set -e             # Beende Skript bei Fehlern
+shopt -s nocaseglob  # Case-insensitive Globbing
+shopt -s extglob     # Erweiterte Globbing-Funktionen
+
+# Explizite Locale-Einstellungen
+export LC_ALL=de_DE.UTF-8
+export LANG=de_DE.UTF-8
+export LANGUAGE=de_DE.UTF-8
 
 # Farben für Ausgabe
 RED='\033[0;31m'
@@ -621,6 +636,36 @@ create_main_script() {
 #!/bin/bash
 # UbuntuFDE Umgebung
 # Dieses Skript startet die UbuntuFDE Umgebung
+
+# Erweiterte Debug-Konfiguration
+set -x  # Tracing aktivieren
+set -euo pipefail  # Strikte Fehlerbehandlung
+
+# Explizite Locale-Konfiguration
+export LC_ALL=de_DE.UTF-8
+export LANG=de_DE.UTF-8
+export LANGUAGE=de_DE.UTF-8
+
+# Debug-Logging-Funktion
+debug_log() {
+    local message="$1"
+    echo "[DEBUG] $(date '+%Y-%m-%d %H:%M:%S') - $message" >&2
+}
+
+# Erweiterte Fehlerbehandlung
+trap 'debug_log "Fehler in Zeile $LINENO"' ERR
+
+# Shell-Konfiguration vereinheitlichen
+set -o posix       # POSIX-Kompatibilitätsmodus
+set -u             # Behandle nicht gesetzte Variablen als Fehler
+set -e             # Beende Skript bei Fehlern
+shopt -s nocaseglob  # Case-insensitive Globbing
+shopt -s extglob     # Erweiterte Globbing-Funktionen
+
+# Explizite Locale-Einstellungen
+export LC_ALL=de_DE.UTF-8
+export LANG=de_DE.UTF-8
+export LANGUAGE=de_DE.UTF-8
 
 # Farben für Ausgabe
 RED='\033[0;31m'
