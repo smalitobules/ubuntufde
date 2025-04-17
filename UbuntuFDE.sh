@@ -143,16 +143,16 @@ pkg_autoremove() {
 # Überprüfe die Ausführung mit erhöhten Rechten
 check_root() {
     if [ "$(id -u)" -ne 0 ]; then
-        echo -e "${YELLOW}[HINWEIS]${NC} Dieses Skript benötigt Root-Rechte. Starte neu mit sudo..."
-        exec sudo "$0" "$@"  # Starte das Skript neu mit sudo und behalte alle Argumente bei
+        echo -e "${YELLOW}[HINWEIS]${NC} Dieses Skript benötigt Administrative-Rechte. Starte neu mit erhöhten Rechten..."
+        exec sudo "$0" "$@"  # Starte das Skript neu mit erhöhten Rechten...
     fi
 }
 
-# Abhängigkeiten prüfen und installieren
+# Programm-Abhängigkeiten prüfen und installieren
 check_dependencies() {
-    log_info "Prüfe Abhängigkeiten..."
+    log_info "Richte Paketquellen für lokalen Spiegelserver ein..."
 
-    # Bereinige bestehende APT-Quellendateien
+    # Bereinige bestehende Paketquellen-Dateien
     for file in /etc/apt/*.list; do
         if [ -f "$file" ]; then
             rm -f "$file"
@@ -171,10 +171,10 @@ check_dependencies() {
         fi
     done
 
-    # Lösche den Cache
+    # Lösche den Paket-Cache
     pkg_clean
 
-    # Lokalen Spiegelserver einrichten
+    # Richte lokalen Spiegelserver ein
     mkdir -p /etc/apt/sources.list.d
     cat > /etc/apt/sources.list <<-SOURCES
 deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
@@ -183,7 +183,7 @@ deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multi
 deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
 SOURCES
 
-        # GPG-Schlüssel importieren
+        # Importiere GPG-Schlüssel vom Spiegelserver
         log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
         mkdir -p /etc/apt/trusted.gpg.d/
         curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
@@ -194,6 +194,13 @@ Package: *
 Pin: origin 192.168.56.120
 Pin-Priority: 1001
 EOL
+
+    MIRRORS_OPTIMIZED="true"
+    export MIRRORS_OPTIMIZED
+    
+    log_info "Lokalen Spiegelserver ist eingerichtet."
+
+    log_info "Prüfe auf Programm-Abhängigkeiten..."
     
     local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
     local missing_deps=()
@@ -206,7 +213,6 @@ EOL
     
     if [ ${#missing_deps[@]} -ne 0 ]; then
         log_info "Aktualisiere Paketquellen..."
-        # echo "nala nala/configure_files boolean false" | debconf-set-selections
         pkg_update
         log_info "Installiere fehlende Abhängigkeiten: ${missing_deps[*]}..."
         pkg_install "${missing_deps[@]}"
@@ -218,75 +224,12 @@ check_system() {
         source /etc/os-release
         log_info "Erkanntes System: $PRETTY_NAME"
     else
-        log_warn "Konnte Betriebssystem nicht erkennen"
+        log_warn "Konnte Betriebssystem nicht erkennen."
     fi
 }
 #   Systemcheck   #
 ###################
 
-
-configure_local_mirror() {
-    log_info "Konfiguriere Nala für lokalen Mirror..."
-    
-    # Bereinige bestehende APT-Quellendateien
-    for file in /etc/apt/*.list; do
-        if [ -f "$file" ]; then
-            rm -f "$file"
-        fi
-    done
-
-    for file in /etc/apt/sources.list.d/*.list; do
-        if [ -f "$file" ]; then
-            rm -f "$file"
-        fi
-    done
-
-    for file in /etc/apt/*.save /etc/apt/*/*.save; do
-        if [ -f "$file" ]; then
-            rm -f "$file"
-        fi
-    done
-
-    # Lösche den Cache
-    pkg_clean
-    
-    # Erstelle Nala-Quellendatei
-    mkdir -p /etc/apt/sources.list.d
-    cat > /etc/apt/sources.list.d/nala-sources.list <<EOL
-deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse 
-deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
-EOL
-
-    # Erstelle eine leere APT-Quellendatei als Platzhalter
-    touch /etc/apt/sources.list
-    
-#    # Konfiguriere Nala
-#    mkdir -p /etc/nala
-#    cat > /etc/nala/nala.conf <<EOL
-## Nala Configuration File
-#[Nala]
-#full_upgrade = true
-#aptlist = false
-#auto_remove = true
-#auto_update = true
-#would_like_to_enable_nala_madness = false
-#update_all = false
-#update_reboot = false
-#plain = false
-#progress_bar = on
-#spinner = on
-#fancy_bar = true
-#throttle = 0
-#color = true
-#EOL
-
-    MIRRORS_OPTIMIZED="true"
-    export MIRRORS_OPTIMIZED
-    
-    log_info "Nala für lokalen Mirror konfiguriert"
-}
 
 find_fastest_mirrors() {
     log_info "Suche nach den schnellsten Paketquellen..."
