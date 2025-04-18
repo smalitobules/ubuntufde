@@ -1413,22 +1413,6 @@ if [ "${INSTALL_DESKTOP}" != "1" ]; then
         \${KERNEL_PACKAGES}
 fi
 
-
-# Thorium Browser installieren
-if [ "${INSTALL_DESKTOP}" = "1" ] && [ -f /tmp/thorium.deb ]; then
-    echo "Thorium-Browser-Paket gefunden, installiere..."
-    
-    # Installation ohne Download oder CPU-Erkennung
-    if dpkg -i /tmp/thorium.deb || pkg_install -f; then
-        echo "Thorium wurde erfolgreich installiert."
-    else
-        echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
-    fi
-    
-    # Aufräumen
-    rm -f /tmp/thorium.deb
-fi
-
 # Spracheinstellungen
 locale-gen ${LOCALE} en_US.UTF-8
 update-locale LANG=${LOCALE} LC_CTYPE=${LOCALE}
@@ -1886,6 +1870,22 @@ LOCALE
         done
     fi
 fi
+
+# Thorium Browser installieren
+if [ "${INSTALL_DESKTOP}" = "1" ] && [ -f /tmp/thorium.deb ]; then
+    echo "Thorium-Browser-Paket gefunden, installiere..."
+    
+    # Installation ohne Download oder CPU-Erkennung
+    if dpkg -i /tmp/thorium.deb || pkg_install -f; then
+        echo "Thorium wurde erfolgreich installiert."
+    else
+        echo "Thorium-Installation fehlgeschlagen, fahre mit restlicher Installation fort."
+    fi
+    
+    # Aufräumen
+    rm -f /tmp/thorium.deb
+fi
+
 #  DESKTOPINSTALLATION  #
 #########################
 
