@@ -1687,6 +1687,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     nautilus-admin \
                     ubuntu-gnome-wallpapers \
+                    fonts-liberation  \
+                    fonts-liberation-sans-narrow  \
+                    libu2f-udev \
                     yad \
                     bleachbit \
                     stacer \
@@ -1731,6 +1734,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     nautilus-admin \
                     ubuntu-gnome-wallpapers \
+                    fonts-liberation  \
+                    fonts-liberation-sans-narrow  \
+                    libu2f-udev \
                     yad \
                     bleachbit \
                     stacer \
@@ -1846,6 +1852,9 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     nautilus-admin \
                     ubuntu-gnome-wallpapers \
+                    fonts-liberation  \
+                    fonts-liberation-sans-narrow  \
+                    libu2f-udev \
                     yad \
                     bleachbit \
                     stacer \
