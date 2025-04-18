@@ -1980,28 +1980,28 @@ EOSETUP
     chmod 755 /mnt/ubuntu/setup_system.sh
 
     # Setze Variablen für das Chroot-Skript
-    sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${USER_PASSWORD}/$USER_PASSWORD/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${LUKS_PASSWORD}/$LUKS_PASSWORD/g" /mnt/ubuntu/setup.sh
-    sed -i "s|\${DEVP}|$DEVP|g" /mnt/ubuntu/setup.sh
-    sed -i "s|\${DM}|$DM|g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${KERNEL_TYPE}/$KERNEL_TYPE/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${INSTALL_MODE}/$INSTALL_MODE/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${ADDITIONAL_PACKAGES}/$ADDITIONAL_PACKAGES/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${UBUNTU_CODENAME}/$UBUNTU_CODENAME/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${UPDATE_OPTION}/$UPDATE_OPTION/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${INSTALL_DESKTOP}/$INSTALL_DESKTOP/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${NETWORK_CONFIG}/$NETWORK_CONFIG/g" /mnt/ubuntu/setup.sh
-    sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${LUKS_BOOT_NAME}/$LUKS_BOOT_NAME/g" /mnt/ubuntu/setup.sh
-    sed -i "s/\${LUKS_ROOT_NAME}/$LUKS_ROOT_NAME/g" /mnt/ubuntu/setup.sh
+    sed -i "s/\${HOSTNAME}/$HOSTNAME/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${USERNAME}/$USERNAME/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${USER_PASSWORD}/$USER_PASSWORD/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${LUKS_PASSWORD}/$LUKS_PASSWORD/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s|\${DEVP}|$DEVP|g" /mnt/ubuntu/setup_system.sh
+    sed -i "s|\${DM}|$DM|g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${KERNEL_TYPE}/$KERNEL_TYPE/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${INSTALL_MODE}/$INSTALL_MODE/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${ADDITIONAL_PACKAGES}/$ADDITIONAL_PACKAGES/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${UBUNTU_CODENAME}/$UBUNTU_CODENAME/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${UPDATE_OPTION}/$UPDATE_OPTION/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${INSTALL_DESKTOP}/$INSTALL_DESKTOP/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${DESKTOP_ENV}/$DESKTOP_ENV/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${DESKTOP_SCOPE}/$DESKTOP_SCOPE/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${UI_LANGUAGE}/$UI_LANGUAGE/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${LOCALE}/$LOCALE/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${KEYBOARD_LAYOUT}/$KEYBOARD_LAYOUT/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${TIMEZONE}/$TIMEZONE/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${NETWORK_CONFIG}/$NETWORK_CONFIG/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s|\${STATIC_IP_CONFIG}|$STATIC_IP_CONFIG|g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${LUKS_BOOT_NAME}/$LUKS_BOOT_NAME/g" /mnt/ubuntu/setup_system.sh
+    sed -i "s/\${LUKS_ROOT_NAME}/$LUKS_ROOT_NAME/g" /mnt/ubuntu/setup_system.sh
 
 show_progress 70
 }
@@ -2010,8 +2010,8 @@ execute_chroot() {
 log_progress "Führe Installation in chroot-Umgebung durch..."
 
 # chroot ausführen
-log_info "Ausführen von setup.sh in chroot..."
-chroot /mnt/ubuntu /setup.sh
+log_info "Ausführen von setup_system.sh in chroot..."
+chroot /mnt/ubuntu /setup_system.sh
 
 log_info "Installation in chroot abgeschlossen."
 show_progress 80
