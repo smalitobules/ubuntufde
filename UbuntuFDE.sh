@@ -1963,8 +1963,8 @@ execute_chroot() {
 log_progress "Führe Installation in chroot-Umgebung durch..."
 
 # chroot ausführen
-log_info "Ausführen von setup_system.sh in chroot..."
-chroot /mnt/ubuntu /setup_system.sh
+log_info "Ausführen von setup.sh in chroot..."
+chroot /mnt/ubuntu /setup.sh
 
 log_info "Installation in chroot abgeschlossen."
 show_progress 80
