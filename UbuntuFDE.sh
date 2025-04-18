@@ -1102,12 +1102,13 @@ install_base_system() {
     
     # Zu inkludierende Pakete definieren
     INCLUDED_PACKAGES=(
-        curl gnupg ca-certificates sudo locales cryptsetup lvm2 nano wget
-        apt-transport-https console-setup bash-completion systemd-resolved
-        initramfs-tools cryptsetup-initramfs grub-efi-amd64 grub-efi-amd64-signed
-        efibootmgr nala openssh-server smbclient cifs-utils util-linux net-tools
-        ufw network-manager btop shim-signed ufw fastfetch zram-tools coreutils
-        timeshift jq unzip unrar-free 7zip mesa-utils vulkan-tools
+        7zip apt-transport-https bash-completion btop ca-certificates
+        cifs-utils console-setup coreutils cryptsetup cryptsetup-initramfs
+        curl efibootmgr fastfetch gnupg grub-efi-amd64 grub-efi-amd64-signed
+        initramfs-tools jq locales lvm2 mesa-utils nala nano net-tools
+        network-manager openssh-server shim-signed smbclient sudo
+        systemd-resolved timeshift ufw unrar-free unzip util-linux
+        vulkan-tools wget zram-tools zstd
     )
 
     # Optional auszuschließende Pakete definieren
