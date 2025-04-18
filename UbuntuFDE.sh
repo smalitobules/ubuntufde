@@ -176,19 +176,12 @@ check_dependencies() {
 
     # Richte lokalen Spiegelserver ein
     mkdir -p /etc/apt/sources.list.d
-    cat > /etc/apt/sources.list <<-APTSOURCES
+    cat > /etc/apt/sources.list.d/sources.list <<-EOSOURCES
 deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
-APTSOURCES
-
-    cat > /etc/apt/sources.list.d/nala-sources.list <<-NALASOURCES
-deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
-NALASOURCES
+EOSOURCES
 
         # Importiere GPG-Schlüssel vom Spiegelserver
         log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
@@ -318,24 +311,20 @@ copy_sources_config() {
     # Bereite das Zielverzeichnis vor
     mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
     
-    # Entferne vorhandene APT-Quellendateien
+    # Entferne etwaig vorhandene Paketquellen-Dateien
     rm -f /mnt/ubuntu/etc/apt/sources.list
     rm -f /mnt/ubuntu/etc/apt/sources.list.d/*.list
     
-    # Kopiere Paketquellen-Daten aus dem Installationsystem
-    cp -f /etc/apt/sources.list /mnt/ubuntu/etc/apt/
-    cp -f /etc/apt/sources.list.d/nala-sources.list /mnt/ubuntu/etc/apt/sources.list.d/
-    
-    # Erstelle leere APT-Quellendatei als Platzhalter
-    # touch /mnt/ubuntu/etc/apt/sources.list
+    # Kopiere Paketquellen-Datei aus dem Installationsystem in chroot-Umgebung
+    cp -f /etc/apt/sources.list.d/sources.list /mnt/ubuntu/etc/apt/sources.list.d/
   fi
 }
 
 setup_ssh_access() {
-    # Lösche bestehende .bash_profile
+    # Lösche bestehendes Bash-Profil
     rm -f /root/.bash_profile
     
-    # Einfaches 6-stelliges Passwort
+    # Generiere 6-stellige PIN für SSH-Passwort
     SSH_PASSWORD=$(tr -dc '0-9' < /dev/urandom | head -c 6)
     
     # Root-Passwort setzen
