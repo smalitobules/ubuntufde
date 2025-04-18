@@ -1346,20 +1346,20 @@ KEYBOARD
     return 0
 }
 
-# Paketverwaltung einrichten
-setup_package_management() {
-    log_info "Konfiguriere Paketverwaltung..."
+# Nala Spiegelserver-Optimierung
+setup_nala_mirrors() {
+    log_info "Konfiguriere Nala Spiegelserver..."
     
-    # Nala-Mirror-Optimierung für das finale System
+    # Falls Nala verfügbar ist, konfiguriere es
     if command -v nala &> /dev/null; then
         log_info "Konfiguriere nala im neuen System..."
         
-        # Falls wir bereits optimierte Mirrors haben, nutze diese
+        # Falls wir bereits optimierte Spiegelserver haben, nutze diese
         if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-            log_info "Übernehme optimierte Mirror-Konfiguration, überspringe erneute Suche..."
+            log_info "Übernehme optimierte Spiegelserver-Konfiguration, überspringe erneute Suche..."
         else
             # Ermittle Land basierend auf IP-Adresse
-            log_info "Keine optimierte Mirror-Konfiguration gefunden, starte Suche..."
+            log_info "Keine optimierte Spiegelserver-Konfiguration gefunden, starte Suche..."
             COUNTRY_CODE=$(curl -s https://ipapi.co/country_code)
             
             if [ -z "$COUNTRY_CODE" ]; then
@@ -1374,15 +1374,17 @@ setup_package_management() {
                 log_info "Erkanntes Land: $COUNTRY_CODE"
             fi
             
-            log_info "Suche nach schnellsten Mirrors für das neue System..."
+            log_info "Suche nach schnellsten Spiegelservern für das neue System..."
             nala fetch --ubuntu plucky --auto --fetches 3 --country "$COUNTRY_CODE"
         fi
     fi
     
-    # GPG-Schlüssel für lokales Repository importieren
-    if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
-        curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
-    fi
+    return 0
+}
+
+# Automatische Aktualisierungen aktivieren
+setup_automatic_updates() {
+    log_info "Richte automatische Aktualisierungen ein..."
     
     # Automatische Updates konfigurieren
     cat > /etc/apt/apt.conf.d/20auto-upgrades <<AUTOUPDATE
@@ -1390,8 +1392,21 @@ APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "${UPDATE_OPTION}";
 AUTOUPDATE
     
-    # Systemaktualisierung durchführen
+    return 0
+}
+
+# System-Aktualisierung durchführen
+update_system() {
+    log_info "Importiere Repository-Schlüssel..."
+    
+    # GPG-Schlüssel für lokales Repository importieren
+    if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
+        curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
+    fi
+    
     log_info "Aktualisiere Paketquellen und System..."
+
+    # Systemaktualisierung durchführen
     pkg_update
     pkg_upgrade
     
@@ -1411,9 +1426,7 @@ setup_external_repositories() {
         curl -s 'https://liquorix.net/linux-liquorix-keyring.gpg' | gpg --dearmor -o /etc/apt/keyrings/liquorix-keyring.gpg
         echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
     fi
-    
-    # Hier Platz für zukünftige Paketquellen
-    
+        
     return 0
 }
 
@@ -1927,7 +1940,9 @@ main() {
     # Grundlegende Systemkonfiguration
     setup_network || log_error "Netzwerkkonfiguration fehlgeschlagen"
     setup_localization || log_error "Lokalisierungskonfiguration fehlgeschlagen"
-    # setup_package_management || log_error "Paketverwaltungskonfiguration fehlgeschlagen"
+    # setup_nala_mirrors || log_error "Nala Spiegelserver-Optimierung fehlgeschlagen"
+    setup_automatic_updates || log_error "Einrichten von automatischen Aktualisierungen fehlgeschlagen"
+    update_system || log_error "System-Aktualisierung fehlgeschlagen"
     setup_external_repositories || log_error "Repository-Konfiguration fehlgeschlagen"
     
     # Kerninstallation, wenn kein Desktop ausgewählt ist
