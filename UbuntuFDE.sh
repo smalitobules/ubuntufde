@@ -313,7 +313,7 @@ find_fastest_mirrors() {
     export MIRRORS_OPTIMIZED
 }
 
-copy_nala_config() {
+copy_sources_config() {
   if [ "${MIRRORS_OPTIMIZED}" = "true" ]; then
     # Bereite das Zielverzeichnis vor
     mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
@@ -322,11 +322,12 @@ copy_nala_config() {
     rm -f /mnt/ubuntu/etc/apt/sources.list
     rm -f /mnt/ubuntu/etc/apt/sources.list.d/*.list
     
-    # Kopiere Nala-Quellendatei aus dem Installationsystem
+    # Kopiere Paketquellen-Daten aus dem Installationsystem
+    cp -f /etc/apt/sources.list /mnt/ubuntu/etc/apt/
     cp -f /etc/apt/sources.list.d/nala-sources.list /mnt/ubuntu/etc/apt/sources.list.d/
     
     # Erstelle leere APT-Quellendatei als Platzhalter
-    touch /mnt/ubuntu/etc/apt/sources.list
+    # touch /mnt/ubuntu/etc/apt/sources.list
   fi
 }
 
@@ -3461,7 +3462,7 @@ main() {
     setup_lvm
     mount_filesystems
     install_base_system
-    copy_nala_config
+    copy_sources_config
     download_thorium
     prepare_chroot
     execute_chroot
