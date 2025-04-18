@@ -176,12 +176,19 @@ check_dependencies() {
 
     # Richte lokalen Spiegelserver ein
     mkdir -p /etc/apt/sources.list.d
-    cat > /etc/apt/sources.list <<-SOURCES
+    cat > /etc/apt/sources.list <<-APTSOURCES
 deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse
 deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
-SOURCES
+APTSOURCES
+
+    cat > /etc/apt/sources.list.d/nala-sources.list <<-NALASOURCES
+deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse
+deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
+NALASOURCES
 
         # Importiere GPG-Schlüssel vom Spiegelserver
         log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
