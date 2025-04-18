@@ -200,6 +200,12 @@ EOL
     
     log_info "Lokalen Spiegelserver ist eingerichtet."
 
+    # Konfiguriere dpkg-Optimierungen
+    mkdir -p /etc/dpkg/dpkg.cfg.d/
+    echo "force-unsafe-io" > /etc/dpkg/dpkg.cfg.d/unsafe-io
+    mkdir -p /etc/apt/apt.conf.d/
+    echo "Dpkg::Parallelize=true;" > /etc/apt/apt.conf.d/70parallelize
+
     log_info "Prüfe auf Programm-Abhängigkeiten..."
     
     local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
@@ -1218,7 +1224,6 @@ EOF
 # Konfiguriere dpkg-Optimierungen in der chroot-Umgebung
 mkdir -p /mnt/ubuntu/etc/dpkg/dpkg.cfg.d/
 echo "force-unsafe-io" > /mnt/ubuntu/etc/dpkg/dpkg.cfg.d/unsafe-io
-
 mkdir -p /mnt/ubuntu/etc/apt/apt.conf.d/
 echo "Dpkg::Parallelize=true;" > /mnt/ubuntu/etc/apt/apt.conf.d/70parallelize
 #   BASISSYSTEM   #
