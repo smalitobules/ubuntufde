@@ -1275,7 +1275,7 @@ fi
 # Wrapper-Funktion für Paketoperationen
 pkg_install() {
     if command -v nala &> /dev/null; then
-        nala install -y "\$@"
+        apt install -y "\$@"
     else
         apt-get install -y "\$@"
     fi
@@ -1283,7 +1283,7 @@ pkg_install() {
 
 pkg_update() {
     if command -v nala &> /dev/null; then
-        nala update
+        apt update
     else
         apt-get update
     fi
@@ -1291,7 +1291,7 @@ pkg_update() {
 
 pkg_upgrade() {
     if command -v nala &> /dev/null; then
-        nala upgrade -y
+        apt upgrade -y
     else
         apt-get dist-upgrade -y
     fi
@@ -1299,7 +1299,7 @@ pkg_upgrade() {
 
 pkg_clean() {
     if command -v nala &> /dev/null; then
-        nala clean
+        apt clean
     else
         apt-get clean
     fi
@@ -1307,7 +1307,7 @@ pkg_clean() {
 
 pkg_autoremove() {
     if command -v nala &> /dev/null; then
-        nala autoremove -y
+        apt autoremove -y
     else
         apt-get autoremove -y
     fi
