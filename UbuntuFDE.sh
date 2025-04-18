@@ -2290,8 +2290,8 @@ idle-delay=uint32 0
 session-name='ubuntu'
 
 [org.gnome.desktop.background]
-picture-uri='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
-picture-uri-dark='file:///usr/share/backgrounds/OrioleMascot_by_Vladimir_Moskalenko_dark.png'
+picture-uri='file:///usr/share/backgrounds/Puffin_by_moskalenko-v-dark.png'
+picture-uri-dark='file:///usr/share/backgrounds/Puffin_by_moskalenko-v-dark.png'
 primary-color='#955733'
 secondary-color='#955733'
 picture-options='zoom'
