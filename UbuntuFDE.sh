@@ -1329,7 +1329,7 @@ if command -v nala &> /dev/null; then
         fi
         
         echo "Suche nach schnellsten Mirrors für das neue System..."
-        nala fetch --ubuntu plucky --auto --fetches 3 --country "\$COUNTRY_CODE"
+        nala fetch --ubuntu "\${UBUNTU_CODENAME}" --auto --fetches 3 --country "\$COUNTRY_CODE"
     fi
 fi
 
