@@ -1077,8 +1077,6 @@ mount_filesystems() {
     mount /dev/mapper/${LUKS_BOOT_NAME} /mnt/ubuntu/boot
     mkdir -p /mnt/ubuntu/boot/efi
     mount ${DEVP}3 /mnt/ubuntu/boot/efi
-    mkdir -p /mnt/ubuntu/sys/firmware/efi/efivars
-    mount -t efivarfs efivarfs /mnt/ubuntu/sys/firmware/efi/efivars
     mkdir -p /mnt/ubuntu/media/data
     mount /dev/mapper/${VGNAME}-data /mnt/ubuntu/media/data
 }
@@ -1582,7 +1580,7 @@ GRUBCFG
     
     # Initramfs aktualisieren und GRUB installieren
     update-initramfs -u -k all
-    grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck
+    grub-install --no-nvram --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck
     update-grub
     
     return 0
@@ -3411,6 +3409,7 @@ finalize_installation() {
     umount -R /mnt/ubuntu
 
     # Logdatei auf externe Partition kopieren
+    mkdir -p /media/data
     if mount /dev/sdb1 /media/data; then
         cp -f "$LOG_FILE" /media/data
         umount /media/data
