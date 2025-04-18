@@ -1077,6 +1077,8 @@ mount_filesystems() {
     mount /dev/mapper/${LUKS_BOOT_NAME} /mnt/ubuntu/boot
     mkdir -p /mnt/ubuntu/boot/efi
     mount ${DEVP}3 /mnt/ubuntu/boot/efi
+    mkdir -p /mnt/ubuntu/sys/firmware/efi/efivars
+    mount -t efivarfs efivarfs /mnt/ubuntu/sys/firmware/efi/efivars
     mkdir -p /mnt/ubuntu/media/data
     mount /dev/mapper/${VGNAME}-data /mnt/ubuntu/media/data
 }
