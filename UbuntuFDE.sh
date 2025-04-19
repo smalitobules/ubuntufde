@@ -1366,7 +1366,6 @@ if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
 fi
 
 # Repositories für Anwendugen einrichten
-
     mkdir -p /etc/apt/keyrings
 
     # Liquorix-Kernel Repository einrichten
@@ -1378,46 +1377,32 @@ fi
     fi
 
     # Mozilla Repository einrichten
-    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozilla.gpg
+    wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O /etc/apt/keyrings/mozilla.gpg
     cat > /etc/apt/sources.list.d/mozilla.sources << EOF
 Types: deb
-URIs: http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu/dists
-Suites: "${UBUNTU_CODENAME}"
+URIs: https://packages.mozilla.org/apt
+Suites: mozilla
 Components: main
 Signed-By: /etc/apt/keyrings/mozilla.gpg
 EOF
 
     # Mozilla Repository priorisieren
-    cat > /etc/apt/preferences.d/mozillateam <<EOF
-Package: firefox*
-Pin: release o=LP-PPA-mozillateam
-Pin-Priority: 1001
-
-Package: firefox*
-Pin: release o=Ubuntu
-Pin-Priority: -1
-
-Package: thunderbird*
-Pin: release o=LP-PPA-mozillateam
-Pin-Priority: 1001
-
-Package: thunderbird*
-Pin: release o=Ubuntu
-Pin-Priority: -1
+    cat > /etc/apt/preferences.d/mozilla << EOF
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
 EOF
 
     # Kvantum Repository einrichten
-    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9461999446FAF0DF770BFC9AE58A9D36647CAE7F" | gpg --dearmor -o /etc/apt/keyrings/papirus.gpg
+    curl -s "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9461999446FAF0DF770BFC9AE58A9D36647CAE7F" > /etc/apt/keyrings/papirus.asc
+    chmod 644 /etc/apt/keyrings/papirus.asc
     cat > /etc/apt/sources.list.d/papirus.sources << EOF
 Types: deb
-URIs: http://ppa.launchpad.net/papirus/papirus/ubuntu/dists
+URIs: https://ppa.launchpadcontent.net/papirus/papirus/ubuntu
 Suites: "${UBUNTU_CODENAME}"
 Components: main
-Signed-By: /etc/apt/keyrings/papirus.gpg
+Signed-By: /etc/apt/keyrings/papirus.asc
 EOF
-
-# # Alte Paketquellenlisten modernisieren
-# apt modernize-sources -y
 
 # Automatische Updates konfigurieren
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<AUTOUPDATE
