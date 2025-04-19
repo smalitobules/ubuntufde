@@ -7,7 +7,7 @@
 
 
 # Debug-Konfiguration
-DEBUG_DIR="$(pwd)/ubuntufde_debug_$(date +%Y%m%d_%H%M%S)"
+DEBUG_DIR="$(pwd)/debug"
 mkdir -p "$DEBUG_DIR"
 
 # Aktiviere Trace-Modus mit detailliertem Format
