@@ -1232,6 +1232,7 @@ echo "Dpkg::Parallelize=true;" > /mnt/ubuntu/etc/apt/apt.conf.d/70parallelize
 log_progress "Konfiguriere System in chroot-Umgebung..."
 cat > /mnt/ubuntu/setup.sh <<EOSETUP
 #!/bin/bash
+
 # Systemeinrichtung in chroot-Umgebung
 
 # Globale Variablen
@@ -1820,7 +1821,7 @@ log_progress "Führe Installation in chroot-Umgebung durch..."
 
 # chroot ausführen
 log_info "Ausführen von setup.sh in chroot..."
-chroot /mnt/ubuntu /setup.sh
+chroot /mnt/ubuntu /bin/bash -xv /setup.sh 2> $(pwd)/setup_error.log | tee $(pwd)/setup_output.log
 
 log_info "Installation in chroot abgeschlossen."
 show_progress 80
