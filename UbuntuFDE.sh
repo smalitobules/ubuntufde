@@ -6,6 +6,30 @@
 # Autor: Smali Tobules
 
 
+# Debug-Konfiguration
+DEBUG_DIR="$(pwd)/ubuntufde_debug_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$DEBUG_DIR"
+
+# Aktiviere Trace-Modus mit detailliertem Format
+PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+exec 19>"$DEBUG_DIR/trace.log"
+BASH_XTRACEFD=19
+set -x  # Aktiviere Debug-Modus
+
+# Leite stdout und stderr in Log-Dateien um, aber zeige sie weiterhin im Terminal
+exec > >(tee -a "$DEBUG_DIR/stdout.log") 2> >(tee -a "$DEBUG_DIR/stderr.log" >&2)
+
+# Logge Systeminformationen
+echo "=== UbuntuFDE Debug Log - $(date) ===" > "$DEBUG_DIR/system_info.log"
+echo "Kernel: $(uname -a)" >> "$DEBUG_DIR/system_info.log"
+echo "Bash-Version: $BASH_VERSION" >> "$DEBUG_DIR/system_info.log"
+echo "Verfügbarer Speicher: $(free -h)" >> "$DEBUG_DIR/system_info.log"
+echo "Laufwerke:" >> "$DEBUG_DIR/system_info.log"
+lsblk >> "$DEBUG_DIR/system_info.log"
+
+echo "Debug-Logging aktiviert. Logs werden in $DEBUG_DIR gespeichert."
+
+
 ###################
 # Konfiguration   #
 SCRIPT_VERSION="0.0.1"
