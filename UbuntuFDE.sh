@@ -1251,9 +1251,9 @@ download_thorium() {
         log_info "Download-URL: ${THORIUM_URL}"
         
         # Download direkt ins chroot-Verzeichnis
-        if wget -q --show-progress --progress=bar:force:noscroll --tries=3 --timeout=10 -O /mnt/ubuntu/tmp/thorium.deb "${THORIUM_URL}"; then
+        if wget -q --show-progress --progress=bar:force:noscroll --tries=3 --timeout=10 -O /mnt/ubuntu/var/cache/thorium/thorium.deb "${THORIUM_URL}"; then
             log_info "Download erfolgreich - Thorium wird später in chroot installiert"
-            chmod 644 /mnt/ubuntu/tmp/thorium.deb
+            chmod 644 /mnt/ubuntu/var/cache/thorium/thorium.deb
         else
             log_error "Download fehlgeschlagen!"
         fi
@@ -1828,41 +1828,6 @@ LOCALE
         done
     fi
 fi
-
-# # Thorium Browser installieren
-# if [ "${INSTALL_DESKTOP}" = "1" ] && [ -f /tmp/thorium.deb ]; then
-#     echo "Thorium-Browser-Paket gefunden, installiere..."
-#     
-#     # # Wichtige Abhängigkeiten vorab installieren
-#     # echo "Installiere kritische Abhängigkeiten für Thorium..."
-#     # apt install -y libasound2 libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libcups2 libcurl4 libglib2.0-0 libgtk-3-0
-#     
-#     # Installation mit apt, das Abhängigkeiten automatisch auflöst
-#     echo "Installiere Thorium-Browser..."
-#     if apt install -y --fix-broken /tmp/thorium.deb; then
-#         echo "Thorium wurde erfolgreich installiert."
-#     else
-#         echo "Thorium-Installation über apt fehlgeschlagen, versuche alternativen Ansatz..."
-#         # Abhängigkeiten beheben und erneut versuchen
-#         apt -f install -y
-#         if dpkg -i /tmp/thorium.deb; then
-#             echo "Thorium wurde im zweiten Versuch erfolgreich installiert."
-#         else
-#             echo "Thorium-Installation fehlgeschlagen."
-#         fi
-#     fi
-    
-    # Überprüfen, ob die Installation tatsächlich erfolgreich war
-    if [ -f /usr/bin/thorium-browser ]; then
-        echo "Thorium-Browser wurde erfolgreich installiert und ist unter /usr/bin/thorium-browser verfügbar."
-    else
-        echo "Thorium-Installation konnte nicht abgeschlossen werden."
-    fi
-    
-    # Aufräumen
-    rm -f /tmp/thorium.deb
-fi
-
 #  DESKTOPINSTALLATION  #
 #########################
 
@@ -2940,6 +2905,21 @@ EOBURN
     
     # Desktop-unabhängige Einstellungen
     show_progress 75
+
+    # Thorium Browser installieren
+    if [ -f "/var/cache/thorium/thorium.deb" ]; then
+        log "Installiere Thorium-Browser..."
+        apt install -y --fix-broken /var/cache/thorium/thorium.deb
+        
+        # Prüfen ob die Installation erfolgreich war
+        if [ -f /usr/bin/thorium-browser ]; then
+            log "Thorium-Browser wurde erfolgreich installiert."
+            # Aufräumen nach erfolgreicher Installation
+            rm -f /var/cache/thorium/thorium.deb
+        else
+            log "Thorium-Installation konnte nicht abgeschlossen werden."
+        fi
+    fi
 
     # Validierung der Benutzereinstellungen
     validate_user_settings() {
