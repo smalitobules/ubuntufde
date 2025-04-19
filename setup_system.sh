@@ -1,72 +1,13 @@
 #!/bin/bash
-# Systemeinrichtung in chroot-Umgebung
 
-set -e
+# Systemeinrichtung in chroot-Umgebung
 
 # Globale Variablen
 export DEBIAN_FRONTEND=noninteractive
-LOG_FILE="/var/log/setup-system.log"
-mkdir -p "$(dirname "$LOG_FILE")"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-# Hilfsfunktionen für Logging
-log_info() {
-    echo "[INFO] $1"
-}
-
-log_warn() {
-    echo "[WARNUNG] $1"
-}
-
-log_error() {
-    echo "[FEHLER] $1"
-    return 1
-}
-
-# Wrapper-Funktionen für Paketoperationen
-pkg_install() {
-    if command -v nala &> /dev/null; then
-        apt install -y "$@"
-    else
-        apt-get install -y "$@"
-    fi
-}
-
-pkg_update() {
-    if command -v nala &> /dev/null; then
-        apt update
-    else
-        apt-get update
-    fi
-}
-
-pkg_upgrade() {
-    if command -v nala &> /dev/null; then
-        apt upgrade -y
-    else
-        apt-get dist-upgrade -y
-    fi
-}
-
-pkg_clean() {
-    if command -v nala &> /dev/null; then
-        apt clean
-    else
-        apt-get clean
-    fi
-}
-
-pkg_autoremove() {
-    if command -v nala &> /dev/null; then
-        apt autoremove -y
-    else
-        apt-get autoremove -y
-    fi
-}
 
 # Netzwerkkonfiguration
 setup_network() {
-    log_info "Konfiguriere Netzwerk..."
+    echo "[INFO] Konfiguriere Netzwerk..."
     
     # SSH-Server deaktivieren
     systemctl disable ssh
@@ -75,13 +16,11 @@ setup_network() {
     ufw default deny incoming
     ufw default allow outgoing
     ufw enable
-    
-    return 0
 }
 
 # Lokalisierung und Zeitzone
 setup_localization() {
-    log_info "Konfiguriere Lokalisierung und Zeitzone..."
+    echo "[INFO] Konfiguriere Lokalisierung und Zeitzone..."
     
     # Zeitzone setzen
     if [ -n "${TIMEZONE}" ]; then
@@ -96,7 +35,7 @@ setup_localization() {
     
     # Tastaturlayout
     if [ -n "${KEYBOARD_LAYOUT}" ]; then
-        log_info "Setze Tastaturlayout auf ${KEYBOARD_LAYOUT}"
+        echo "[INFO] Setze Tastaturlayout auf ${KEYBOARD_LAYOUT}"
         cat > /etc/default/keyboard <<KEYBOARD
 XKBMODEL="pc105"
 XKBLAYOUT="${KEYBOARD_LAYOUT}"
@@ -109,119 +48,67 @@ KEYBOARD
     # Hostname setzen
     echo "${HOSTNAME}" > /etc/hostname
     echo "127.0.1.1 ${HOSTNAME}" >> /etc/hosts
-    
-    return 0
-}
-
-# Nala Spiegelserver-Optimierung
-setup_nala_mirrors() {
-    log_info "Konfiguriere Nala Spiegelserver..."
-    
-    # Falls Nala verfügbar ist, konfiguriere es
-    if command -v nala &> /dev/null; then
-        log_info "Konfiguriere nala im neuen System..."
-        
-        # Falls wir bereits optimierte Spiegelserver haben, nutze diese
-        if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-            log_info "Übernehme optimierte Spiegelserver-Konfiguration, überspringe erneute Suche..."
-        else
-            # Ermittle Land basierend auf IP-Adresse
-            log_info "Keine optimierte Spiegelserver-Konfiguration gefunden, starte Suche..."
-            COUNTRY_CODE=$(curl -s https://ipapi.co/country_code)
-            
-            if [ -z "$COUNTRY_CODE" ]; then
-                # Fallback
-                COUNTRY_CODE=$(curl -s https://ipinfo.io/country)
-            fi
-            
-            if [ -z "$COUNTRY_CODE" ]; then
-                # Letzter Fallback
-                COUNTRY_CODE="${COUNTRY_CODE:-all}"
-            else
-                log_info "Erkanntes Land: $COUNTRY_CODE"
-            fi
-            
-            log_info "Suche nach schnellsten Spiegelservern für das neue System..."
-            nala fetch --ubuntu plucky --auto --fetches 3 --country "$COUNTRY_CODE"
-        fi
-    fi
-    
-    return 0
 }
 
 # Automatische Aktualisierungen aktivieren
 setup_automatic_updates() {
-    log_info "Richte automatische Aktualisierungen ein..."
+    echo "[INFO] Richte automatische Aktualisierungen ein..."
     
     # Automatische Updates konfigurieren
     cat > /etc/apt/apt.conf.d/20auto-upgrades <<AUTOUPDATE
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "${UPDATE_OPTION}";
 AUTOUPDATE
-    
-    return 0
 }
 
 # System-Aktualisierung durchführen
 update_system() {
-    log_info "Importiere Repository-Schlüssel..."
+    echo "[INFO] Importiere Repository-Schlüssel..."
     
     # GPG-Schlüssel für lokales Repository importieren
     if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
         curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
     fi
     
-    log_info "Aktualisiere Paketquellen und System..."
-
-    # Systemaktualisierung durchführen
-    pkg_update
-    pkg_upgrade
-    
-    return 0
+    echo "[INFO] Aktualisiere Paketquellen und System..."
+    apt update
+    apt upgrade -y
 }
 
 # Externe Repositories einrichten
 setup_external_repositories() {
-    log_info "Richte externe Repositories ein..."
+    echo "[INFO] Richte externe Repositories ein..."
     
     mkdir -p /etc/apt/keyrings
     
     # Liquorix-Kernel Repository
     if [ "${KERNEL_TYPE}" = "liquorix" ]; then
-        log_info "Füge Liquorix-Kernel-Repository hinzu..."
+        echo "[INFO] Füge Liquorix-Kernel-Repository hinzu..."
         echo "deb http://liquorix.net/debian stable main" > /etc/apt/sources.list.d/liquorix.list
         curl -s 'https://liquorix.net/linux-liquorix-keyring.gpg' | gpg --dearmor -o /etc/apt/keyrings/liquorix-keyring.gpg
         echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
     fi
-        
-    return 0
 }
 
 # Kernel und kritische Systempakete installieren
 install_kernel() {
-    log_info "Installiere Kernel-Pakete..."
+    echo "[INFO] Installiere Kernel-Pakete..."
     
     # Kernel-Pakete basierend auf Auswahl
-    local KERNEL_PACKAGES=""
-    if [ "${KERNEL_TYPE}" = "standard" ]; then
-        KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
-    elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
-        KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
-    elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
-        KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
-    fi
-    
-    # Grundlegende Programme für Desktopfreie-Umgebung installieren
     if [ "${INSTALL_DESKTOP}" != "1" ]; then
-        pkg_install --no-install-recommends ${KERNEL_PACKAGES}
+        if [ "${KERNEL_TYPE}" = "standard" ]; then
+            apt install -y --no-install-recommends linux-image-generic linux-headers-generic
+        elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
+            apt install -y --no-install-recommends linux-image-lowlatency linux-headers-lowlatency
+        elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
+            apt install -y --no-install-recommends linux-image-liquorix-amd64 linux-headers-liquorix-amd64    
+        fi
     fi
-    
-    return 0
 }
 
 # LUKS-Verschlüsselung einrichten
 setup_luks_encryption() {
-    log_info "Konfiguriere LUKS-Verschlüsselung..."
+    echo "[INFO] Konfiguriere LUKS-Verschlüsselung..."
     
     # Schlüsseldatei und Konfigurations-hook einrichten
     mkdir -p /etc/luks
@@ -314,13 +201,11 @@ EOF
     
     # Hook ausführbar machen
     chmod +x /etc/initramfs-tools/hooks/persist-boot
-    
-    return 0
 }
 
 # GRUB-Bootloader konfigurieren
 setup_grub() {
-    log_info "Konfiguriere GRUB-Bootloader..."
+    echo "[INFO] Konfiguriere GRUB-Bootloader..."
     
     # GRUB Verzeichnisse vorbereiten
     mkdir -p /etc/default/
@@ -334,7 +219,7 @@ GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=1
 GRUB_DISTRIBUTOR="$(. /etc/os-release && echo "$NAME")"
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
-GRUB_CMDLINE_LINUX=""
+GRUB_CMDLINE_LINUX="cryptdevice=UUID=\$(blkid -s UUID -o value ${DEVP}5):${LUKS_ROOT_NAME} root=/dev/mapper/vg-root resume=/dev/mapper/vg-swap"
 GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXMODE=1280x1024
 GRUBCFG
@@ -349,67 +234,198 @@ GRUBCFG
     update-initramfs -u -k all
     grub-install --no-nvram --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck
     update-grub
-    
-    return 0
 }
 
 # Zram für Swap konfigurieren
 setup_zram_swap() {
-    log_info "Konfiguriere Zram für Swap..."
+    echo "[INFO] Konfiguriere Zram für Swap..."
     
     cat > /etc/default/zramswap <<EOZ
 # Konfiguration für zramswap
 PERCENT=200
 ALLOCATION=lz4
 EOZ
-    
-    return 0
 }
 
 # Benutzer anlegen
 setup_users() {
-    log_info "Erstelle Benutzer..."
+    echo "[INFO] Erstelle Benutzer..."
     
     useradd -m -s /bin/bash -G sudo ${USERNAME}
     echo "${USERNAME}:${USER_PASSWORD}" | chpasswd
+}
+
+# GNOME Desktop installieren
+install_gnome_desktop() {
+    # WICHTIG: Hier wird \$ verwendet, damit die Variablen erst im chroot ausgewertet werden!
+    GNOME_PACKAGES="
+        xserver-xorg
+        xorg
+        x11-common
+        x11-xserver-utils
+        xdotool
+        dbus-x11
+        gnome-session
+        gnome-shell
+        gdm3
+        libpam-gnome-keyring
+        gsettings-desktop-schemas
+        gparted
+        gnome-disk-utility
+        gnome-text-editor
+        gnome-terminal
+        gnome-tweaks
+        gnome-shell-extensions
+        gnome-shell-extension-manager
+        gnome-system-monitor
+        chrome-gnome-shell
+        gufw
+        gir1.2-gtop-2.0
+        libgtop-2.0-11
+        dconf-editor
+        dconf-cli
+        nautilus
+        nautilus-hide
+        nautilus-admin
+        ubuntu-gnome-wallpapers
+        yad
+        bleachbit
+        stacer
+        vlc
+        deluge
+        virtualbox-guest-additions-iso
+        virtualbox-guest-utils
+        virtualbox-guest-x11
+    "
     
-    return 0
+    # GNOME-spezifische Sprachpakete
+    echo "[INFO] Installiere GNOME Desktop mit Sprachpaketen für ${UI_LANGUAGE}..."
+    
+    # Kernel-Pakete basierend auf Auswahl
+    if [ "${KERNEL_TYPE}" = "standard" ]; then
+        KERNEL="linux-image-generic linux-headers-generic"
+    elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
+        KERNEL="linux-image-lowlatency linux-headers-lowlatency"
+    elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
+        KERNEL="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"
+    else
+        KERNEL="linux-image-generic linux-headers-generic"
+    fi
+    
+    # Sprachpakete
+    LANGUAGE_BASE="language-pack-${UI_LANGUAGE%_*} language-selector-common"
+    LANGUAGE_GNOME="language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome"
+    
+    # Installation durchführen
+    apt install -y --no-install-recommends $KERNEL $LANGUAGE_BASE $LANGUAGE_GNOME $GNOME_PACKAGES
+    
+    echo "[INFO] GNOME Desktop-Installation abgeschlossen"
+}
+
+# KDE Desktop installieren
+install_kde_desktop() {
+    echo "[INFO] Installiere KDE Plasma..."
+    
+    # Kernel-Pakete basierend auf Auswahl
+    if [ "${KERNEL_TYPE}" = "standard" ]; then
+        KERNEL="linux-image-generic linux-headers-generic"
+    elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
+        KERNEL="linux-image-lowlatency linux-headers-lowlatency"
+    elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
+        KERNEL="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"
+    else
+        KERNEL="linux-image-generic linux-headers-generic"
+    fi
+    
+    # Sprachpakete
+    LANGUAGE_BASE="language-pack-${UI_LANGUAGE%_*} language-selector-common"
+    LANGUAGE_KDE="language-pack-kde-${UI_LANGUAGE%_*}"
+    
+    # Füge kde-l10n nur hinzu wenn verfügbar (ist in neueren Versionen nicht mehr vorhanden)
+    if apt-cache show kde-l10n-${UI_LANGUAGE%_*} >/dev/null 2>&1; then
+        LANGUAGE_KDE="$LANGUAGE_KDE kde-l10n-${UI_LANGUAGE%_*}"
+    fi
+    
+    # Minimal-Installation für VMs
+    KDE_PACKAGES="
+        virtualbox-guest-additions-iso
+        virtualbox-guest-utils
+        virtualbox-guest-x11
+    "
+    
+    # Installation durchführen
+    apt install -y --no-install-recommends $KERNEL $LANGUAGE_BASE $LANGUAGE_KDE $KDE_PACKAGES
+    
+    echo "[INFO] KDE Desktop-Installation abgeschlossen"
+}
+
+# Xfce Desktop installieren
+install_xfce_desktop() {
+    echo "[INFO] Installiere Xfce..."
+    
+    # Kernel-Pakete basierend auf Auswahl
+    if [ "${KERNEL_TYPE}" = "standard" ]; then
+        KERNEL="linux-image-generic linux-headers-generic"
+    elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
+        KERNEL="linux-image-lowlatency linux-headers-lowlatency"
+    elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
+        KERNEL="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"
+    else
+        KERNEL="linux-image-generic linux-headers-generic"
+    fi
+    
+    # Sprachpakete
+    LANGUAGE_BASE="language-pack-${UI_LANGUAGE%_*} language-selector-common"
+    LANGUAGE_XFCE="language-pack-${UI_LANGUAGE%_*}-base"
+    
+    # Füge xfce4-session-l10n nur hinzu wenn verfügbar
+    if apt-cache show xfce4-session-l10n >/dev/null 2>&1; then
+        LANGUAGE_XFCE="$LANGUAGE_XFCE xfce4-session-l10n"
+    fi
+    
+    # Minimal-Installation für VMs
+    XFCE_PACKAGES="
+        virtualbox-guest-additions-iso
+        virtualbox-guest-utils
+        virtualbox-guest-x11
+    "
+    
+    # Installation durchführen
+    apt install -y --no-install-recommends $KERNEL $LANGUAGE_BASE $LANGUAGE_XFCE $XFCE_PACKAGES
+    
+    echo "[INFO] Xfce Desktop-Installation abgeschlossen"
 }
 
 # Desktop-Umgebung installieren
 install_desktop_environment() {
     if [ "${INSTALL_DESKTOP}" != "1" ]; then
-        log_info "Keine Desktop-Installation gewählt, überspringe..."
+        echo "[INFO] Keine Desktop-Installation gewählt, überspringe..."
         return 0
     fi
     
-    log_info "Installiere Desktop-Umgebung..."
-    
-    # Basis-Sprachpakete für alle Desktop-Umgebungen
-    BASE_LANGUAGE_PACKAGES="language-pack-${UI_LANGUAGE%_*} language-selector-common"
+    echo "[INFO] Installiere Desktop-Umgebung..."
     
     case "${DESKTOP_ENV}" in
         # GNOME Desktop
         1)
-            log_info "Installiere GNOME Desktop mit Sprachpaketen für ${UI_LANGUAGE}..."
             install_gnome_desktop
             ;;
             
         # KDE Plasma Desktop
         2)
-            log_info "KDE Plasma wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
+            echo "[INFO] KDE Plasma wird derzeit noch nicht vollständig unterstützt."
             install_kde_desktop
             ;;
             
         # Xfce Desktop
         3)
-            log_info "Xfce wird derzeit noch nicht unterstützt. Installiere GNOME stattdessen..."
+            echo "[INFO] Xfce wird derzeit noch nicht vollständig unterstützt."
             install_xfce_desktop
             ;;
             
         # Fallback
         *)
-            log_info "Unbekannte Desktop-Umgebung. Installiere GNOME..."
+            echo "[INFO] Unbekannte Desktop-Umgebung. Installiere GNOME..."
             install_gnome_desktop
             ;;
     esac
@@ -432,241 +448,40 @@ LOCALE
             fi
         done
     fi
-    
-    return 0
-}
-
-# GNOME Desktop installieren
-install_gnome_desktop() {
-    # GNOME-spezifische Sprachpakete
-    GNOME_LANGUAGE_PACKAGES="language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome"
-    
-    # Basis-Kernpaket ermitteln
-    local KERNEL_PACKAGES=""
-    if [ "${KERNEL_TYPE}" = "standard" ]; then
-        KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
-    elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
-        KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
-    elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
-        KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
-    fi
-    
-    if [ "${DESKTOP_SCOPE}" = "1" ]; then
-        # Standard-Installation mit Sprachpaketen
-        pkg_install --no-install-recommends \
-            ${KERNEL_PACKAGES} \
-            ${BASE_LANGUAGE_PACKAGES} \
-            ${GNOME_LANGUAGE_PACKAGES} \
-            xserver-xorg \
-            xorg \
-            x11-common \
-            x11-xserver-utils \
-            xdotool \
-            dbus-x11 \
-            gnome-session \
-            gnome-shell \
-            gdm3 \
-            libpam-gnome-keyring \
-            gsettings-desktop-schemas \
-            gparted \
-            gnome-disk-utility \
-            gnome-text-editor \
-            gnome-terminal \
-            gnome-tweaks \
-            gnome-shell-extensions \
-            gnome-shell-extension-manager \
-            gnome-system-monitor \
-            chrome-gnome-shell \
-            gufw \
-            gir1.2-gtop-2.0 \
-            libgtop-2.0-11 \
-            dconf-editor \
-            dconf-cli \
-            nautilus \
-            nautilus-hide \
-            nautilus-admin \
-            ubuntu-gnome-wallpapers \
-            yad \
-            bleachbit \
-            stacer \
-            vlc \
-            deluge \
-            virtualbox-guest-additions-iso \
-            virtualbox-guest-utils \
-            virtualbox-guest-x11
-    else
-        # Minimale Installation mit Sprachpaketen
-        pkg_install --no-install-recommends \
-            ${KERNEL_PACKAGES} \
-            ${BASE_LANGUAGE_PACKAGES} \
-            ${GNOME_LANGUAGE_PACKAGES} \
-            xserver-xorg \
-            xorg \
-            x11-common \
-            x11-xserver-utils \
-            xdotool \
-            dbus-x11 \
-            gnome-session \
-            gnome-shell \
-            gdm3 \
-            libpam-gnome-keyring \
-            gsettings-desktop-schemas \
-            gparted \
-            gnome-disk-utility \
-            gnome-text-editor \
-            gnome-terminal \
-            gnome-tweaks \
-            gnome-shell-extensions \
-            gnome-shell-extension-manager \
-            gnome-system-monitor \
-            chrome-gnome-shell \
-            gufw \
-            gir1.2-gtop-2.0 \
-            libgtop-2.0-11 \
-            dconf-editor \
-            dconf-cli \
-            nautilus \
-            nautilus-hide \
-            nautilus-admin \
-            ubuntu-gnome-wallpapers \
-            yad \
-            bleachbit \
-            stacer \
-            vlc \
-            deluge \
-            virtualbox-guest-additions-iso \
-            virtualbox-guest-utils \
-            virtualbox-guest-x11
-    fi
-    
-    log_info "GNOME Desktop-Installation abgeschlossen"
-}
-
-# KDE Desktop installieren
-install_kde_desktop() {
-    # KDE-spezifische Sprachpakete
-    KDE_LANGUAGE_PACKAGES="language-pack-kde-${UI_LANGUAGE%_*}"
-    
-    # Füge kde-l10n nur hinzu wenn verfügbar (ist in neueren Versionen nicht mehr vorhanden)
-    if apt-cache show kde-l10n-${UI_LANGUAGE%_*} >/dev/null 2>&1; then
-        KDE_LANGUAGE_PACKAGES+=" kde-l10n-${UI_LANGUAGE%_*}"
-    fi
-    
-    # Basis-Kernpaket ermitteln
-    local KERNEL_PACKAGES=""
-    if [ "${KERNEL_TYPE}" = "standard" ]; then
-        KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
-    elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
-        KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
-    elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
-        KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
-    fi
-    
-    if [ "${DESKTOP_SCOPE}" = "1" ]; then
-        pkg_install --no-install-recommends \
-            ${KERNEL_PACKAGES} \
-            ${BASE_LANGUAGE_PACKAGES} \
-            ${KDE_LANGUAGE_PACKAGES} \
-            virtualbox-guest-additions-iso \
-            virtualbox-guest-utils \
-            virtualbox-guest-x11
-    else
-        pkg_install --no-install-recommends \
-            ${KERNEL_PACKAGES} \
-            ${BASE_LANGUAGE_PACKAGES} \
-            ${KDE_LANGUAGE_PACKAGES} \
-            virtualbox-guest-additions-iso \
-            virtualbox-guest-utils \
-            virtualbox-guest-x11                
-    fi
-    
-    log_info "KDE Desktop-Installation abgeschlossen"
-}
-
-# Xfce Desktop installieren
-install_xfce_desktop() {
-    # Xfce-spezifische Sprachpakete
-    XFCE_LANGUAGE_PACKAGES="language-pack-${UI_LANGUAGE%_*}-base"
-    
-    # Füge xfce4-session-l10n nur hinzu wenn verfügbar
-    if apt-cache show xfce4-session-l10n >/dev/null 2>&1; then
-        XFCE_LANGUAGE_PACKAGES+=" xfce4-session-l10n"
-    fi
-    
-    # Basis-Kernpaket ermitteln
-    local KERNEL_PACKAGES=""
-    if [ "${KERNEL_TYPE}" = "standard" ]; then
-        KERNEL_PACKAGES="linux-image-generic linux-headers-generic"
-    elif [ "${KERNEL_TYPE}" = "lowlatency" ]; then
-        KERNEL_PACKAGES="linux-image-lowlatency linux-headers-lowlatency"
-    elif [ "${KERNEL_TYPE}" = "liquorix" ]; then
-        KERNEL_PACKAGES="linux-image-liquorix-amd64 linux-headers-liquorix-amd64"    
-    fi
-    
-    if [ "${DESKTOP_SCOPE}" = "1" ]; then
-        pkg_install --no-install-recommends \
-            ${KERNEL_PACKAGES} \
-            ${BASE_LANGUAGE_PACKAGES} \
-            ${XFCE_LANGUAGE_PACKAGES} \
-            virtualbox-guest-additions-iso \
-            virtualbox-guest-utils \
-            virtualbox-guest-x11
-    else
-        pkg_install --no-install-recommends \
-            ${KERNEL_PACKAGES} \
-            ${BASE_LANGUAGE_PACKAGES} \
-            ${XFCE_LANGUAGE_PACKAGES} \
-            virtualbox-guest-additions-iso \
-            virtualbox-guest-utils \
-            virtualbox-guest-x11
-    fi
-    
-    log_info "Xfce Desktop-Installation abgeschlossen"
 }
 
 # Installiere zusätzliche Software
 install_additional_software() {
-    log_info "Prüfe auf zusätzliche Software-Installation..."
+    echo "[INFO] Prüfe auf zusätzliche Software-Installation..."
     
     # Thorium Browser installieren
     if [ "${INSTALL_DESKTOP}" = "1" ] && [ -f /tmp/thorium.deb ]; then
-        log_info "Thorium-Browser-Paket gefunden, installiere..."
+        echo "[INFO] Thorium-Browser-Paket gefunden, installiere..."
         
-        # Installation mit apt, das Abhängigkeiten automatisch auflöst
-        log_info "Installiere Thorium-Browser..."
+        # Installation mit apt
         if apt install -y --fix-broken /tmp/thorium.deb; then
-            log_info "Thorium wurde erfolgreich installiert."
+            echo "[INFO] Thorium wurde erfolgreich installiert."
         else
-            log_warn "Thorium-Installation über apt fehlgeschlagen, versuche alternativen Ansatz..."
+            echo "[WARNUNG] Thorium-Installation über apt fehlgeschlagen, versuche alternativen Ansatz..."
             # Abhängigkeiten beheben und erneut versuchen
             apt -f install -y
             if dpkg -i /tmp/thorium.deb; then
-                log_info "Thorium wurde im zweiten Versuch erfolgreich installiert."
+                echo "[INFO] Thorium wurde im zweiten Versuch erfolgreich installiert."
             else
-                log_warn "Thorium-Installation fehlgeschlagen."
+                echo "[WARNUNG] Thorium-Installation fehlgeschlagen."
             fi
-        fi
-        
-        # Überprüfen, ob die Installation tatsächlich erfolgreich war
-        if [ -f /usr/bin/thorium-browser ]; then
-            log_info "Thorium-Browser wurde erfolgreich installiert und ist unter /usr/bin/thorium-browser verfügbar."
-        else
-            log_warn "Thorium-Installation konnte nicht abgeschlossen werden."
         fi
         
         # Aufräumen
         rm -f /tmp/thorium.deb
     fi
-    
-    return 0
 }
 
 # Systemd-Dienste konfigurieren
 configure_systemd_services() {
-    log_info "Konfiguriere Systemd-Dienste..."
+    echo "[INFO] Konfiguriere Systemd-Dienste..."
     
     # Deaktiviere unerwünschte Systemd-Dienste
-    log_info "Deaktiviere unerwünschte Systemd-Dienste..."
     SERVICES_TO_DISABLE=(
         gnome-remote-desktop.service
         gnome-remote-desktop-configuration.service
@@ -686,58 +501,53 @@ configure_systemd_services() {
     for service in "${SERVICES_TO_DISABLE[@]}"; do
         systemctl disable $service >/dev/null 2>&1 || true
     done
-    
-    return 0
 }
 
 # System-Cleanup
 cleanup_system() {
-    log_info "Bereinige temporäre Dateien..."
-    pkg_clean
-    pkg_autoremove
+    echo "[INFO] Bereinige temporäre Dateien..."
+    apt clean
+    apt autoremove -y
     rm -f /setup_system.sh
-    
-    return 0
 }
 
 # Hauptfunktion
 main() {
-    log_info "===== Starte System-Setup: $(date) ====="
+    echo "===== Starte System-Setup: $(date) ====="
     
     # Grundlegende Systemkonfiguration
-    setup_network || log_error "Netzwerkkonfiguration fehlgeschlagen"
-    setup_localization || log_error "Lokalisierungskonfiguration fehlgeschlagen"
-    # setup_nala_mirrors || log_error "Nala Spiegelserver-Optimierung fehlgeschlagen"
-    setup_automatic_updates || log_error "Einrichten von automatischen Aktualisierungen fehlgeschlagen"
-    update_system || log_error "System-Aktualisierung fehlgeschlagen"
-    setup_external_repositories || log_error "Repository-Konfiguration fehlgeschlagen"
+    setup_network 
+    setup_localization
+    setup_automatic_updates
+    update_system
+    setup_external_repositories
     
     # Kerninstallation, wenn kein Desktop ausgewählt ist
-    install_kernel || log_error "Kernel-Installation fehlgeschlagen"
+    install_kernel
     
     # LUKS und Boot-Setup
-    setup_luks_encryption || log_error "LUKS-Konfiguration fehlgeschlagen"
-    setup_grub || log_error "GRUB-Konfiguration fehlgeschlagen"
-    setup_zram_swap || log_error "ZRAM-Konfiguration fehlgeschlagen"
+    setup_luks_encryption
+    setup_grub
+    setup_zram_swap
     
     # Benutzer einrichten
-    setup_users || log_error "Benutzereinrichtung fehlgeschlagen"
+    setup_users
     
     # Desktop-Umgebung installieren
-    install_desktop_environment || log_error "Desktop-Installation fehlgeschlagen"
+    install_desktop_environment
     
     # Zusätzliche Software
-    install_additional_software || log_error "Software-Installation fehlgeschlagen"
+    install_additional_software
     
     # Systemd-Dienste
-    configure_systemd_services || log_error "Systemd-Konfiguration fehlgeschlagen"
+    configure_systemd_services
     
     # Bereinigung
-    cleanup_system || log_error "System-Bereinigung fehlgeschlagen"
+    cleanup_system
     
-    log_info "===== System-Setup erfolgreich abgeschlossen: $(date) ====="
+    echo "===== System-Setup erfolgreich abgeschlossen: $(date) ====="
     return 0
 }
 
 # Skript ausführen
-main "$@" || log_error "System-Setup fehlgeschlagen, fahre trotzdem fort"
+main "$@"
