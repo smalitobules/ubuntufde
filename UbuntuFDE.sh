@@ -1451,7 +1451,7 @@ GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=1
 GRUB_DISTRIBUTOR="$(. /etc/os-release && echo "$NAME")"
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
-GRUB_CMDLINE_LINUX=""
+GRUB_CMDLINE_LINUX="cryptdevice=UUID=\$(blkid -s UUID -o value ${DEVP}5):${LUKS_ROOT_NAME} root=/dev/mapper/vg-root resume=/dev/mapper/vg-swap"
 GRUB_ENABLE_CRYPTODISK=y
 GRUB_GFXMODE=1280x1024
 GRUBCFG
