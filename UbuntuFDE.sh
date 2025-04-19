@@ -341,7 +341,7 @@ copy_sources_config() {
     rm -f /mnt/ubuntu/etc/apt/sources.list.d/*.list
     
     # Kopiere Paketquellen-Datei aus dem Installationsystem in chroot-Umgebung
-    cp -f /etc/apt/sources.list.d/sources.list /mnt/ubuntu/etc/apt/sources.list.d/
+    cp -f /etc/apt/sources.list.d/system.sources /mnt/ubuntu/etc/apt/sources.list.d/
   fi
 }
 
@@ -1380,7 +1380,7 @@ fi
     cat > /etc/apt/sources.list.d/mozilla.sources << EOF
 Types: deb
 URIs: http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu
-Suites: $UBUNTU_CODENAME
+Suites: \{$UBUNTU_CODENAME}
 Components: main
 Signed-By: /etc/apt/keyrings/mozilla.gpg
 EOF
@@ -1409,7 +1409,7 @@ EOF
     cat > /etc/apt/sources.list.d/papirus.sources << EOF
 Types: deb
 URIs: http://ppa.launchpad.net/papirus/papirus/ubuntu
-Suites: $UBUNTU_CODENAME
+Suites: \{$UBUNTU_CODENAME}
 Components: main
 Signed-By: /etc/apt/keyrings/papirus.gpg
 EOF
