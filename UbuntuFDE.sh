@@ -1433,12 +1433,12 @@ fi
 echo "${HOSTNAME}" > /etc/hostname
 echo "127.0.1.1 ${HOSTNAME}" >> /etc/hosts
 
-# Netzwerk konfigurieren (systemd-networkd)
-mkdir -p /etc/systemd/network
+# Netzwerk konfigurieren
+mkdir -p /etc/netplan
 
 if [ "${NETWORK_CONFIG}" = "static" ]; then
-    # Statische IP-Konfiguration anwenden
-    echo "Konfiguriere statische IP-Adresse für systemd-networkd..."
+    # Statische Netzwerk-Konfiguration anwenden
+    echo "Konfiguriere statisches Netzwerk..."
     
     # STATIC_IP_CONFIG parsen (Format: interface=eth0,address=192.168.1.100/24,gateway=192.168.1.1,dns=8.8.8.8)
     NET_INTERFACE=\$(echo "${STATIC_IP_CONFIG}" | sed -n 's/.*interface=\([^,]*\).*/\1/p')
@@ -1447,27 +1447,32 @@ if [ "${NETWORK_CONFIG}" = "static" ]; then
     NET_DNS=\$(echo "${STATIC_IP_CONFIG}" | sed -n 's/.*dns=\([^,]*\).*/\1/p')
     
     # Statisches Netzwerk konfigurieren
-    cat > /etc/systemd/network/99-static.network <<EON
-[Match]
-Name=\${NET_INTERFACE}
-
-[Network]
-Address=\${NET_IP}
-Gateway=\${NET_GATEWAY}
-DNS=\${NET_DNS}
+    cat > /etc/netplan/01-network-manager-all.yaml <<EON
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    \${NET_INTERFACE}:
+      addresses:
+        - \${NET_IP}
+      routes:
+        - to: default
+          via: \${NET_GATEWAY}
+      nameservers:
+        addresses: [\${NET_DNS}]
+      dhcp4: false
 EON
 else
-    # DHCP-Konfiguration
-    cat > /etc/systemd/network/99-dhcp.network <<EON
-[Match]
-Name=en*
-
-[Network]
-DHCP=yes
+    # Variables Netzwerk konfigurieren
+    cat > /etc/netplan/01-network-manager-all.yaml <<EON
+network:
+  version: 2
+  renderer: NetworkManager
 EON
 fi
 
-systemctl enable systemd-networkd
+# Netzwerk- und DNS-Manager aktivieren
+systemctl enable NetworkManager
 systemctl enable systemd-resolved
 
 
