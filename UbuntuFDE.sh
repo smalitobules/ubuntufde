@@ -2917,6 +2917,7 @@ EOBURN
             log "Thorium-Browser wurde erfolgreich installiert."
             # Aufräumen nach erfolgreicher Installation
             rm -f /var/cache/thorium/thorium.deb
+            rmdir --ignore-fail-on-non-empty /var/cache/thorium
         else
             log "Thorium-Installation konnte nicht abgeschlossen werden."
         fi
