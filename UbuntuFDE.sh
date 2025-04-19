@@ -1700,7 +1700,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?"
             else
                 # Minimale Installation mit Sprachpaketen
                 pkg_install --no-install-recommends \
@@ -1748,7 +1748,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?"
             fi
             ;;
             
@@ -1771,7 +1771,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?"
             else
                 pkg_install --no-install-recommends \
                     \${KERNEL_PACKAGES} \
@@ -1780,7 +1780,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11                
-                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?"
             fi
             ;;
             
@@ -1803,7 +1803,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?"
             else
                 pkg_install --no-install-recommends \
                     \${KERNEL_PACKAGES} \
@@ -1812,7 +1812,7 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-additions-iso \
                     virtualbox-guest-utils \
                     virtualbox-guest-x11
-                echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
+                echo "Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?"
             fi
             ;;
     esac
