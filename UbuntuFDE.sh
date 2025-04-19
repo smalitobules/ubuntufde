@@ -2257,6 +2257,10 @@ if [ "$DESKTOP_ENV" = "gnome" ]; then
     cat > /usr/share/glib-2.0/schemas/90_ubuntu-fde.gschema.override <<EOSETTINGS
 # UbuntuFDE Schema Override für GNOME
 
+[org.gnome.desktop.peripherals.keyboard]
+delay=uint32 300
+repeat-interval=uint32 30
+
 [org.gnome.desktop.input-sources]
 sources=[('xkb', '$KEYBOARD_LAYOUT')]
 xkb-options=[]
