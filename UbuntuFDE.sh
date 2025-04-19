@@ -1251,6 +1251,7 @@ download_thorium() {
         log_info "Download-URL: ${THORIUM_URL}"
         
         # Download direkt ins chroot-Verzeichnis
+        mkdir -p /mnt/ubuntu/var/cache/thorium
         if wget -q --show-progress --progress=bar:force:noscroll --tries=3 --timeout=10 -O /mnt/ubuntu/var/cache/thorium/thorium.deb "${THORIUM_URL}"; then
             log_info "Download erfolgreich - Thorium wird später in chroot installiert"
             chmod 644 /mnt/ubuntu/var/cache/thorium/thorium.deb
