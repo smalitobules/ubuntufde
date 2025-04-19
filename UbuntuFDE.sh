@@ -1380,7 +1380,7 @@ fi
     cat > /etc/apt/sources.list.d/mozilla.sources << EOF
 Types: deb
 URIs: http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu
-Suites: \{$UBUNTU_CODENAME}
+Suites: \${UBUNTU_CODENAME}
 Components: main
 Signed-By: /etc/apt/keyrings/mozilla.gpg
 EOF
@@ -1409,7 +1409,7 @@ EOF
     cat > /etc/apt/sources.list.d/papirus.sources << EOF
 Types: deb
 URIs: http://ppa.launchpad.net/papirus/papirus/ubuntu
-Suites: \{$UBUNTU_CODENAME}
+Suites: \${UBUNTU_CODENAME}
 Components: main
 Signed-By: /etc/apt/keyrings/papirus.gpg
 EOF
