@@ -1095,8 +1095,8 @@ install_base_system() {
         cifs-utils console-setup coreutils cryptsetup cryptsetup-initramfs
         curl efibootmgr fastfetch gnupg grub-efi-amd64 grub-efi-amd64-signed
         initramfs-tools jq locales lvm2 mesa-utils nala nano net-tools
-        network-manager openssh-server shim-signed smbclient sudo
-        systemd-resolved timeshift ufw unrar-free unzip util-linux
+        network-manager openssh-server shim-signed smbclient software-properties-common
+        sudo systemd-resolved timeshift ufw unrar-free unzip util-linux
         vulkan-tools wget zram-tools zstd
     )
 
