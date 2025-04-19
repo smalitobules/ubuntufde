@@ -175,21 +175,22 @@ check_dependencies() {
     pkg_clean
 
     # Richte lokalen Spiegelserver ein
+    log_info "Importiere GPG-Schlüssel..."
+    mkdir -p /etc/apt/trusted.gpg.d/
+    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
+
+    log_info "Erstelle Paketquellendatei..."
     mkdir -p /etc/apt/sources.list.d
-    cat > /etc/apt/sources.list.d/sources.list <<-EOSOURCES
-deb http://192.168.56.120/ubuntu/ plucky main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ plucky-updates main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ plucky-security main restricted universe multiverse
-deb http://192.168.56.120/ubuntu/ plucky-backports main restricted universe multiverse
-EOSOURCES
+    cat > /etc/apt/sources.list.d/system.sources << EOF
+Types: deb
+URIs: http://192.168.56.120/ubuntu/
+Suites: plucky plucky-updates plucky-security plucky-backports
+Components: main restricted universe multiverse
+Signed-By: /etc/apt/trusted.gpg.d/local-mirror.gpg
+EOF
 
-        # Importiere GPG-Schlüssel vom Spiegelserver
-        log_info "Importiere GPG-Schlüssel für lokalen Mirror..."
-        mkdir -p /etc/apt/trusted.gpg.d/
-        curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
-
-        # Lokalen Spiegelserver als bevorzugt festlegen
-        cat > /etc/apt/preferences.d/local-mirror <<EOL
+    # Lokalen Spiegelserver priorisieren
+    cat > /etc/apt/preferences.d/local-mirror <<EOL
 Package: *
 Pin: origin 192.168.56.120
 Pin-Priority: 1001
@@ -1342,7 +1343,7 @@ fi
 
     mkdir -p /etc/apt/keyrings
 
-    # Liquorix-Kernel Repository
+    # Liquorix-Kernel Repository einrichten
     if [ "${KERNEL_TYPE}" = "liquorix" ]; then
         echo "Füge Liquorix-Kernel-Repository hinzu..."
         echo "deb http://liquorix.net/debian stable main" > /etc/apt/sources.list.d/liquorix.list
@@ -1350,40 +1351,47 @@ fi
         echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
     fi
 
-    ## Mozilla Team GPG-Schlüssel importieren
-    #curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg
+    # Mozilla Repository einrichten
+    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozilla.gpg
+    cat > /etc/apt/sources.list.d/mozilla.sources << EOF
+Types: deb
+URIs: http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu
+Suites: ${UBUNTU_CODENAME}
+Components: main
+Signed-By: /etc/apt/keyrings/mozilla.gpg
+EOF
 
-    ## Mozilla Team Repository einrichten
-    #echo "deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.gpg] http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu ${UBUNTU_CODENAME} main" | tee /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+    # Mozilla Repository priorisieren
+    cat > /etc/apt/preferences.d/mozillateam <<EOF
+Package: firefox*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001
 
-    ## Paket-Präferenzen für Mozilla Programme setzen
-    #cat > /etc/apt/preferences.d/mozillateam <<EOF
-#Package: firefox*
-#Pin: release o=LP-PPA-mozillateam
-#Pin-Priority: 1001
+Package: firefox*
+Pin: release o=Ubuntu
+Pin-Priority: -1
 
-#Package: firefox*
-#Pin: release o=Ubuntu
-#Pin-Priority: -1
+Package: thunderbird*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001
 
-#Package: thunderbird*
-#Pin: release o=LP-PPA-mozillateam
-#Pin-Priority: 1001
+Package: thunderbird*
+Pin: release o=Ubuntu
+Pin-Priority: -1
+EOF
 
-#Package: thunderbird*
-#Pin: release o=Ubuntu
-#Pin-Priority: -1
-#EOF
+    # Kvantum Repository einrichten
+    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9461999446FAF0DF770BFC9AE58A9D36647CAE7F" | gpg --dearmor -o /etc/apt/keyrings/papirus.gpg
+    cat > /etc/apt/sources.list.d/papirus.sources << EOF
+Types: deb
+URIs: http://ppa.launchpad.net/papirus/papirus/ubuntu
+Suites: ${UBUNTU_CODENAME}
+Components: main
+Signed-By: /etc/apt/keyrings/papirus.gpg
+EOF
 
-
-    # Hier Platz für zukünftige Paketquellen
-    # BEISPIEL: Multimedia-Codecs
-    # if [ "${INSTALL_MULTIMEDIA}" = "1" ]; then
-    #     echo "Füge Multimedia-Repository hinzu..."
-    #     echo "deb http://example.org/multimedia stable main" > /etc/apt/sources.list.d/multimedia.list
-    # fi
-
-
+# # Alte Paketquellenlisten modernisieren
+# apt modernize-sources -y
 
 # Automatische Updates konfigurieren
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<AUTOUPDATE
@@ -1680,6 +1688,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     nautilus-admin \
                     ubuntu-gnome-wallpapers \
+                    qt6-style-kvantum \
+                    qt6-style-kvantum-themes \
+                    firefox \
+                    libreoffice \
                     yad \
                     bleachbit \
                     stacer \
@@ -1724,6 +1736,10 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     nautilus-hide \
                     nautilus-admin \
                     ubuntu-gnome-wallpapers \
+                    qt6-style-kvantum \
+                    qt6-style-kvantum-themes \
+                    firefox \
+                    libreoffice \
                     yad \
                     bleachbit \
                     stacer \
@@ -1798,56 +1814,6 @@ if [ "${INSTALL_DESKTOP}" = "1" ]; then
                     virtualbox-guest-x11
                 echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             fi
-            ;;
-            
-        # Fallback
-        *)
-            echo "Unbekannte Desktop-Umgebung. Installiere GNOME..."
-            # Fallback-Paketliste (GNOME)
-            GNOME_LANGUAGE_PACKAGES="language-pack-gnome-${UI_LANGUAGE%_*} language-selector-gnome"
-            
-            pkg_install --no-install-recommends \
-                    \${KERNEL_PACKAGES} \
-                    \${BASE_LANGUAGE_PACKAGES} \
-                    \${GNOME_LANGUAGE_PACKAGES} \
-                    xserver-xorg \
-                    xorg \
-                    x11-common \
-                    x11-xserver-utils \
-                    xdotool \
-                    dbus-x11 \
-                    gnome-session \
-                    gnome-shell \
-                    gdm3 \
-                    libpam-gnome-keyring \
-                    gsettings-desktop-schemas \
-                    gparted \
-                    gnome-disk-utility \
-                    gnome-text-editor \
-                    gnome-terminal \
-                    gnome-tweaks \
-                    gnome-shell-extensions \
-                    gnome-shell-extension-manager \
-                    gnome-system-monitor \
-                    chrome-gnome-shell \
-                    gufw \
-                    gir1.2-gtop-2.0 \
-                    libgtop-2.0-11 \
-                    dconf-editor \
-                    dconf-cli \
-                    nautilus \
-                    nautilus-hide \
-                    nautilus-admin \
-                    ubuntu-gnome-wallpapers \
-                    yad \
-                    bleachbit \
-                    stacer \
-                    vlc \
-                    deluge \
-                    virtualbox-guest-additions-iso \
-                    virtualbox-guest-utils \
-                    virtualbox-guest-x11
-            echo "DEBUG: Desktop-Installation mit Sprachpaketen abgeschlossen, exit code: $?" >> /var/log/install-debug.log
             ;;
     esac
     
