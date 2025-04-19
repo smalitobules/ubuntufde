@@ -1469,6 +1469,10 @@ network:
   version: 2
   renderer: NetworkManager
 EON
+
+# Netplan Konfigurationsdatei-Rechte setzen
+chmod 600 /etc/netplan/01-network-manager-all.yaml
+
 fi
 
 # Netzwerk- und DNS-Manager aktivieren
