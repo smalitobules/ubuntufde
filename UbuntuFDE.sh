@@ -366,13 +366,13 @@ setup_chroot_repositories() {
     
     # Mozilla Repository einrichten
     log_info "Richte Mozilla-Repository für chroot ein..."
-    wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O /mnt/ubuntu/etc/apt/keyrings/mozilla.gpg
+    wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O /mnt/ubuntu/etc/apt/keyrings/mozilla.asc
     cat > /mnt/ubuntu/etc/apt/sources.list.d/mozilla.sources << EOF
 Types: deb
 URIs: https://packages.mozilla.org/apt
 Suites: mozilla
 Components: main
-Signed-By: /etc/apt/keyrings/mozilla.gpg
+Signed-By: /etc/apt/keyrings/mozilla.asc
 EOF
     
     # Mozilla Repository priorisieren
