@@ -1381,7 +1381,7 @@ fi
     curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0ab215679c571d1c8325275b9bdb3d89ce49ec21" | gpg --dearmor -o /etc/apt/keyrings/mozilla.gpg
     cat > /etc/apt/sources.list.d/mozilla.sources << EOF
 Types: deb
-URIs: http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu
+URIs: http://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu/dists
 Suites: "${UBUNTU_CODENAME}"
 Components: main
 Signed-By: /etc/apt/keyrings/mozilla.gpg
@@ -1410,7 +1410,7 @@ EOF
     curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9461999446FAF0DF770BFC9AE58A9D36647CAE7F" | gpg --dearmor -o /etc/apt/keyrings/papirus.gpg
     cat > /etc/apt/sources.list.d/papirus.sources << EOF
 Types: deb
-URIs: http://ppa.launchpad.net/papirus/papirus/ubuntu
+URIs: http://ppa.launchpad.net/papirus/papirus/ubuntu/dists
 Suites: "${UBUNTU_CODENAME}"
 Components: main
 Signed-By: /etc/apt/keyrings/papirus.gpg
