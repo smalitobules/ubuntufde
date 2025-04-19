@@ -233,7 +233,7 @@ EOL
 
     log_info "Prüfe auf Programm-Abhängigkeiten..."
     
-    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget" "nala")
+    local deps=("sgdisk" "cryptsetup" "debootstrap" "lvm2" "curl" "wget")
     local missing_deps=()
     
     for dep in "${deps[@]}"; do
@@ -334,15 +334,67 @@ find_fastest_mirrors() {
 copy_sources_config() {
   if [ "${MIRRORS_OPTIMIZED}" = "true" ]; then
     # Bereite das Zielverzeichnis vor
+    mkdir -p /etc/apt/keyrings/
+    mkdir -p /etc/apt/trusted.gpg.d/
     mkdir -p /mnt/ubuntu/etc/apt/sources.list.d/
     
-    # Entferne etwaig vorhandene Paketquellen-Dateien
-    rm -f /mnt/ubuntu/etc/apt/sources.list
+    # Entferne etwaig vorhandene Paketquellen-Dateien und ihre Schlüssel
+    rm -f /etc/apt/keyrings/*.gpg
+    rm -f /etc/apt/keyrings/*.asc
+    rm -f /mnt/ubuntu/etc/apt/*.list
     rm -f /mnt/ubuntu/etc/apt/sources.list.d/*.list
     
-    # Kopiere Paketquellen-Datei aus dem Installationsystem in chroot-Umgebung
+    # Kopiere Paketquellen-Datei aus dem Installationsystem in die chroot-Umgebung
     cp -f /etc/apt/sources.list.d/system.sources /mnt/ubuntu/etc/apt/sources.list.d/
+    cp -f /etc/apt/trusted.gpg.d/local-mirror.gpg /mnt/ubuntu/etc/apt/trusted.gpg.d/local-mirror.gpg
   fi
+}
+
+setup_chroot_repositories() {
+    log_info "Richte Drittanbieter-Repositories für chroot-Umgebung ein..."
+    
+    # Verzeichnis für GPG-Schlüssel erstellen
+    mkdir -p /mnt/ubuntu/etc/apt/keyrings
+    
+    # Liquorix-Kernel Repository einrichten
+    if [ "${KERNEL_TYPE}" = "liquorix" ]; then
+        log_info "Füge Liquorix-Kernel-Repository für chroot hinzu..."
+        echo "deb http://liquorix.net/debian stable main" > /mnt/ubuntu/etc/apt/sources.list.d/liquorix.list
+        curl -s 'https://liquorix.net/linux-liquorix-keyring.gpg' | gpg --dearmor -o /mnt/ubuntu/etc/apt/keyrings/liquorix-keyring.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" > /mnt/ubuntu/etc/apt/sources.list.d/liquorix.list
+    fi
+    
+    # Mozilla Repository einrichten
+    log_info "Richte Mozilla-Repository für chroot ein..."
+    wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O /mnt/ubuntu/etc/apt/keyrings/mozilla.gpg
+    cat > /mnt/ubuntu/etc/apt/sources.list.d/mozilla.sources << EOF
+Types: deb
+URIs: https://packages.mozilla.org/apt
+Suites: mozilla
+Components: main
+Signed-By: /etc/apt/keyrings/mozilla.gpg
+EOF
+    
+    # Mozilla Repository priorisieren
+    cat > /mnt/ubuntu/etc/apt/preferences.d/mozilla << EOF
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+EOF
+    
+    # Kvantum Repository einrichten
+    log_info "Richte Kvantum-Repository für chroot ein..."
+    curl -s "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9461999446FAF0DF770BFC9AE58A9D36647CAE7F" > /mnt/ubuntu/etc/apt/keyrings/papirus.asc
+    chmod 644 /mnt/ubuntu/etc/apt/keyrings/papirus.asc
+    cat > /mnt/ubuntu/etc/apt/sources.list.d/papirus.sources << EOF
+Types: deb
+URIs: https://ppa.launchpadcontent.net/papirus/papirus/ubuntu
+Suites: ${UBUNTU_CODENAME}
+Components: main
+Signed-By: /etc/apt/keyrings/papirus.asc
+EOF
+
+    log_info "Drittanbieter-Repositories für chroot-Umgebung wurden eingerichtet"
 }
 
 setup_ssh_access() {
@@ -1251,6 +1303,8 @@ mkdir -p /mnt/ubuntu/etc/dpkg/dpkg.cfg.d/
 echo "force-unsafe-io" > /mnt/ubuntu/etc/dpkg/dpkg.cfg.d/unsafe-io
 mkdir -p /mnt/ubuntu/etc/apt/apt.conf.d/
 echo "Dpkg::Parallelize=true;" > /mnt/ubuntu/etc/apt/apt.conf.d/70parallelize
+
+setup_chroot_repositories
 #   BASISSYSTEM   #
 ###################
 
@@ -1330,79 +1384,6 @@ pkg_autoremove() {
         apt-get autoremove -y
     fi
 }
-
-## Nala-Mirror-Optimierung für das finale System
-#if command -v nala &> /dev/null; then
-#    echo "Konfiguriere nala im neuen System..."
-#    
-#    # Falls wir bereits optimierte Mirrors haben, nutze diese
-#    if [ -f /etc/apt/sources.list.d/nala-sources.list ]; then
-#        echo "Übernehme optimierte Mirror-Konfiguration, überspringe erneute Suche..."
-#    else
-#        # Ermittle Land basierend auf IP-Adresse
-#        echo "Keine optimierte Mirror-Konfiguration gefunden, starte Suche..."
-#        COUNTRY_CODE=\$(curl -s https://ipapi.co/country_code)
-#        
-#        if [ -z "\$COUNTRY_CODE" ]; then
-#            # Fallback
-#            COUNTRY_CODE=\$(curl -s https://ipinfo.io/country)
-#        fi
-#        
-#        if [ -z "\$COUNTRY_CODE" ]; then
-#            # Letzter Fallback
-#            COUNTRY_CODE="${COUNTRY_CODE:-all}"
-#        else
-#            echo "Erkanntes Land: \$COUNTRY_CODE"
-#        fi
-#        
-#        echo "Suche nach schnellsten Mirrors für das neue System..."
-#        nala fetch --ubuntu "\${UBUNTU_CODENAME}" --auto --fetches 3 --country "\$COUNTRY_CODE"
-#    fi
-#fi
-
-# GPG-Schlüssel für lokales Repository importieren
-if [ ! -f "/etc/apt/trusted.gpg.d/local-mirror.gpg" ]; then
-    curl -fsSL http://192.168.56.120/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/local-mirror.gpg
-fi
-
-# Repositories für Anwendugen einrichten
-    mkdir -p /etc/apt/keyrings
-
-    # Liquorix-Kernel Repository einrichten
-    if [ "${KERNEL_TYPE}" = "liquorix" ]; then
-        echo "Füge Liquorix-Kernel-Repository hinzu..."
-        echo "deb http://liquorix.net/debian stable main" > /etc/apt/sources.list.d/liquorix.list
-        curl -s 'https://liquorix.net/linux-liquorix-keyring.gpg' | gpg --dearmor -o /etc/apt/keyrings/liquorix-keyring.gpg
-        echo "deb [signed-by=/etc/apt/keyrings/liquorix-keyring.gpg] https://liquorix.net/debian stable main" | tee /etc/apt/sources.list.d/liquorix.list
-    fi
-
-    # Mozilla Repository einrichten
-    wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O /etc/apt/keyrings/mozilla.gpg
-    cat > /etc/apt/sources.list.d/mozilla.sources << EOF
-Types: deb
-URIs: https://packages.mozilla.org/apt
-Suites: mozilla
-Components: main
-Signed-By: /etc/apt/keyrings/mozilla.gpg
-EOF
-
-    # Mozilla Repository priorisieren
-    cat > /etc/apt/preferences.d/mozilla << EOF
-Package: *
-Pin: origin packages.mozilla.org
-Pin-Priority: 1000
-EOF
-
-    # Kvantum Repository einrichten
-    curl -s "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9461999446FAF0DF770BFC9AE58A9D36647CAE7F" > /etc/apt/keyrings/papirus.asc
-    chmod 644 /etc/apt/keyrings/papirus.asc
-    cat > /etc/apt/sources.list.d/papirus.sources << EOF
-Types: deb
-URIs: https://ppa.launchpadcontent.net/papirus/papirus/ubuntu
-Suites: "${UBUNTU_CODENAME}"
-Components: main
-Signed-By: /etc/apt/keyrings/papirus.asc
-EOF
 
 # Automatische Updates konfigurieren
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<AUTOUPDATE
